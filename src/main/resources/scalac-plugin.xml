@@ -1,0 +1,4 @@
+<plugin>
+    <name>morpheus</name>
+    <classname>org.morpheus.codegen.MorpheusPlugin</classname>
+</plugin>
