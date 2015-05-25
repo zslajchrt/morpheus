@@ -148,8 +148,10 @@ Now let’s invoke the two common methods address and sendMessage.
 
 The console should read:
 
+```
 Recipient address pepa@gmail.com
 Sending message to pepa@gmail.com by email 
+```
 
 As the last step of this brief tutorial switch the morph to the second alternative.
 
@@ -162,6 +164,7 @@ As the last step of this brief tutorial switch the morph to the second alternati
 
 Now the console should read this:
 
+```
 Recipient address pepa
 Sending message to pepa by chat
-
+```
