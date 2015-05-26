@@ -168,13 +168,24 @@ with TreeDSL {
 
         val depsFromSelf: List[MorpheusPreTyper.this.global.Tree] = extractDepsFromSelfType(clsDef)
 
+        //warning(s"Fragment ${ctxCls.name} parents ${ctxCls.impl.parents.map(p => showRaw(p))}")
+
         // Try to find the config trait among the direct ancestors
         val (fragClassAnnot, classBody) = ctxCls.impl.parents.find {
-          case Ident(TypeName(parentName)) => parentName == ctxCls.name + "Config"
+          case AppliedTypeTree(Ident(TypeName("Delegate")), List(Ident(TypeName(_)))) =>
+            true
+          case Ident(TypeName(parentName)) =>
+            parentName == ctxCls.name + "Config"
           case _ => false
         } match {
-          case Some(configParent) =>
-            //inform(s"Found config parent: $configParent")
+          case Some(cfgParentTree) =>
+
+            val configParent = cfgParentTree match {
+              case AppliedTypeTree(_, List(delegateParent)) => delegateParent
+              case _ => cfgParentTree
+            }
+
+            inform(s"Found config parent: $configParent")
 
             val fragClsAnnot = generateFragmentClassAnnotation(depsFromSelf, configParent)
 

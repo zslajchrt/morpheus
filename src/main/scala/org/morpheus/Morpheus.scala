@@ -24,6 +24,8 @@ object Morpheus {
 
   type ~[M, LUB] = MutableCompositeMirror[M, LUB]
 
+  type Delegate[T] = T
+
   def external[E](implicit instance: E): (Frag[E, Unit]) => E = _ => {
     instance
   }
