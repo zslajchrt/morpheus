@@ -175,7 +175,7 @@ Recipient address pepa
 Sending message to pepa by chat
 ```
 
-## Quickstart
+## Quick Start
 
 Assuming git, sbt and mvn installed:
 
