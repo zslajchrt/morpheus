@@ -192,7 +192,7 @@ Assuming git, sbt and mvn installed:
 
 ## Find out more
 
-[Technical Docs] [techdocs]
+**[Technical Docs] [techdocs]**
 
 ## License
 
