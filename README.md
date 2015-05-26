@@ -63,9 +63,7 @@ The `or` 'keyword' is a special trait with two type parameters. Without the synt
 
 In previous step we only declared a type alias. The static analysis of the morph type will take place in the following step in which we will create the so called *morph kernel*. The kernel is a structure whose purpose is to assemble a chosen alternative according to the *morph model* built from the morph type. The kernel also contains factories for all fragments specified in the morph type and knows the composition of all alternative forms that the mutating object can assume. The static analysis is done in a macro which analyses the morph type and checks a number of conditions. We will deal with these conditions in detail later on, but at this point we can reveal that one such condition is the dependency check (which we have yet to demonstrate), which verifies that all dependencies of all fragments in all alternative forms are satisfied.
 
-```
-Note: Although fragment instances used by the kernel are real objects, they are not meant to be used outside of the scope of an alternative form.
-```
+*Note: Although fragment instances used by the kernel are real objects, they are not meant to be used outside of the scope of an alternative form.*
 
 The `singleton` macro creates a morph kernel that uses singleton *fragment factorie* for creating fragments. It causes that all alternative forms produced by the kernel will de-facto reuse the fragment instances provided that the singleton factories create fragment instances just once.
 
