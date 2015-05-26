@@ -174,3 +174,18 @@ Now the console should read this:
 Recipient address pepa
 Sending message to pepa by chat
 ```
+
+## Quickstart
+
+Assuming git, sbt and mvn installed:
+
+```bash
+ host$ git clone https://github.com/zslajchrt/morpheus.git
+ host$ cd morpheus
+ host$ sbt package publishM2
+ host$ cd ..
+ host$ git clone https://github.com/zslajchrt/morpheus-tutor.git
+ host$ cd morpheus-tutor
+ host$ mvn package
+
+```
