@@ -24,7 +24,7 @@ trait Contact {
 }
 ```
 
-And now we can declare the two traits representing the offline and online contacts. These traits become Morpheus fragments by annotating them by the fragment annotation. Each fragment trait has a special field for keeping the proprietary address.
+And now we can declare the two traits representing the offline and online contacts. These traits become Morpheus fragments by annotating them by means of the fragment annotation. Each fragment trait has a special field for keeping the proprietary address.
 
 ```scala
 @fragment trait OfflineContact extends Contact {
