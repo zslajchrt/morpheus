@@ -46,18 +46,18 @@ And now we can declare the two traits representing the offline and online contac
 }
 ```
 
-The modelling phase is done now and we can start playing with the model. What we want to achieve next is to create a single object representing a chat contact capable of switching between the two alternative forms.
+Now that we have completed the modelling phase, we can start to play with the model. Our next objective is to create a single object representing a chat contact capable of switching between the two alternative forms.
 
-First, we have to declare the morph type that specifies all possible alternatives and fragments constituting these alternatives. In this case it is quite straightforward since we simply express the fact that the resulting object can be either OfflineContact or OnlineContact:
+First, we have to declare the morph type, which specifies all possible alternatives and fragments constituting these alternatives. In this case the type declaration is quite straightforward since we simply express the fact that the resulting object can be either OfflineContact or OnlineContact:
 
 ```scala
   type ContactMorphType = OfflineContact or OnlineContact
 ```
-The or ‘keyword’ is a special trait with two type parameters. Without Scala’s syntax flexibility allowing writing a type with two parameters in the in-fix way, the morph type would have to be written as or[OfflineContact, OnlineContact].
+The 'or' keyword is a special trait with two type parameters. Without the syntax flexibility possesed by Scala, which allows the writing of a type with two parameters in the in-fix way, the morph type would have to be written as or[OfflineContact, OnlineContact].
 
-No special check on the validity of the morph type has happened so far, since we just declared a type alias. The static analysis will take place in the following step in which we are creating so called morph kernel. The kernel is a structure whose purpose is to assemble a chosen alternative according to the morph model. The kernel also encloses factories for all fragments specified in the morph type and knows the composition of all alternative forms that the mutating object can take on. The static analysis is done in a macro which introspects the morph type and checks a number of conditions. We will deal with these conditions in detail later on, but now we can reveal that one such a condition is the dependency check (we haven’t demonstrated it yet) that verifies that all dependencies of all fragments in all alternative forms are satisfied.
+In previous step we only declared a type alias. The static analysis of the morph type will take place in the following step in which we will create the so called morph kernel. The kernel is a structure whose purpose is to assemble a chosen alternative according to the morph model. The kernel also contains factories for all fragments specified in the morph type and knows the composition of all alternative forms that the mutating object can assume. The static analysis is done in a macro which analyses the morph type and checks a number of conditions. We will deal with these conditions in detail later on, but at this point we can reveal that one such condition is the dependency check (which we have yet to demonstrat), which verifies that all dependencies of all fragments in all alternative forms are satisfied.
 
-Note: Although fragment instances used by the kernel are real objects, they are not meant to be used out of the scope of an alternative form.
+Note: Although fragment instances used by the kernel are real objects, they are not meant to be used outside of the scope of an alternative form.
 
 The singleton macro creates a morph kernel that uses singleton factories for creating fragments. It causes that all alternative forms produced by the kernel will de-facto reuse the fragment instances provided that the singleton factories create fragment instances just once.
 
