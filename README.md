@@ -17,11 +17,9 @@ import org.morpheus._
 import org.morpheus.Morpheus._
 ```
 
-The contact is undoubtedly the fundamental entity in the application. It represents a remote user stored within the profile of the local user of the chat application. In contrast to the traditional OOP approach, in which an entity is represented by means of a class, here, we use traits for modelling entities. Incidentally, classes are second-class citizens in Morpheus and are only used as auxiliary types.
+The contact is the main entity in the application. It represents a remote user stored within the profile of the local user of the chat application. In contrast to the traditional OOP approach, in which an entity is represented by means of a class, here, we use traits for modelling entities. Incidentally, classes are second-class citizens in Morpheus and are only used as auxiliary types.
 
-The contact comes in two basic flavors offline and online. It is natural to model these two flavors as two traits extending from the same parent trait `Contact` encapsulating common behaviour. Let us assume at this stage that the common behavior is the sending of a message to the remote user. Additionaly, the common trait provides a textual representation of the address to which the message is sent. Each fragment keeps its own address and implements the sending procedure in its own way. The offline contact uses email as its communication channel, while the online contact uses the chat channel (which is under development).
-
-Next, we declare the parent trait `Contact`:
+The contact comes in two basic flavors offline and online. It is natural to model these two flavors as two traits extending from the same parent trait `Contact` encapsulating common behaviour. This is the declaration the parent trait `Contact`:
 
 ```scala
 trait Contact {
@@ -30,7 +28,9 @@ trait Contact {
 }
 ```
 
-And now we can declare the two traits representing the offline and online contacts. These traits become Morpheus fragments by annotating them by means of the `fragment` annotation. Each fragment trait has a special field for storing the proprietary address.
+Let us assume at this stage that the common behavior is the sending of a message to the remote user. Additionaly, the common trait provides a textual representation of the address to which the message is sent. Each fragment keeps its own address and implements the sending procedure in its own way. The offline contact uses email as its communication channel, while the online contact uses the chat channel (which is under development).
+
+Now we can declare the two traits representing the offline and online contacts. These traits become Morpheus fragments by annotating them by means of the `fragment` annotation. Each fragment trait has a special field for storing the proprietary address.
 
 ```scala
 @fragment trait OfflineContact extends Contact {
