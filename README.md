@@ -193,7 +193,7 @@ Assuming git, sbt and mvn installed:
 ## Find out more
 
 * [Wiki Home](https://github.com/zslajchrt/morpheus/wiki/Home)
-* [Tutorial](https://github.com/zslajchrt/morpheus-tutor)**
+* [Tutorial](https://github.com/zslajchrt/morpheus-tutor)
 
 ## License
 
