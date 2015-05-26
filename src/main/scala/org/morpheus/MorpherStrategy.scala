@@ -600,7 +600,7 @@ case class AlternatingMorpherStrategy[M](alts: MorpherStrategy[M]*) extends Morp
 
     def switch(index: Int): Unit = {
       AlternatingMorpherStrategy.this.switch(index)
-      proxy.notifyMorpher()
+      proxy.remorph()
     }
   }
 

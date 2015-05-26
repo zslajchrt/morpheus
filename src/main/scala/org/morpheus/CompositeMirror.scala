@@ -40,7 +40,7 @@ trait Mutator[M] {
   /**
    * It causes a re-instantiation only if the new composition of the proxy's delegate differs from the current one.
    */
-  def notifyMorpher(): Unit
+  def remorph(): Unit
 
   def remorph(altStrategy: MorpherStrategy[M])
 }
@@ -54,7 +54,7 @@ trait MutableCompositeMirror[M, LUB] extends CompositeMirror[M, LUB] with Mutato
     override def onEvent(eventName: String, eventValue: Any, eventSource: Any) = {
       val ce = CompositeEvent(eventName, eventValue, eventSource)
       if (eventSelector.isDefinedAt(ce) && eventSelector(ce)) {
-        notifyMorpher()
+        remorph()
       }
       Nil
     }

@@ -217,7 +217,7 @@ abstract class MutableCompositeContext[M, LUB, ConformLev <: ConformanceLevelMar
 
     override type ConfLev = ConformLev
 
-    def notifyMorpher() {
+    def remorph() {
       MutableCompositeContext.this.delegate = morph(proxy, MutableCompositeContext.this.delegate.strategy)
     }
 

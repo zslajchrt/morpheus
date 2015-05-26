@@ -113,7 +113,7 @@ abstract class CompositeInstance[M](val root: CompositeModelNode) extends Compos
           case mut: MutableFragment with Mutator[M] =>
             mut.addListener(new MutableFragmentListener {
               override def onEvent(eventName: String, eventValue: Any, eventSource: Any) = {
-                mut.notifyMorpher()
+                mut.remorph()
                 Nil
               }
             })

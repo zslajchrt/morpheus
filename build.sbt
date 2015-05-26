@@ -1,10 +1,14 @@
 name := "Morpheus"
 
+organization := "org.morpheus"
+
 version := "0.7"
 
 scalaVersion := "2.11.5"
 
 val paradiseVersion = "2.1.0-M5"
+
+publishTo := Some(Resolver.file("file",  new File(Path.userHome.absolutePath+"/.m2/repository")))
 
 resolvers ++= Seq(
   Resolver.sonatypeRepo("releases"),
