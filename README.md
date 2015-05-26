@@ -4,7 +4,7 @@ Morpheus is a component bringing metamorphosing capabilities into Scala. The mai
 
 ## Motivation
 
-As the name suggests, Morpheus allows for an object to assume various forms as a result of either external or internal events. The object can adapt so its behavior and state to a changeable environment. 
+As the name suggests, Morpheus allows creating an object, which can assume various forms as a result of either external or internal events and adapt its behavior and state to a changeable environment.
 
 The forms that the object can adopt are not arbitrary. Instead, all possible forms of the object are determined by a finite automaton model represented by so-called morph type. The morph type specifies two fundamentals: firstly the building blocks called fragments and secondly all possible combinations of fragments representing the object forms called alternatives. Morph types are expressed as Scala types and are checked in compile time so that the runtime part of Morpheus can be certain that all forms of an object under construction are valid and assembled correctly from the fragments. 
 
