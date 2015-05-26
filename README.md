@@ -138,11 +138,11 @@ We expect that the morph is now adopting the alternative with the `OnlineContact
 
 Since we have initialised all members, we can use the common `sendMessage` method regardless the alternative form the morph is taking on.
 
-First, we are going to activate the `OfflineContact` again, what brings us to another method from `MutableCompositeMirror`. The no-args `remorph` method causes re-morphing of the morph by means of the strategy used for assembling the last alternative. Before we call it, we have to change the value of `contactAlt` to `0` indicating the first alternative.
+First, we are going to activate the `OfflineContact` again, what brings us to another method from `MutableCompositeMirror`. The no-args `remorph` method causes re-morphing of the morph by means of the strategy used to assemble the last alternative. Before we call it, we have to change the value of `contactAlt` to `0` indicating the first alternative.
 
 ```scala
   contactAlt = 0
-  contactKernel.~.notifyMorpher
+  contactKernel.~.remorph
 ```
 
 Now let’s invoke the two common methods `address` and `sendMessage`.
@@ -163,7 +163,7 @@ As the last step of this brief tutorial switch the morph to the second alternati
 
 ```scala
   contactAlt = 1
-  contactKernel.~.notifyMorpher
+  contactKernel.~.remorph
   println(s"Recipient address ${contactKernel.~.address}")
   contactKernel.~.sendMessage("Hello again!")
 ```
