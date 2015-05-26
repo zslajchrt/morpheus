@@ -194,7 +194,7 @@ Assuming git, sbt and mvn installed:
 
 ## Find out more
 
-**[Technical Docs](https://github.com/zslajchrt/morpheus/wiki/techdocs)**
+**[WIKI Home](https://github.com/zslajchrt/morpheus/wiki/Home)**
 
 ## License
 
