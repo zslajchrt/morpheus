@@ -6,7 +6,7 @@ Allow me to demonstrate Morpheus in action in this simple example, in which we w
 
 The contact is undoubtedly the fundamental entity in the application. It represents a remote user stored within the profile of the local user of the chat application. In contrast to the traditional OOP approach, in which an entity is represented by means of a class, here, we use traits for modelling entities. Incidentally, classes are second-class citizens in Morpheus and are only used as auxiliary types.
 
-The contact comes in two basic flavours offline and online. It is natural to model these two flavours as two traits extending from the same parent trait Contact encapsulating common behaviour. Let’s assume at this stage that the common behaviour is sending a message to the remote user and a textual representation of the address to which the message is sent. Each fragment keeps its own address and implements the sending procedure in its way. The offline contact uses email as its communication channel, while the online contact uses the chat channel (which is to be done).
+The contact comes in two basic flavors offline and online. It is natural to model these two flavours as two traits extending from the same parent trait Contact encapsulating common behaviour. Let’s assume at this stage that the common behaviour is sending a message to the remote user and a textual representation of the address to which the message is sent. Each fragment keeps its own address and implements the sending procedure in its way. The offline contact uses email as its communication channel, while the online contact uses the chat channel (which is to be done).
 
 First, in order to start using Morpheus, we have to include these two import statements:
 
