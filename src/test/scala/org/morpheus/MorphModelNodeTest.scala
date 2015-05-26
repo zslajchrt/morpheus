@@ -7,7 +7,7 @@ import org.junit.Test
 /**
  * Created by zslajchrt on 06/03/15.
  */
-class CompositeModelNodeTest {
+class MorphModelNodeTest {
 
   @Test
   def testFlattenConj() {

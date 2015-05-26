@@ -22,7 +22,7 @@ object Morpheus {
   type \?[F] = or[Unit, F]
   type /?[F] = or[F, Unit]
 
-  type ~[M, LUB] = MutableCompositeMirror[M, LUB]
+  type ~[M, LUB] = MutableMorpherMirror[M, LUB]
 
   type Delegate[T] = T
 
@@ -34,7 +34,7 @@ object Morpheus {
     instance
   }
 
-  def expose[F](ci: CompositeInstance[_]): Any = macro expose_impl[F]
+  def expose[F](ci: MorphKernel[_]): Any = macro expose_impl[F]
 
   def frag[F] = new FragmentFactory[F, Unit](None)
   def fragAsDim[F] = macro fragAsDimNoCfg_impl[F]
@@ -63,7 +63,7 @@ object Morpheus {
 
   def toDimFrag[F, C](fragFactory: (Frag[F, C] => F)): Any = macro toDimFrag_impl[F, C]
 
-  def selectProxy[F](ci: CompositeInstance[_]): Any = macro selectProxy_impl[F]
+  def selectProxy[F](ci: MorphKernel[_]): Any = macro selectProxy_impl[F]
 
   implicit def fragmentHolderToFragmentFactory[F, C](holder: FragmentHolder[F]): (Frag[F, C] => F) = (frag) => {
     holder.proxy
@@ -77,25 +77,25 @@ object Morpheus {
     () => Some(t)
   }
 
-  def parse[M](checkDeps: Boolean): CompositeModel[M] = macro parse_impl[M]
+  def parse[M](checkDeps: Boolean): MorphModel[M] = macro parse_impl[M]
 
-  def build[M](compositeModel: CompositeModel[M], checkDeps: Boolean, fragmentProvider: FragmentProvider,
-               defaultStrategy: MorpherStrategy[M], conformanceLevel: org.morpheus.Morpheus.ConformanceLevel): Any = macro build_impl[M]
+  def build[M](compositeModel: MorphModel[M], checkDeps: Boolean, fragmentProvider: FragmentProvider,
+               defaultStrategy: MorphingStrategy[M], conformanceLevel: org.morpheus.Morpheus.ConformanceLevel): Any = macro build_impl[M]
 
   def compose[M]: Any = macro compose_impl[M]
 
-  def compose[M](compositeModel: CompositeModel[M], defaultStrategy: MorpherStrategy[M]): Any = macro composeWithModel_impl[M]
+  def compose[M](compositeModel: MorphModel[M], defaultStrategy: MorphingStrategy[M]): Any = macro composeWithModel_impl[M]
 
   def singleton[M]: Any = macro singleton_impl[M]
 
-  def singleton[M](compositeModel: CompositeModel[M], defaultStrategy: MorpherStrategy[M]): Any = macro singletonWithModel_impl[M]
+  def singleton[M](compositeModel: MorphModel[M], defaultStrategy: MorphingStrategy[M]): Any = macro singletonWithModel_impl[M]
 
   //  @deprecated
-  //  def arrangeY[M]: CompositeModel[M] = macro arrange_impl[M]
+  //  def arrangeY[M]: MorphModel[M] = macro arrange_impl[M]
 
   def glean[M]: Any = macro glean_impl[M]
 
-  def glean[M](compositeModel: CompositeModel[M], defaultStrategy: MorpherStrategy[M]): Any = macro gleanWithModel_impl[M]
+  def glean[M](compositeModel: MorphModel[M], defaultStrategy: MorphingStrategy[M]): Any = macro gleanWithModel_impl[M]
 
   def compose_?[M]: Any = macro composePartial_impl[M]
 
@@ -103,38 +103,38 @@ object Morpheus {
 
   def glean_?[M]: Any = macro gleanPartial_impl[M]
 
-  //def \/[M1, M2](ci1: CompositeProtoInstance[M1], ci2: CompositeProtoInstance[M2]): Any = macro fork_impl[M1, M2]
+  //def \/[M1, M2](ci1: MorphKernelBase[M1], ci2: MorphKernelBase[M2]): Any = macro fork_impl[M1, M2]
 
-  //def mirror[S](self: S): Option[S with CompositeMirror[\?[S], Any]] = macro mirror_impl[S]
+  //def mirror[S](self: S): Option[S with MorpherMirror[\?[S], Any]] = macro mirror_impl[S]
   def mirror[S](self: S): Any = macro mirror_impl[S]
 
   def remorph[S](arg: S, altNum: Int): Unit = macro remorph_impl[S]
 
-  // todo: support not only MutableCompositeMirror, but also CompositeMirror for immutable composite proxies
+  // todo: support not only MutableMorpherMirror, but also MorpherMirror for immutable composite proxies
   def select[F](mutableProxy: Any): Option[F] = macro select_impl[F]
 
-  def inspect[T <: MutableCompositeMirror[_, _], R](mutableProxy: T)(fork: PartialFunction[Any, R]): Any = macro inspect_impl[T, R]
+  def inspect[T <: MutableMorpherMirror[_, _], R](mutableProxy: T)(fork: PartialFunction[Any, R]): Any = macro inspect_impl[T, R]
 
-  implicit def convertMorphToPartialRef[M1, M2](morph: CompositeMirror[M1, _]): ~&[M2] = macro convertMorphToPartialRef_impl[M1, M2]
+  implicit def convertMorphToPartialRef[M1, M2](morph: MorpherMirror[M1, _]): ~&[M2] = macro convertMorphToPartialRef_impl[M1, M2]
 
-  implicit def convertMorphToTotalRef[M1, M2](morph: CompositeMirror[M1, _]): &[M2] = macro convertMorphToTotalRef_impl[M1, M2]
+  implicit def convertMorphToTotalRef[M1, M2](morph: MorpherMirror[M1, _]): &[M2] = macro convertMorphToTotalRef_impl[M1, M2]
 
-  implicit def convertCompositeInstanceToPartialRef[M1, M2](ci: CompositeInstance[M1]): ~&[M2] = macro convertCompositeInstanceToPartialRef_impl[M1, M2]
+  implicit def convertMorphKernelToPartialRef[M1, M2](ci: MorphKernel[M1]): ~&[M2] = macro convertMorphKernelToPartialRef_impl[M1, M2]
 
-  implicit def convertCompositeInstanceToPartialRefNoDepsCheck[M1, M2](ci: CompositeInstance[M1]): ~&?[M2] = macro convertCompositeInstanceToPartialRefNoDepsCheck_impl[M1, M2]
+  implicit def convertMorphKernelToPartialRefNoDepsCheck[M1, M2](ci: MorphKernel[M1]): ~&?[M2] = macro convertMorphKernelToPartialRefNoDepsCheck_impl[M1, M2]
 
-  implicit def convertCompositeInstanceToTotalRef[M1, M2](ci: CompositeInstance[M1]): &[M2] = macro convertCompositeInstanceToTotalRef_impl[M1, M2]
+  implicit def convertMorphKernelToTotalRef[M1, M2](ci: MorphKernel[M1]): &[M2] = macro convertMorphKernelToTotalRef_impl[M1, M2]
 
-  implicit def convertCompositeInstanceToTotalRefNoDepsCheck[M1, M2](ci: CompositeInstance[M1]): &?[M2] = macro convertCompositeInstanceToTotalRefNoDepsCheck_impl[M1, M2]
+  implicit def convertMorphKernelToTotalRefNoDepsCheck[M1, M2](ci: MorphKernel[M1]): &?[M2] = macro convertMorphKernelToTotalRefNoDepsCheck_impl[M1, M2]
 
   def rootStrategy[M](src: Any): Any = macro rootStrategy_impl[M]
 
-  //  implicit def convertCompositeInstanceToExclusiveRef[M1, M2](ci: CompositeInstance[M1]): &~[M2] = macro convertCompositeInstanceToExclusiveRef_impl[M1, M2]
+  //  implicit def convertMorphKernelToExclusiveRef[M1, M2](ci: MorphKernel[M1]): &~[M2] = macro convertMorphKernelToExclusiveRef_impl[M1, M2]
   //
-  //  implicit def convertCompositeInstanceToExclusiveRefNoDepsCheck[M1, M2](ci: CompositeInstance[M1]): &~?[M2] = macro convertCompositeInstanceToExclusiveRefNoDepsCheck_impl[M1, M2]
+  //  implicit def convertMorphKernelToExclusiveRefNoDepsCheck[M1, M2](ci: MorphKernel[M1]): &~?[M2] = macro convertMorphKernelToExclusiveRefNoDepsCheck_impl[M1, M2]
 
-  def *[M](ciRef: CompositeInstanceRef[M, _], placeholders: Any*): Any = macro deref_impl[M]
-  def *[M](ciRef: CompositeInstanceRef[M, _], strategy: MorpherStrategy[_], placeholders: Any*): Any = macro derefWithStrategy_impl[M]
+  def *[M](ciRef: MorphKernelRef[M, _], placeholders: Any*): Any = macro deref_impl[M]
+  def *[M](ciRef: MorphKernelRef[M, _], strategy: MorphingStrategy[_], placeholders: Any*): Any = macro derefWithStrategy_impl[M]
 
   def selfRef(self: Any): Any = macro selfRefOpt_impl
   def &&(self: Any): Any = macro selfRef_impl
@@ -142,9 +142,9 @@ object Morpheus {
 
   def tupled[T](arg: T): Any = macro tupled_impl[T]
 
-  def deref[M](ciRef: CompositeInstanceRef[M, _], placeholders: Any*): Any = macro deref_impl[M]
+  def deref[M](ciRef: MorphKernelRef[M, _], placeholders: Any*): Any = macro deref_impl[M]
 
-  def proxies[M](ci: CompositeInstance[M] with WithHiddenFragments): Any = macro proxies_impl[M]
+  def proxies[M](ci: MorphKernel[M] with WithHiddenFragments): Any = macro proxies_impl[M]
 
   /**
    *
@@ -152,21 +152,21 @@ object Morpheus {
    * @tparam M
    * @return the LUB of the submodel `M` of the model of the composite instance `ci`
    */
-  def asCompositeOf[M](ci: CompositeInstance[_]): Any = macro asCompositeOf_impl[M]
+  def asCompositeOf[M](ci: MorphKernel[_]): Any = macro asCompositeOf_impl[M]
 
-  def asCompositeOf_~[M](ci: CompositeInstance[_]): Any = macro asCompositeOfMutable_impl[M]
+  def asCompositeOf_~[M](ci: MorphKernel[_]): Any = macro asCompositeOfMutable_impl[M]
 
   def promote[M](sw: () => Option[Int]): Any = macro promote_implOneArg[M]
 
-  def promote[S](delegate: MorpherStrategy[_], sw: () => Option[Int]): Any = macro promote_impl[S]
+  def promote[S](delegate: MorphingStrategy[_], sw: () => Option[Int]): Any = macro promote_impl[S]
 
   def rate[M](sw: () => Set[(Int, Int)]): Any = macro rate_implOneArgPos[M]
 
   def rate_![M](sw: () => Set[(Int, Int)]): Any = macro rate_implOneArgNeg[M]
 
-  def rate[S](delegate: MorpherStrategy[_], sw: () => Set[(Int, Int)]): Any = macro ratePos_impl[S]
+  def rate[S](delegate: MorphingStrategy[_], sw: () => Set[(Int, Int)]): Any = macro ratePos_impl[S]
 
-  def rate_![S](delegate: MorpherStrategy[_], sw: () => Set[(Int, Int)]): Any = macro rateNeg_impl[S]
+  def rate_![S](delegate: MorphingStrategy[_], sw: () => Set[(Int, Int)]): Any = macro rateNeg_impl[S]
 
   def remorph_impl[S: c.WeakTypeTag](c: whitebox.Context)(arg: c.Expr[Any], altNum: c.Expr[Int]): c.Expr[Unit] = {
     import c.universe._
@@ -187,7 +187,7 @@ object Morpheus {
              import org.morpheus.Morpheus._
              for (m <- mirror(this); mm <- m.owningMutableProxy) {
                val self = &&(this)
-               val ci = m.toCompositeInstance
+               val ci = m.toMorphKernel
                val defaultStrategy = FixedStrategy[m.Model](m.alternatives)
                val am = self.altMappings
                val swModel = parse[$thisSelfTpe](false)
@@ -200,7 +200,7 @@ object Morpheus {
 
       case _ =>
 
-        if (arg.actualType.erasure <:< implicitly[WeakTypeTag[CompositeInstanceRef[_, _]]].tpe.erasure) {
+        if (arg.actualType.erasure <:< implicitly[WeakTypeTag[MorphKernelRef[_, _]]].tpe.erasure) {
           val ref = arg
           val targetModelTpe = ref.actualType.typeArgs.head
 
@@ -227,13 +227,13 @@ object Morpheus {
   }
 
 
-  def expose_impl[F: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[CompositeInstance[_]]): c.Expr[Any] = {
+  def expose_impl[F: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[_]]): c.Expr[Any] = {
     import c.universe._
 
     c.Expr(q"org.morpheus.Morpheus.external($ci.fragments.select[org.morpheus.FragmentHolder[${implicitly[WeakTypeTag[F]]}]].proxy)")
   }
 
-  def selectProxy_impl[F: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[CompositeInstance[_]]): c.Expr[Any] = {
+  def selectProxy_impl[F: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[_]]): c.Expr[Any] = {
     import c.universe._
 
     c.Expr(q"$ci.fragments.select[org.morpheus.FragmentHolder[${implicitly[WeakTypeTag[F]]}]].proxy")
@@ -325,8 +325,8 @@ object Morpheus {
           mirror(this) match {
             case None => None
             case Some(m) =>
-              val depsMaps = m.toCompositeInstance.fragmentHolder[$fragTpe].get.fragment.depsMappings.get
-              Some(new $refTpe(m.toCompositeInstance.asInstanceOf[CompositeInstance[Any]], depsMaps))
+              val depsMaps = m.toMorphKernel.fragmentHolder[$fragTpe].get.fragment.depsMappings.get
+              Some(new $refTpe(m.toMorphKernel.asInstanceOf[MorphKernel[Any]], depsMaps))
           }
         }
 
@@ -429,7 +429,7 @@ object Morpheus {
   def rootStrategy_impl[M: c.WeakTypeTag](c: whitebox.Context)(src: c.Expr[Any]): c.Expr[Any] = {
     import c.universe._
 
-    val result = if (src.actualType.erasure <:< typeOf[CompositeInstanceRef[_, _]]) {
+    val result = if (src.actualType.erasure <:< typeOf[MorphKernelRef[_, _]]) {
       val modelTpe = src.actualType.typeArgs.head.dealias
       val (_, modelRoot, _, _, _, fragmentTypesMap) = buildModel(c)(modelTpe, None, Total)
       val modelNoPlh = transformToNoPlaceholders(c)(modelRoot, fragmentTypesMap, None)
@@ -437,18 +437,18 @@ object Morpheus {
 
       q"""
          {
-          val ref = $src.asInstanceOf[org.morpheus.CompositeInstanceRef[$modelNoPlhTpe, _]]
+          val ref = $src.asInstanceOf[org.morpheus.MorphKernelRef[$modelNoPlhTpe, _]]
           org.morpheus.BridgeStrategy(ref)
          }
        """
 
-    } else if (src.actualType.erasure <:< typeOf[CompositeModel[_]]) {
+    } else if (src.actualType.erasure <:< typeOf[MorphModel[_]]) {
 
       //val modelTpe = src.actualType.typeArgs.head.dealias
       q"org.morpheus.RootStrategy($src)"
 
     } else {
-      c.abort(c.enclosingPosition, s"Illegal argument. Expected ${typeOf[CompositeInstanceRef[_, _]]} or ${typeOf[CompositeModel[_]]}")
+      c.abort(c.enclosingPosition, s"Illegal argument. Expected ${typeOf[MorphKernelRef[_, _]]} or ${typeOf[MorphModel[_]]}")
     }
 
 
@@ -461,7 +461,7 @@ object Morpheus {
 
     val modelTag: WeakTypeTag[M] = implicitly[WeakTypeTag[M]]
     val modelTpe = modelTag.tpe.dealias
-    val delegate = c.Expr[MorpherStrategy[_]](c.typecheck(q"org.morpheus.RootStrategy[$modelTpe]()"))
+    val delegate = c.Expr[MorphingStrategy[_]](c.typecheck(q"org.morpheus.RootStrategy[$modelTpe]()"))
     rate_impl(c)(delegate, sw, negative = false)(modelTag)
   }
 
@@ -470,26 +470,26 @@ object Morpheus {
 
     val modelTag: WeakTypeTag[M] = implicitly[WeakTypeTag[M]]
     val modelTpe = modelTag.tpe.dealias
-    val delegate = c.Expr[MorpherStrategy[_]](c.typecheck(q"org.morpheus.RootStrategy[$modelTpe]()"))
+    val delegate = c.Expr[MorphingStrategy[_]](c.typecheck(q"org.morpheus.RootStrategy[$modelTpe]()"))
     rate_impl(c)(delegate, sw, negative = true)(modelTag)
   }
 
-  def ratePos_impl[S: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorpherStrategy[_]], sw: c.Expr[() => Set[(Int, Int)]]): c.Expr[Any] = {
+  def ratePos_impl[S: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorphingStrategy[_]], sw: c.Expr[() => Set[(Int, Int)]]): c.Expr[Any] = {
     rate_impl(c)(delegate, sw, negative = false)(implicitly[c.WeakTypeTag[S]])
   }
 
-  def rateNeg_impl[S: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorpherStrategy[_]], sw: c.Expr[() => Set[(Int, Int)]]): c.Expr[Any] = {
+  def rateNeg_impl[S: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorphingStrategy[_]], sw: c.Expr[() => Set[(Int, Int)]]): c.Expr[Any] = {
     rate_impl(c)(delegate, sw, negative = true)(implicitly[c.WeakTypeTag[S]])
   }
 
-  private def rate_impl[S: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorpherStrategy[_]], sw: c.Expr[() => Set[(Int, Int)]], negative: Boolean): c.Expr[Any] = {
+  private def rate_impl[S: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorphingStrategy[_]], sw: c.Expr[() => Set[(Int, Int)]], negative: Boolean): c.Expr[Any] = {
     import c.universe._
 
     val modelTpe = delegate.actualType.typeArgs.head.dealias
     val switchTpe = implicitly[WeakTypeTag[S]].tpe.dealias
 
-    val switchModelTree = parseCompositeModelFromType(c)(switchTpe, false, false, None, Total)._1
-    val altMapTree = checkCompositeInstanceAssignment(c)(modelTpe, switchTpe, false, Total, Total, false)
+    val switchModelTree = parseMorphModelFromType(c)(switchTpe, false, false, None, Total)._1
+    val altMapTree = checkMorphKernelAssignment(c)(modelTpe, switchTpe, false, Total, Total, false)
 
     val result = q"org.morpheus.AltMapRatingStrategy($delegate, $switchModelTree, $altMapTree, $sw, $negative)"
 
@@ -501,25 +501,25 @@ object Morpheus {
 
     val modelTag: WeakTypeTag[M] = implicitly[WeakTypeTag[M]]
     val modelTpe = modelTag.tpe.dealias
-    val delegate = c.Expr[MorpherStrategy[_]](c.typecheck(q"org.morpheus.RootStrategy[$modelTpe]()"))
+    val delegate = c.Expr[MorphingStrategy[_]](c.typecheck(q"org.morpheus.RootStrategy[$modelTpe]()"))
     promote_impl(c)(delegate, sw)(modelTag)
   }
 
-  def promote_impl[S: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorpherStrategy[_]], sw: c.Expr[() => Option[Int]]): c.Expr[Any] = {
+  def promote_impl[S: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorphingStrategy[_]], sw: c.Expr[() => Option[Int]]): c.Expr[Any] = {
     import c.universe._
 
     val modelTpe = delegate.actualType.typeArgs.head.dealias
     val switchTpe = implicitly[WeakTypeTag[S]].tpe.dealias
 
-    val switchModelTree = parseCompositeModelFromType(c)(switchTpe, false, false, None, Total)._1
-    val altMapTree = checkCompositeInstanceAssignment(c)(modelTpe, switchTpe, false, Total, Total, false)
+    val switchModelTree = parseMorphModelFromType(c)(switchTpe, false, false, None, Total)._1
+    val altMapTree = checkMorphKernelAssignment(c)(modelTpe, switchTpe, false, Total, Total, false)
 
     val result = q"org.morpheus.PromotingStrategy($delegate, $switchModelTree, $altMapTree, $sw)"
 
     c.Expr(result)
   }
 
-  def asCompositeOf_impl[M: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[CompositeInstance[_]]): c.Expr[Any] = {
+  def asCompositeOf_impl[M: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[_]]): c.Expr[Any] = {
     import c.universe._
 
     val targetTpe = implicitly[WeakTypeTag[M]].tpe
@@ -535,7 +535,7 @@ object Morpheus {
     c.Expr(result)
   }
 
-  def asCompositeOfMutable_impl[M: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[CompositeInstance[_]]): c.Expr[Any] = {
+  def asCompositeOfMutable_impl[M: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[_]]): c.Expr[Any] = {
     import c.universe._
 
     val targetTpe = implicitly[WeakTypeTag[M]].tpe
@@ -554,8 +554,8 @@ object Morpheus {
   def tupled_impl[T: c.WeakTypeTag](c: whitebox.Context)(arg: c.Expr[T]): c.Expr[Any] = {
     import c.universe._
 
-    // Currently, only CompositeInstanceRef can be tuplified
-    val result = if (arg.actualType.erasure <:< implicitly[WeakTypeTag[CompositeInstanceRef[_, _]]].tpe) {
+    // Currently, only MorphKernelRef can be tuplified
+    val result = if (arg.actualType.erasure <:< implicitly[WeakTypeTag[MorphKernelRef[_, _]]].tpe) {
       val compTpe = arg.actualType.typeArgs.head
       val (_, modelRoot, _, _, _, typesMap) = buildModel(c)(compTpe, None, Total)
 
@@ -582,13 +582,13 @@ object Morpheus {
     c.Expr(result)
   }
 
-  def deref_impl[M: c.WeakTypeTag](c: whitebox.Context)(ciRef: c.Expr[CompositeInstanceRef[M, _]], placeholders: c.Expr[Any]*): c.Expr[Any] = {
+  def deref_impl[M: c.WeakTypeTag](c: whitebox.Context)(ciRef: c.Expr[MorphKernelRef[M, _]], placeholders: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
     derefWithStrategy_impl[M](c)(ciRef, null, placeholders :_*)
   }
 
-  def derefWithStrategy_impl[M: c.WeakTypeTag](c: whitebox.Context)(ciRef: c.Expr[CompositeInstanceRef[M, _]], strategy: c.Expr[MorpherStrategy[_]], placeholders: c.Expr[Any]*): c.Expr[Any] = {
+  def derefWithStrategy_impl[M: c.WeakTypeTag](c: whitebox.Context)(ciRef: c.Expr[MorphKernelRef[M, _]], strategy: c.Expr[MorphingStrategy[_]], placeholders: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
     // The placeholders can be passed as a tuple. The following code detects such a condition and transforms the tuple to a sequence
@@ -723,7 +723,7 @@ object Morpheus {
 
   }
 
-  def convertMorphToPartialRef_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(morph: c.Expr[CompositeMirror[M1, _]]): c.Expr[~&[M2]] = {
+  def convertMorphToPartialRef_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(morph: c.Expr[MorpherMirror[M1, _]]): c.Expr[~&[M2]] = {
     import c.universe._
 
     val tgtTpe = implicitly[WeakTypeTag[M2]].tpe.dealias
@@ -731,14 +731,14 @@ object Morpheus {
     val res = q"""
       {
         import org.morpheus._
-        val ref: ~&[$tgtTpe] = convertCompositeInstanceToPartialRef[$srcTpe, $tgtTpe]($morph.toCompositeInstance)
-        ref.copy(sourceStrategy = Some(new LastRatingStrategy($morph.asInstanceOf[CompositeMirror[Any, _]]))).asInstanceOf[~&[$tgtTpe]]
+        val ref: ~&[$tgtTpe] = convertMorphKernelToPartialRef[$srcTpe, $tgtTpe]($morph.toMorphKernel)
+        ref.copy(sourceStrategy = Some(new LastRatingStrategy($morph.asInstanceOf[MorpherMirror[Any, _]]))).asInstanceOf[~&[$tgtTpe]]
       }
     """
     c.Expr[~&[M2]](res)
   }
 
-  def convertMorphToTotalRef_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(morph: c.Expr[CompositeMirror[M1, _]]): c.Expr[&[M2]] = {
+  def convertMorphToTotalRef_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(morph: c.Expr[MorpherMirror[M1, _]]): c.Expr[&[M2]] = {
     import c.universe._
 
     val tgtTpe = implicitly[WeakTypeTag[M2]].tpe.dealias
@@ -746,43 +746,43 @@ object Morpheus {
     val res = q"""
       {
         import org.morpheus._
-        val ref: &[$tgtTpe] = convertCompositeInstanceToTotalRef[$srcTpe, $tgtTpe]($morph.toCompositeInstance)
-        ref.copy(sourceStrategy = Some(new LastRatingStrategy($morph.asInstanceOf[CompositeMirror[Any, _]]))).asInstanceOf[&[$tgtTpe]]
+        val ref: &[$tgtTpe] = convertMorphKernelToTotalRef[$srcTpe, $tgtTpe]($morph.toMorphKernel)
+        ref.copy(sourceStrategy = Some(new LastRatingStrategy($morph.asInstanceOf[MorpherMirror[Any, _]]))).asInstanceOf[&[$tgtTpe]]
       }
     """
     c.Expr[&[M2]](res)
   }
 
-  def convertCompositeInstanceToPartialRef_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[CompositeInstance[M1]]): c.Expr[~&[M2]] = {
+  def convertMorphKernelToPartialRef_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[M1]]): c.Expr[~&[M2]] = {
     import c.universe._
 
     val tgtTpe = implicitly[WeakTypeTag[M2]].tpe.dealias
     val isDereferenced = ci.actualType <:< c.typeOf[WithHiddenFragments]
 
-    val altMappingsExpr = checkCompositeInstanceAssignmentUsingTypeArgs[M1, M2](c)(ci, checkDepsInSrcModel = !isDereferenced, refConfLevel = Partial)
+    val altMappingsExpr = checkMorphKernelAssignmentUsingTypeArgs[M1, M2](c)(ci, checkDepsInSrcModel = !isDereferenced, refConfLevel = Partial)
 
-    val res = q"new ~&[$tgtTpe]($ci.asInstanceOf[org.morpheus.CompositeInstance[Any]], $altMappingsExpr)"
+    val res = q"new ~&[$tgtTpe]($ci.asInstanceOf[org.morpheus.MorphKernel[Any]], $altMappingsExpr)"
     c.Expr[~&[M2]](res)
   }
 
-  def convertCompositeInstanceToPartialRefNoDepsCheck_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[CompositeInstance[M1]]): c.Expr[~&?[M2]] = {
+  def convertMorphKernelToPartialRefNoDepsCheck_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[M1]]): c.Expr[~&?[M2]] = {
     import c.universe._
 
     val tgtTpe = implicitly[WeakTypeTag[M2]].tpe.dealias
     val isDereferenced = ci.actualType <:< c.typeOf[WithHiddenFragments]
 
-    val altMappingsExpr = checkCompositeInstanceAssignmentUsingTypeArgs[M1, M2](c)(ci, checkDepsInSrcModel = false, refConfLevel = Partial)
+    val altMappingsExpr = checkMorphKernelAssignmentUsingTypeArgs[M1, M2](c)(ci, checkDepsInSrcModel = false, refConfLevel = Partial)
 
-    val res = q"new ~&?[$tgtTpe]($ci.asInstanceOf[org.morpheus.CompositeInstance[Any]], $altMappingsExpr)"
+    val res = q"new ~&?[$tgtTpe]($ci.asInstanceOf[org.morpheus.MorphKernel[Any]], $altMappingsExpr)"
     c.Expr[~&?[M2]](res)
   }
 
-  def convertCompositeInstanceToTotalRef_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[CompositeInstance[M1]]): c.Expr[&[M2]] = {
+  def convertMorphKernelToTotalRef_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[M1]]): c.Expr[&[M2]] = {
     import c.universe._
 
     //val srcTpe = implicitly[WeakTypeTag[M1]].tpe.dealias
     val tgtTpe = implicitly[WeakTypeTag[M2]].tpe.dealias
-    //c.info(c.enclosingPosition, s"convertCompositeInstanceToTotalRef: $srcTpe -> $tgtTpe", true)
+    //c.info(c.enclosingPosition, s"convertMorphKernelToTotalRef: $srcTpe -> $tgtTpe", true)
 
     val isDereferenced = ci.actualType <:< c.typeOf[WithHiddenFragments]
 
@@ -792,19 +792,19 @@ object Morpheus {
     // all required dependencies for such a fragment.
     // If the reference's composite type contains a fragment placeholder, the placeholder's dependencies check is carried out independently
     // within the validation of the placeholder.
-    val altMappingsExpr = checkCompositeInstanceAssignmentUsingTypeArgs[M1, M2](c)(ci, checkDepsInSrcModel = !isDereferenced, refConfLevel = Total)
+    val altMappingsExpr = checkMorphKernelAssignmentUsingTypeArgs[M1, M2](c)(ci, checkDepsInSrcModel = !isDereferenced, refConfLevel = Total)
 
-    val res = q"new &[$tgtTpe]($ci.asInstanceOf[org.morpheus.CompositeInstance[Any]], $altMappingsExpr)"
+    val res = q"new &[$tgtTpe]($ci.asInstanceOf[org.morpheus.MorphKernel[Any]], $altMappingsExpr)"
     c.Expr[&[M2]](res)
   }
 
-  def convertCompositeInstanceToTotalRefNoDepsCheck_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[CompositeInstance[M1]]): c.Expr[&?[M2]] = {
+  def convertMorphKernelToTotalRefNoDepsCheck_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[M1]]): c.Expr[&?[M2]] = {
     import c.universe._
 
-    val altMappingsExpr = checkCompositeInstanceAssignmentUsingTypeArgs[M1, M2](c)(ci, checkDepsInSrcModel = false, refConfLevel = Total)
+    val altMappingsExpr = checkMorphKernelAssignmentUsingTypeArgs[M1, M2](c)(ci, checkDepsInSrcModel = false, refConfLevel = Total)
 
     val tgtTpe = implicitly[WeakTypeTag[M2]].tpe.dealias
-    val res = q"new &?[$tgtTpe]($ci.asInstanceOf[org.morpheus.CompositeInstance[Any]], $altMappingsExpr)"
+    val res = q"new &?[$tgtTpe]($ci.asInstanceOf[org.morpheus.MorphKernel[Any]], $altMappingsExpr)"
     c.Expr[&?[M2]](res)
   }
 
@@ -826,7 +826,7 @@ object Morpheus {
   case object Partial extends ConformanceLevel
   case object Total extends ConformanceLevel
 
-  private def checkCompositeInstanceAssignmentUsingTypeArgs[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[CompositeInstance[M1]], checkDepsInSrcModel: Boolean, refConfLevel: ConformanceLevel): c.Expr[AltMappings] = {
+  private def checkMorphKernelAssignmentUsingTypeArgs[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[M1]], checkDepsInSrcModel: Boolean, refConfLevel: ConformanceLevel): c.Expr[AltMappings] = {
     import c.universe._
 
     val srcTpe = implicitly[WeakTypeTag[M1]].tpe.dealias
@@ -844,7 +844,7 @@ object Morpheus {
     }
 
     try {
-      checkCompositeInstanceAssignment(c)(srcTpe, tgtTpe, checkDepsInSrcModel, srcConfLev, refConfLevel, containsHiddenFragments)
+      checkMorphKernelAssignment(c)(srcTpe, tgtTpe, checkDepsInSrcModel, srcConfLev, refConfLevel, containsHiddenFragments)
     }
     catch {
       case dchk: DependencyCheckException =>
@@ -864,7 +864,7 @@ object Morpheus {
    *                                In such a case the placeholder is rejected unless it is a simple replacement or a wrapper.
    * @return the AltMappings AST or the list of unsatisfied target alternatives
    */
-  private def checkCompositeInstanceAssignment(c: whitebox.Context)(srcTpe: c.Type, tgtTpe: c.Type,
+  private def checkMorphKernelAssignment(c: whitebox.Context)(srcTpe: c.Type, tgtTpe: c.Type,
                                                                     checkDepsInSrcModel: Boolean, srcConfLev: ConformanceLevel,
                                                                     tgtConfLev: ConformanceLevel, containsHiddenFragments: Boolean): c.Expr[AltMappings] = {
     import c.universe._
@@ -1348,7 +1348,7 @@ object Morpheus {
             plhTpe.typeSymbol.asClass.selfType match {
               case RefinedType(parents, scope) =>
                 val depsTpe = internal.refinedType(parents.tail, scope)
-                checkCompositeInstanceAssignment(c)(mergedTpe, depsTpe, false, tgtConfLev, plhConfLevelMode, false)
+                checkMorphKernelAssignment(c)(mergedTpe, depsTpe, false, tgtConfLev, plhConfLevelMode, false)
               case _ => // no placeholder's dependencies
             }
           }
@@ -1390,7 +1390,7 @@ object Morpheus {
   }
 
   private def alternativesIterator(c: whitebox.Context)(compositeModelTpe: c.Type, checkDeps: Boolean, excludePlaceholders: Boolean, conformanceLevel: ConformanceLevel):
-  (CompositeModelNode, Map[Int, (c.Type, Option[c.universe.Type])], ResettableIterator[(List[FragmentNode], List[c.Type], c.Type)]) = {
+  (MorphModelNode, Map[Int, (c.Type, Option[c.universe.Type])], ResettableIterator[(List[FragmentNode], List[c.Type], c.Type)]) = {
 
     val (_, modelRoot, _, _, _, fragmentTypesMap) = buildModel(c)(compositeModelTpe, None, conformanceLevel)
     val altIter = alternativesIterator_(c)(modelRoot, fragmentTypesMap, excludePlaceholders)
@@ -1404,7 +1404,7 @@ object Morpheus {
   }
 
 
-  private def alternativesIterator_(c: whitebox.Context)(modelRoot: CompositeModelNode,
+  private def alternativesIterator_(c: whitebox.Context)(modelRoot: MorphModelNode,
                                                          fragmentTypesMap: Map[Int, (c.Type, Option[c.universe.Type])], excludePlaceholders: Boolean):
   ResettableIterator[(List[FragmentNode], List[c.Type], c.Type)] = {
 
@@ -1429,7 +1429,7 @@ object Morpheus {
 
   }
 
-  //def mirror_impl[S: c.WeakTypeTag](c: whitebox.Context)(self: c.Expr[Any]): c.Expr[Option[S with CompositeMirror[\?[S], Any]]] = {
+  //def mirror_impl[S: c.WeakTypeTag](c: whitebox.Context)(self: c.Expr[Any]): c.Expr[Option[S with MorpherMirror[\?[S], Any]]] = {
   def mirror_impl[S: c.WeakTypeTag](c: whitebox.Context)(self: c.Expr[Any]): c.Expr[Any] = {
     import c.universe._
 
@@ -1444,7 +1444,7 @@ object Morpheus {
 
     val conformanceLevelMarker = implicitly[WeakTypeTag[ConformanceLevelMarker]]
 
-    val mirrorTpe = tq"$tp with CompositeMirror[or[$tp, Unit], Any] with $conformanceLevelMarker"
+    val mirrorTpe = tq"$tp with MorpherMirror[or[$tp, Unit], Any] with $conformanceLevelMarker"
 
     val res =
       q"""
@@ -1452,7 +1452,7 @@ object Morpheus {
             import org.morpheus._
             import org.morpheus.Morpheus._
             $self match {
-              case mirror: org.morpheus.CompositeMirror[_, _] =>
+              case mirror: org.morpheus.MorpherMirror[_, _] =>
                 Some(mirror.asInstanceOf[$mirrorTpe]).asInstanceOf[Option[$mirrorTpe]]
               case _ => None
             }
@@ -1461,7 +1461,7 @@ object Morpheus {
 
     //val res = q"if (true) None else Some(null.asInstanceOf[$fragmentTpe])"
 
-    //c.Expr[Option[S with CompositeMirror[\?[S], Any]]](res)
+    //c.Expr[Option[S with MorpherMirror[\?[S], Any]]](res)
     c.Expr(res)
 
   }
@@ -1483,8 +1483,8 @@ object Morpheus {
 
     val fragmentTpe = implicitly[WeakTypeTag[F]].tpe
 
-    val immutableMirrorTpe = implicitly[TypeTag[CompositeMirror[_, _]]].tpe
-    val mutableMirrorTpe = implicitly[TypeTag[MutableCompositeMirror[_, _]]].tpe
+    val immutableMirrorTpe = implicitly[TypeTag[MorpherMirror[_, _]]].tpe
+    val mutableMirrorTpe = implicitly[TypeTag[MutableMorpherMirror[_, _]]].tpe
 
     if (!(proxy.actualType <:< immutableMirrorTpe)) {
       c.abort(c.enclosingPosition, s"Illegal argument type ${proxy.actualType} (${showRaw(proxy.tree)}}). Expected instance of $immutableMirrorTpe")
@@ -1546,7 +1546,7 @@ object Morpheus {
 
     // todo: check if the self is a fragment
 
-    //val mutableMirrorTpe = implicitly[TypeTag[MutableCompositeMirror[_, _]]].tpe
+    //val mutableMirrorTpe = implicitly[TypeTag[MutableMorpherMirror[_, _]]].tpe
 
     // Use the type of 'this' as the composite type. It allows checking whether the F argument is valid since
     // F can refer only to the fragment type itself or its dependencies.
@@ -1564,7 +1564,7 @@ object Morpheus {
       q"""
           {
             val morphOpt = $self match {
-              case mirror: org.morpheus.CompositeMirror[_, _] =>
+              case mirror: org.morpheus.MorpherMirror[_, _] =>
                 mirror.owningMutableProxy match {
                   case None => Some($self)
                   case Some(proxy) => Some(proxy.delegate)
@@ -1793,7 +1793,7 @@ object Morpheus {
         val optDepsTpe = c.typecheck(tq"org.morpheus.Morpheus.or[Unit, $depsTpe]", mode = c.TYPEmode).tpe
 
         val refConfLevel: ConformanceLevel = getConfLevelFromAnnotation(c)(fragTpe)
-        val depsMaps = checkCompositeInstanceAssignment(c)(compTpe, optDepsTpe, checkDepsInSrcModel = false, conformanceLevel,
+        val depsMaps = checkMorphKernelAssignment(c)(compTpe, optDepsTpe, checkDepsInSrcModel = false, conformanceLevel,
           refConfLevel, containsHiddenFragments = false /* irrelevant, no placeholders in the self-type */)
 
         fragToDepsMaps += (fragNode.id -> depsMaps)
@@ -1822,7 +1822,7 @@ object Morpheus {
 //        val depsTpe = fragTpe.typeSymbol.asClass.selfType
 //
 //        val refConfLevel: ConformanceLevel = getConfLevelFromAnnotation(c)(fragTpe)
-//        checkCompositeInstanceAssignment(c)(altModelTpe, depsTpe, checkDepsInSrcModel = false, conformanceLevel,
+//        checkMorphKernelAssignment(c)(altModelTpe, depsTpe, checkDepsInSrcModel = false, conformanceLevel,
 //          refConfLevel, containsHiddenFragments = false /* irrelevant, no placeholders in the self-type */)
 //
 //      } catch {
@@ -1842,7 +1842,7 @@ object Morpheus {
 //        getDependencyType(c)(fragTpe, excludeHead = true) match {
 //          case Some(depsTpe) =>
 //            val refConfLevel: ConformanceLevel = getConfLevelFromAnnotation(c)(fragTpe)
-//            Some(checkCompositeInstanceAssignment(c)(compModelTp, depsTpe, checkDepsInSrcModel = false, conformanceLevel,
+//            Some(checkMorphKernelAssignment(c)(compModelTp, depsTpe, checkDepsInSrcModel = false, conformanceLevel,
 //              refConfLevel, containsHiddenFragments = false /* irrelevant, no placeholders in the self-type */))
 //          case None => None
 //        }
@@ -1857,7 +1857,7 @@ object Morpheus {
 //  }
 
   def buildModel(c: whitebox.Context)(compRawTp: c.Type, placeholderTpeTransf: Option[PartialFunction[c.Type, c.Type]], conformanceLevel: ConformanceLevel):
-  (c.Type, CompositeModelNode, List[FragmentNode], c.Type, List[c.Type], Map[Int, (c.Type, Option[c.universe.Type])]) = {
+  (c.Type, MorphModelNode, List[FragmentNode], c.Type, List[c.Type], Map[Int, (c.Type, Option[c.universe.Type])]) = {
 
     import c.universe._
 
@@ -1921,13 +1921,13 @@ object Morpheus {
       }
     }
 
-    def verifyModel(node: CompositeModelNode): (CompositeModelNode, Type, List[Type]) = {
+    def verifyModel(node: MorphModelNode): (MorphModelNode, Type, List[Type]) = {
       val (lubTpe, lubTpeComponents) = determineLUB(node)
       //c.echo(c.enclosingPosition, s"LUB: $lubTpe")
 
-      def checkFragments(node: CompositeModelNode, checkedFragments: List[FragmentNode]): List[FragmentNode] = {
+      def checkFragments(node: MorphModelNode, checkedFragments: List[FragmentNode]): List[FragmentNode] = {
 
-        def checkChildren(children: List[CompositeModelNode]) = {
+        def checkChildren(children: List[MorphModelNode]) = {
           var checked = checkedFragments
           for (ch <- children)
             checked = checkFragments(ch, checked)
@@ -1963,7 +1963,7 @@ object Morpheus {
       FragmentNode(fragId, isPlaceholder)
     }
 
-    def traverseCompTp(tp: Type): CompositeModelNode = tp.dealias match {
+    def traverseCompTp(tp: Type): MorphModelNode = tp.dealias match {
       case RefinedType(parents, _) =>
         val fragNodes = for (p <- parents) yield traverseCompTp(p)
         ConjNode(fragNodes)
@@ -2012,9 +2012,9 @@ object Morpheus {
       fragmentTypes(fn.id)._1
     }
 
-    def determineLUB(node: CompositeModelNode): (Type, List[Type]) = {
+    def determineLUB(node: MorphModelNode): (Type, List[Type]) = {
 
-      def determineLUB_(node: CompositeModelNode): (c.Type, List[c.Type]) = node match {
+      def determineLUB_(node: MorphModelNode): (c.Type, List[c.Type]) = node match {
         case ConjNode(children) =>
           conjunctionLUB(c)(children.map(c => determineLUB_(c)._1))
         case DisjNode(children) =>
@@ -2040,7 +2040,7 @@ object Morpheus {
       }
     }
 
-    def collectFragmentNodes(node: CompositeModelNode): List[FragmentNode] = node match {
+    def collectFragmentNodes(node: MorphModelNode): List[FragmentNode] = node match {
       case ConjNode(children) =>
         children.flatMap(ch => collectFragmentNodes(ch))
       case DisjNode(children) =>
@@ -2050,7 +2050,7 @@ object Morpheus {
     }
 
     val flattenedModel = traverseCompTp(compModelTp.asInstanceOf[c.Type]).flatten
-    val (modelRoot, modelLUB, modelLUBComponents): (CompositeModelNode, c.Type, List[c.Type]) =
+    val (modelRoot, modelLUB, modelLUBComponents): (MorphModelNode, c.Type, List[c.Type]) =
       verifyModel(flattenedModel)
 
     val fragmentNodes = collectFragmentNodes(modelRoot).reverse
@@ -2081,17 +2081,17 @@ object Morpheus {
     }
   }
 
-  def parse_impl[M: c.WeakTypeTag](c: whitebox.Context)(checkDeps: c.Expr[Boolean]): c.Expr[CompositeModel[M]] = {
+  def parse_impl[M: c.WeakTypeTag](c: whitebox.Context)(checkDeps: c.Expr[Boolean]): c.Expr[MorphModel[M]] = {
     import c.universe._
 
     val Literal(Constant(check)) = checkDeps.tree
     val compTpe = implicitly[WeakTypeTag[M]].tpe
-    parseCompositeModelFromType(c)(compTpe, check.asInstanceOf[Boolean], removePlaceholders = false, None, Total)._1.asInstanceOf[c.Expr[CompositeModel[M]]]
+    parseMorphModelFromType(c)(compTpe, check.asInstanceOf[Boolean], removePlaceholders = false, None, Total)._1.asInstanceOf[c.Expr[MorphModel[M]]]
   }
 
-  def build_impl[M: c.WeakTypeTag](c: whitebox.Context)(compositeModel: c.Expr[CompositeModel[M]], checkDeps: c.Expr[Boolean],
+  def build_impl[M: c.WeakTypeTag](c: whitebox.Context)(compositeModel: c.Expr[MorphModel[M]], checkDeps: c.Expr[Boolean],
                                                         fragmentProvider: c.Expr[FragmentProvider],
-                                                        defaultStrategy: c.Expr[MorpherStrategy[M]],
+                                                        defaultStrategy: c.Expr[MorphingStrategy[M]],
                                                         conformanceLevel: c.Expr[org.morpheus.Morpheus.ConformanceLevel]): c.Expr[Any] = {
     import c.universe._
 
@@ -2114,7 +2114,7 @@ object Morpheus {
     composeOrGlean_impl[M](c)(FactoryProvider, checkDeps = true, None, None, None, None)
   }
 
-  def composeWithModel_impl[M: c.WeakTypeTag](c: whitebox.Context)(compositeModel: c.Expr[CompositeModel[M]], defaultStrategy: c.Expr[MorpherStrategy[M]]): c.Expr[Any] = {
+  def composeWithModel_impl[M: c.WeakTypeTag](c: whitebox.Context)(compositeModel: c.Expr[MorphModel[M]], defaultStrategy: c.Expr[MorphingStrategy[M]]): c.Expr[Any] = {
     composeOrGlean_impl[M](c)(FactoryProvider, checkDeps = true, Some(compositeModel), Some(defaultStrategy), None, None)
   }
 
@@ -2122,7 +2122,7 @@ object Morpheus {
     composeOrGlean_impl[M](c)(SingletonProvider, checkDeps = true, None, None, None, None)
   }
 
-  def singletonWithModel_impl[M: c.WeakTypeTag](c: whitebox.Context)(compositeModel: c.Expr[CompositeModel[M]], defaultStrategy: c.Expr[MorpherStrategy[M]]): c.Expr[Any] = {
+  def singletonWithModel_impl[M: c.WeakTypeTag](c: whitebox.Context)(compositeModel: c.Expr[MorphModel[M]], defaultStrategy: c.Expr[MorphingStrategy[M]]): c.Expr[Any] = {
     composeOrGlean_impl[M](c)(SingletonProvider, checkDeps = true, Some(compositeModel), Some(defaultStrategy), None, None)
   }
 
@@ -2130,7 +2130,7 @@ object Morpheus {
     composeOrGlean_impl[M](c)(InstanceProvider, checkDeps = true, None, None, None, None)
   }
 
-  def gleanWithModel_impl[M: c.WeakTypeTag](c: whitebox.Context)(compositeModel: c.Expr[CompositeModel[M]], defaultStrategy: c.Expr[MorpherStrategy[M]]): c.Expr[Any] = {
+  def gleanWithModel_impl[M: c.WeakTypeTag](c: whitebox.Context)(compositeModel: c.Expr[MorphModel[M]], defaultStrategy: c.Expr[MorphingStrategy[M]]): c.Expr[Any] = {
     composeOrGlean_impl[M](c)(InstanceProvider, checkDeps = true, Some(compositeModel), Some(defaultStrategy), None, None)
   }
 
@@ -2146,28 +2146,28 @@ object Morpheus {
     composeOrGlean_impl[M](c)(InstanceProvider, checkDeps = false, None, None, None, None)
   }
 
-//  def fork_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(ci1: c.Expr[CompositeProtoInstance[M1]], ci2: c.Expr[CompositeProtoInstance[M2]]): c.Expr[Any] = {
+//  def fork_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(ci1: c.Expr[MorphKernelBase[M1]], ci2: c.Expr[MorphKernelBase[M2]]): c.Expr[Any] = {
 //    import c.universe._
 //
 //    val comp1Tpe = implicitly[WeakTypeTag[M1]].tpe.dealias
 //    val comp2Tpe = implicitly[WeakTypeTag[M2]].tpe.dealias
 //
 //    if (comp1Tpe =:= comp2Tpe) {
-//      createCompositeInstance(c)(comp1Tpe, ForkProvider(ci1, ci2), false, None, None, None, None)
+//      createMorphKernel(c)(comp1Tpe, ForkProvider(ci1, ci2), false, None, None, None, None)
 //    } else {
 //      c.abort(c.enclosingPosition, s"Composite types do not match:\n$comp1Tpe\n!=\n$comp2Tpe")
 //    }
 //
 //  }
 
-  def transformToNoPlaceholders(c: whitebox.Context)(rootNode: CompositeModelNode,
+  def transformToNoPlaceholders(c: whitebox.Context)(rootNode: MorphModelNode,
                                                      fragmentTypesMap: Map[Int, (c.Type, Option[c.Type])],
                                                      placeholderTpeTransf: Option[PartialFunction[c.Type, c.Type]]): c.Tree = {
     import c.universe._
 
     val unitTpe = implicitly[WeakTypeTag[Unit]].tpe
 
-    def transformNode(node: CompositeModelNode): Tree = {
+    def transformNode(node: MorphModelNode): Tree = {
       node match {
         case ConjNode(children) =>
           val headTpe = transformNode(children.head)
@@ -2202,9 +2202,9 @@ object Morpheus {
   }
 
 
-  def parseCompositeModelFromType(c: whitebox.Context)(compTpe: c.Type, checkDeps: Boolean, removePlaceholders: Boolean,
+  def parseMorphModelFromType(c: whitebox.Context)(compTpe: c.Type, checkDeps: Boolean, removePlaceholders: Boolean,
                                                        placeholderTpeTransf: Option[PartialFunction[c.Type, c.Type]],
-                                                       conformanceLevel: ConformanceLevel): (c.Expr[CompositeModel[_]], c.Type) = {
+                                                       conformanceLevel: ConformanceLevel): (c.Expr[MorphModel[_]], c.Type) = {
     import c.universe._
 
     val (compModelTpe, modelRoot, fragmentNodes, lub, lubComponentTypes, fragmentTypesMap) = buildModel(c)(compTpe, placeholderTpeTransf, conformanceLevel)
@@ -2215,7 +2215,7 @@ object Morpheus {
       Map.empty
     }
 
-    def convertModelToTree(node: CompositeModelNode): Tree = node match {
+    def convertModelToTree(node: MorphModelNode): Tree = node match {
       case ConjNode(children) =>
         val childrenTrees: List[Tree] = for (c <- children) yield convertModelToTree(c)
         q"""
@@ -2265,9 +2265,9 @@ object Morpheus {
     val (appliedCompModelTpe, actualModelTpe) = if (removePlaceholders) {
       val transformedModel = transformToNoPlaceholders(c)(modelRoot, fragmentTypesMap.map(e => (e._1, (e._2._1, e._2._2))), placeholderTpeTransf)
       val transformedModelTpe = c.typecheck(transformedModel, mode = c.TYPEmode).tpe
-      (tq"org.morpheus.CompositeModel[$transformedModel]", transformedModelTpe)
+      (tq"org.morpheus.MorphModel[$transformedModel]", transformedModelTpe)
     } else
-      (tq"org.morpheus.CompositeModel[$compTpe]", compTpe)
+      (tq"org.morpheus.MorphModel[$compTpe]", compTpe)
 
     //val appliedCompModelTpe = c.typecheck(appliedCompModelTpeNoCheck, mode = c.TYPEmode)
 
@@ -2296,24 +2296,24 @@ object Morpheus {
       """
 
     //c.info(c.enclosingPosition, s"Composite model: ${show(compositeModelTree)}", true)
-    (c.Expr[CompositeModel[_]](compositeModelTree), actualModelTpe)
+    (c.Expr[MorphModel[_]](compositeModelTree), actualModelTpe)
   }
 
   def composeOrGlean_impl[M: c.WeakTypeTag](c: whitebox.Context)(fragmentProvider: FragmentProvider, checkDeps: Boolean,
-                                                                 compositeModelExprOpt: Option[c.Expr[CompositeModel[M]]],
-                                                                 defaultStrategyOpt: Option[c.Expr[MorpherStrategy[_]]],
+                                                                 compositeModelExprOpt: Option[c.Expr[MorphModel[M]]],
+                                                                 defaultStrategyOpt: Option[c.Expr[MorphingStrategy[_]]],
                                                                  placeholderTpeTransf: Option[PartialFunction[c.Type, c.Type]],
                                                                  conformanceLevel: Option[c.Expr[org.morpheus.Morpheus.ConformanceLevel]]): c.Expr[Any] = {
     import c.universe._
 
     val compTpe = implicitly[WeakTypeTag[M]].tpe
-    createCompositeInstance(c)(compTpe, fragmentProvider, checkDeps, compositeModelExprOpt, defaultStrategyOpt, placeholderTpeTransf, conformanceLevel)
+    createMorphKernel(c)(compTpe, fragmentProvider, checkDeps, compositeModelExprOpt, defaultStrategyOpt, placeholderTpeTransf, conformanceLevel)
   }
 
 
-  def createCompositeInstance(c: whitebox.Context)(compTpe: c.Type, fragmentProvider: FragmentProvider, checkDeps: Boolean,
-                                                   compositeModelExprOpt: Option[c.Expr[CompositeModel[_]]],
-                                                   defaultStrategyOpt: Option[c.Expr[MorpherStrategy[_]]],
+  def createMorphKernel(c: whitebox.Context)(compTpe: c.Type, fragmentProvider: FragmentProvider, checkDeps: Boolean,
+                                                   compositeModelExprOpt: Option[c.Expr[MorphModel[_]]],
+                                                   defaultStrategyOpt: Option[c.Expr[MorphingStrategy[_]]],
                                                    placeholderTpeTransf: Option[PartialFunction[c.Type, c.Type]],
                                                    conformanceLevelExpr: Option[c.Expr[org.morpheus.Morpheus.ConformanceLevel]]): c.Expr[Any] = {
     import c.universe._
@@ -2359,7 +2359,7 @@ object Morpheus {
       case Some(modelExpr) =>
         (modelExpr, compTpe)
       case None =>
-        parseCompositeModelFromType(c)(compTpe, checkDeps, removePlaceholders = true, placeholderTpeTransf, conformanceLevel)
+        parseMorphModelFromType(c)(compTpe, checkDeps, removePlaceholders = true, placeholderTpeTransf, conformanceLevel)
     }
     val compModelTree = compModelExpr.tree
 
@@ -2379,30 +2379,30 @@ object Morpheus {
       case InstanceProvider =>
         (q"org.morpheus.InstanceProviderImplicits", defaultRootNode, defaultFragmentList, defaultDefaultStrategy, defaultAltComposer, noHiddenFragmentsMarker, defaultParentInstance)
       case CopyProvider(src, placeholderFacts, _, _, delegation) if !delegation =>
-        val srcTree = src.asInstanceOf[c.Expr[CompositeInstanceRef[_, _]]].tree
+        val srcTree = src.asInstanceOf[c.Expr[MorphKernelRef[_, _]]].tree
         val placeholderFactMapTree = placeholderFacts.asInstanceOf[Tree]
         (q"new org.morpheus.CopyProviderImplicits($srcTree.instance, $placeholderFactMapTree, $defaultRootNode)",
           defaultRootNode, defaultFragmentList,
-          q"org.morpheus.BridgeStrategy($srcTree.asInstanceOf[org.morpheus.CompositeInstanceRef[compositeModel.Model, _]])",
-          q"org.morpheus.BridgeAlternativeComposer($srcTree.asInstanceOf[org.morpheus.CompositeInstanceRef[compositeModel.Model, _]])",
+          q"org.morpheus.BridgeStrategy($srcTree.asInstanceOf[org.morpheus.MorphKernelRef[compositeModel.Model, _]])",
+          q"org.morpheus.BridgeAlternativeComposer($srcTree.asInstanceOf[org.morpheus.MorphKernelRef[compositeModel.Model, _]])",
           mayContainHiddenFragmentsMarker, q"Some($srcTree.instance)")
       case CopyProvider(src, _, _, _, delegation) if delegation =>
-        val srcTree = src.asInstanceOf[c.Expr[CompositeProtoInstance[_]]].tree
+        val srcTree = src.asInstanceOf[c.Expr[MorphKernelBase[_]]].tree
         (q"new org.morpheus.CopyProviderImplicits($srcTree, Map.empty, $defaultRootNode)",
           defaultRootNode, defaultFragmentList, defaultDefaultStrategy, defaultAltComposer, noHiddenFragmentsMarker, q"Some($srcTree)")
 //      case ForkProvider(src1, src2) =>
-//        val src1Tree = src1.asInstanceOf[c.Expr[CompositeProtoInstance[_]]].tree
-//        val src2Tree = src2.asInstanceOf[c.Expr[CompositeProtoInstance[_]]].tree
+//        val src1Tree = src1.asInstanceOf[c.Expr[MorphKernelBase[_]]].tree
+//        val src2Tree = src2.asInstanceOf[c.Expr[MorphKernelBase[_]]].tree
 //        (q"new org.morpheus.ForkProviderImplicits()", defaultRootNode, defaultFragmentList,
 //          defaultDefaultStrategy,
-//          q"org.morpheus.ForkAlternativeComposer($src1Tree.asInstanceOf[org.morpheus.CompositeProtoInstance[compositeModel.Model]], $src2Tree.asInstanceOf[org.morpheus.CompositeProtoInstance[compositeModel.Model]])",
-//          mayContainHiddenFragmentsMarker, q"Some(new org.morpheus.ForkCompositeProtoInstance($src1Tree, $src2Tree))")
+//          q"org.morpheus.ForkAlternativeComposer($src1Tree.asInstanceOf[org.morpheus.MorphKernelBase[compositeModel.Model]], $src2Tree.asInstanceOf[org.morpheus.MorphKernelBase[compositeModel.Model]])",
+//          mayContainHiddenFragmentsMarker, q"Some(new org.morpheus.ForkMorphKernelBase($src1Tree, $src2Tree))")
     }
 
     val defaultStrategy = defaultStrategyOpt match {
       case None => strategy
       case Some(defStrat) =>
-        val requiredStrategyTpe = c.typecheck(tq"org.morpheus.MorpherStrategy[$actualModelTpe]", mode = c.TYPEmode).tpe
+        val requiredStrategyTpe = c.typecheck(tq"org.morpheus.MorphingStrategy[$actualModelTpe]", mode = c.TYPEmode).tpe
         if (!(defStrat.actualType <:< requiredStrategyTpe)) {
           c.abort(c.enclosingPosition, s"Default strategy type\n${defStrat.actualType}\n does not conform the required type\n$requiredStrategyTpe")
         }
@@ -2417,7 +2417,7 @@ object Morpheus {
     val compositeInstanceTree = q"""
         {
             val compositeModel = $compModelTree
-            new org.morpheus.CompositeInstance[compositeModel.Model]($rootNode) with $hiddenFragmentsMarker with $conformanceLevelMarker {
+            new org.morpheus.MorphKernel[compositeModel.Model]($rootNode) with $hiddenFragmentsMarker with $conformanceLevelMarker {
               import org.morpheus._
               import shapeless.{record, syntax, HList, Poly1, HNil}
               import record._

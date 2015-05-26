@@ -4,7 +4,7 @@ package org.morpheus
  *
  * Created by zslajchrt on 19/05/15.
  */
-class Alternatives[M] private (rootNode: CompositeModelNode, ratedAlts: Map[List[FragmentNode], Double]) {
+class Alternatives[M] private (rootNode: MorphModelNode, ratedAlts: Map[List[FragmentNode], Double]) {
 
   private [morpheus] def filter(f: (List[FragmentNode], Double) => Boolean): Alternatives[M] = {
     val newRatedAlts = ratedAlts.filter(e => f(e._1, e._2))
@@ -28,7 +28,7 @@ class Alternatives[M] private (rootNode: CompositeModelNode, ratedAlts: Map[List
 
   def promote(promotedAlts: Set[List[Int]]): Alternatives[M] = {
 
-    def reorderModel(altNode: AltNode[FragmentNode]): CompositeModelNode = altNode match {
+    def reorderModel(altNode: AltNode[FragmentNode]): MorphModelNode = altNode match {
       case ch@ChoiceAltNode(children) =>
         val (_, _, currentChild) = ch.findSubCounter(ch.counter.value)
         val reorderedChildren = Alternatives.moveChildToHead(children.map(reorderModel), children.indexOf(currentChild))
@@ -46,7 +46,7 @@ class Alternatives[M] private (rootNode: CompositeModelNode, ratedAlts: Map[List
       val alt: List[Int] = altIter.current().map(_.id)
       if (promotedAlts.contains(alt)) {
         // The alt found. Reorder the model so that the iterator produces this alt as the first one.
-        val newModelRoot: CompositeModelNode = reorderModel(altIter.rootAltNode)
+        val newModelRoot: MorphModelNode = reorderModel(altIter.rootAltNode)
         newAlternatives = Some(new Alternatives[M](newModelRoot, ratedAlts))
       } else {
         altIter.next()
@@ -70,13 +70,13 @@ class Alternatives[M] private (rootNode: CompositeModelNode, ratedAlts: Map[List
 
 object Alternatives {
 
-  private [morpheus] def apply[M](root: CompositeModelNode): Alternatives[M] = {
+  private [morpheus] def apply[M](root: MorphModelNode): Alternatives[M] = {
     val altIter = new IdentAltIterator(root.toAltNode)
     val defaultRatedAlts: Map[List[FragmentNode], Double] = altIter.toList.map(alt => (alt, 0d)).toMap
     new Alternatives[M](root, defaultRatedAlts)
   }
 
-  def moveChildToHead(children: List[CompositeModelNode], index: Int): List[CompositeModelNode] = {
+  def moveChildToHead(children: List[MorphModelNode], index: Int): List[MorphModelNode] = {
     val splitChildren = children.splitAt(index)
     splitChildren._2.head :: (splitChildren._1 ::: splitChildren._2.tail)
   }

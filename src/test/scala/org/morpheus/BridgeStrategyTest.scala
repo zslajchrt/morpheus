@@ -24,12 +24,12 @@ class BridgeStrategyTest {
     // TODO
 
 //    // B or D
-//    val mainModel = new CompositeProtoModel[Any](mainRoot) {
+//    val mainModel = new MorphModelBase[Any](mainRoot) {
 //      override val fragmentDescriptorsList: List[Frag[_, _]] = List(Frag.create[A, Unit](0), Frag.create[B, Unit](1), Frag.create[C, Unit](2), Frag.create[D, Unit](3))
 //      override val lubComponents: Array[Class[_]] = Array.empty
 //    }
 //
-//    val subModel = new CompositeProtoModel[Any](subRoot) {
+//    val subModel = new MorphModelBase[Any](subRoot) {
 //      override val fragmentDescriptorsList: List[Frag[_, _]] = List(Frag.create[B, Unit](0), Frag.create[D, Unit](1))
 //      override val lubComponents: Array[Class[_]] = Array.empty
 //    }

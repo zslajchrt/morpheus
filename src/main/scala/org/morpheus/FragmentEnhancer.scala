@@ -95,12 +95,12 @@ object FragmentEnhancer {
 
         //if (!isConstructor && isCallTo$class(insnNode)) {
         if (isCallTo$class(insnNode)) {
-          // Insert the call to the method org.morpheus.CompositeUtils.context(this) which return the composite context before the current instruction.
+          // Insert the call to the method org.morpheus.MorphUtils.context(this) which return the composite context before the current instruction.
           // Note: The retrieved context implements all composite interfaces.
 
           // Find the preceding ALOAD 0
           val aload0 = findPrecedingALOAD0(insnNode)
-          val contextRetr = new MethodInsnNode(Opcodes.INVOKESTATIC, "org/morpheus/CompositeUtils", "context", "(Ljava/lang/Object;)Ljava/lang/Object;")
+          val contextRetr = new MethodInsnNode(Opcodes.INVOKESTATIC, "org/morpheus/MorphUtils", "context", "(Ljava/lang/Object;)Ljava/lang/Object;")
           val cast = new TypeInsnNode(Opcodes.CHECKCAST, fragmentTraitName)
 
           methodNode.instructions.insert(aload0, contextRetr)
@@ -110,9 +110,9 @@ object FragmentEnhancer {
         //        if (insnNode.getOpcode == Opcodes.CHECKCAST) {
         //          val tcInsn: TypeInsnNode = insnNode.asInstanceOf[TypeInsnNode]
         //          if (entityClassName == tcInsn.desc) {
-        //            // insert a call to the method org.cloudio.morpheus.CompositeUtils.context(this) which return the composite context.
+        //            // insert a call to the method org.cloudio.morpheus.MorphUtils.context(this) which return the composite context.
         //            // This context implements the current entity interface.
-        //            methodNode.instructions.insertBefore(tcInsn, new MethodInsnNode(Opcodes.INVOKESTATIC, "org/cloudio/morpheus/codegen/CompositeUtils", "context", "(Ljava/lang/Object;)Ljava/lang/Object;"))
+        //            methodNode.instructions.insertBefore(tcInsn, new MethodInsnNode(Opcodes.INVOKESTATIC, "org/cloudio/morpheus/codegen/MorphUtils", "context", "(Ljava/lang/Object;)Ljava/lang/Object;"))
         //          }
         //        }
 
@@ -135,7 +135,7 @@ object FragmentEnhancer {
           }
 
           // this instruction retrieves the context super instance
-          val superRetr: MethodInsnNode = new MethodInsnNode(Opcodes.INVOKESTATIC, "org/morpheus/CompositeUtils", "$super$", "(Ljava/lang/Object;)Ljava/lang/Object;")
+          val superRetr: MethodInsnNode = new MethodInsnNode(Opcodes.INVOKESTATIC, "org/morpheus/MorphUtils", "$super$", "(Ljava/lang/Object;)Ljava/lang/Object;")
           // we have to cast the contextual super instance (obtained by INVOKESTATIC) to the super class type
           val cast: TypeInsnNode = new TypeInsnNode(Opcodes.CHECKCAST, superInterface)
           methodNode.instructions.insert(aload0, superRetr)

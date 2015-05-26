@@ -10,23 +10,23 @@ import scala.language.experimental.macros
  *
  * Created by zslajchrt on 29/04/15.
  */
-trait MorpherStrategy[M] {
+trait MorphingStrategy[M] {
 
   type Model = M
 
-  def chooseAlternatives(instance: CompositeInstance[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M]
+  def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M]
 
 }
 
 trait AlternativeComposer[M] {
 
-  def convertToHolders(instance: CompositeInstance[M], alternative: List[FragmentNode], rating: Double, altStruct: Option[List[Node]]): List[FragmentHolder[_]]
+  def convertToHolders(instance: MorphKernel[M], alternative: List[FragmentNode], rating: Double, altStruct: Option[List[Node]]): List[FragmentHolder[_]]
 
 }
 
 class DefaultAlternativeComposer[M] extends AlternativeComposer[M] {
 
-  def convertToHolders(instance: CompositeInstance[M], alternative: List[FragmentNode], rating: Double, altStruct: Option[List[Node]]): List[FragmentHolder[_]] = {
+  def convertToHolders(instance: MorphKernel[M], alternative: List[FragmentNode], rating: Double, altStruct: Option[List[Node]]): List[FragmentHolder[_]] = {
     altStruct match {
       case None =>
         alternative.map(fn => instance.fragmentHolder(fn).get)
@@ -36,19 +36,19 @@ class DefaultAlternativeComposer[M] extends AlternativeComposer[M] {
 
 }
 
-case class FixedStrategy[M](alternatives: Alternatives[M]) extends MorpherStrategy[M] {
+case class FixedStrategy[M](alternatives: Alternatives[M]) extends MorphingStrategy[M] {
 
-  override def chooseAlternatives(instance: CompositeInstance[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = alternatives
+  override def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = alternatives
 
 }
 
-case class LastRatingStrategy[M](mirrorOpt: Option[CompositeMirror[M, _]]) extends MorpherStrategy[M] {
+case class LastRatingStrategy[M](mirrorOpt: Option[MorpherMirror[M, _]]) extends MorphingStrategy[M] {
 
   def this() = this(None)
 
-  def this(mirror: CompositeMirror[M, _]) = this(Some(mirror))
+  def this(mirror: MorpherMirror[M, _]) = this(Some(mirror))
 
-  override def chooseAlternatives(instance: CompositeInstance[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = mirrorOpt match {
+  override def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = mirrorOpt match {
     case Some(mirror) => mirror.alternatives
     case None => owningMutableProxy match {
       case None => instance.model.alternatives
@@ -62,9 +62,9 @@ case class LastRatingStrategy[M](mirrorOpt: Option[CompositeMirror[M, _]]) exten
 
 }
 
-case class Normalizer[M](delegate: MorpherStrategy[M], minRating: Double = 0, maxRating: Double = 1) extends MorpherStrategy[M] {
+case class Normalizer[M](delegate: MorphingStrategy[M], minRating: Double = 0, maxRating: Double = 1) extends MorphingStrategy[M] {
 
-  override def chooseAlternatives(instance: CompositeInstance[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = {
+  override def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = {
 
     var minFound: Option[Double] = None
     var maxFound: Option[Double] = None
@@ -101,17 +101,17 @@ case class Normalizer[M](delegate: MorpherStrategy[M], minRating: Double = 0, ma
 
 }
 
-case class RootStrategy[M]() extends MorpherStrategy[M] {
-  override def chooseAlternatives(instance: CompositeInstance[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = instance.model.alternatives
+case class RootStrategy[M]() extends MorphingStrategy[M] {
+  override def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = instance.model.alternatives
 }
 
 object RootStrategy {
-  def apply[M](model: CompositeModel[M]) = new RootStrategy[M]()
+  def apply[M](model: MorphModel[M]) = new RootStrategy[M]()
 }
 
-case class RatingStrategy[M](delegate: MorpherStrategy[M], ratingOperators: ((List[FragmentHolder[_]], Double) => Double)*) extends MorpherStrategy[M] {
+case class RatingStrategy[M](delegate: MorphingStrategy[M], ratingOperators: ((List[FragmentHolder[_]], Double) => Double)*) extends MorphingStrategy[M] {
 
-  def chooseAlternatives(instance: CompositeInstance[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = {
+  def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = {
 
     def calculateRating(alt: List[FragmentHolder[_]], origRating: Double): Double = {
       ratingOperators.foldRight(origRating)((ratOper, res) => ratOper(alt, res))
@@ -130,14 +130,14 @@ case class RatingStrategy[M](delegate: MorpherStrategy[M], ratingOperators: ((Li
 
 }
 
-case class AltMapRatingStrategy[M, S](delegate: MorpherStrategy[M], switchModel: CompositeModel[S], altMap: AltMappings, switchFn: () => Set[(Int, Int)], negative: Boolean) extends MorpherStrategy[M] {
+case class AltMapRatingStrategy[M, S](delegate: MorphingStrategy[M], switchModel: MorphModel[S], altMap: AltMappings, switchFn: () => Set[(Int, Int)], negative: Boolean) extends MorphingStrategy[M] {
 
   val switchAlts: List[List[Int]] = switchModel.altIterator().toList.map(_.map(_.id))
   val altMapReduced = altMap.preserveDynamics()
 
   val altsCount = altMap.newAltToOrigAlt.size
 
-  def chooseAlternatives(instance: CompositeInstance[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = {
+  def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = {
     val origAlts = delegate.chooseAlternatives(instance)(owningMutableProxy)
 
     val altRatings: Set[(Int, Int)] = switchFn()
@@ -166,14 +166,14 @@ case class AltMapRatingStrategy[M, S](delegate: MorpherStrategy[M], switchModel:
   }
 }
 
-case class PromotingStrategy[M, S](delegate: MorpherStrategy[M], switchModel: CompositeModel[S], altMap: AltMappings, switchFn: () => Option[Int]) extends MorpherStrategy[M] {
+case class PromotingStrategy[M, S](delegate: MorphingStrategy[M], switchModel: MorphModel[S], altMap: AltMappings, switchFn: () => Option[Int]) extends MorphingStrategy[M] {
 
   val switchAlts: List[List[Int]] = switchModel.altIterator().toList.map(_.map(_.id))
   val altMapReduced = altMap.preserveDynamics()
 
   val altsCount = altMap.newAltToOrigAlt.size
 
-  def chooseAlternatives(instance: CompositeInstance[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = {
+  def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = {
 
     val origAlts = delegate.chooseAlternatives(instance)(owningMutableProxy)
 
@@ -196,15 +196,15 @@ case class PromotingStrategy[M, S](delegate: MorpherStrategy[M], switchModel: Co
  * the type `M`.
  * @tparam M
  */
-case class DefaultCompositeStrategy[M](model: CompositeModel[M]) extends MorpherStrategy[M] {
+case class DefaultCompositeStrategy[M](model: MorphModel[M]) extends MorphingStrategy[M] {
 
   val alternatives = model.alternatives
 
-  def chooseAlternatives(instance: CompositeInstance[M])(owningMutableProxy: Option[instance.MutableLUB]) = alternatives
+  def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]) = alternatives
 
 }
 
-case class BridgeStrategy[MT, MS](srcInstanceRef: CompositeInstanceRef[MT, MS]) extends MorpherStrategy[MT] {
+case class BridgeStrategy[MT, MS](srcInstanceRef: MorphKernelRef[MT, MS]) extends MorphingStrategy[MT] {
 
   outer =>
 
@@ -213,7 +213,7 @@ case class BridgeStrategy[MT, MS](srcInstanceRef: CompositeInstanceRef[MT, MS]) 
     case None => srcInstanceRef.instance.defaultStrategy
   }
 
-  def chooseAlternatives(instance: CompositeInstance[MT])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[MT] = {
+  def chooseAlternatives(instance: MorphKernel[MT])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[MT] = {
     val suggestedOrigAlternatives: List[(List[Int], Double)] = actualStrategy.chooseAlternatives(srcInstanceRef.instance)(None).toList
       .map(origAlt => (origAlt._1.map(_.id), origAlt._2)) // maps FragmentNode -> Int
 
@@ -260,7 +260,7 @@ case class BridgeStrategy[MT, MS](srcInstanceRef: CompositeInstanceRef[MT, MS]) 
 
 }
 
-case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: CompositeInstanceRef[MT, MS]) extends AlternativeComposer[MT] {
+case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: MorphKernelRef[MT, MS]) extends AlternativeComposer[MT] {
 
   outer =>
 
@@ -281,7 +281,7 @@ case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: CompositeInstanceRe
 
   }
 
-  override def convertToHolders(newModelInstance: CompositeInstance[MT], newAlt: List[FragmentNode], rating: Double, newAltStruct: Option[List[Node]]): List[FragmentHolder[_]] = {
+  override def convertToHolders(newModelInstance: MorphKernel[MT], newAlt: List[FragmentNode], rating: Double, newAltStruct: Option[List[Node]]): List[FragmentHolder[_]] = {
     val altMap: AltMappings = srcInstanceRef.altMappings
 
     val newAltIds: List[Int] = newAlt.map(_.id)
@@ -298,7 +298,7 @@ case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: CompositeInstanceRe
     val chosenAlts = restrictRatedAltsToSpecifiedAlts(origAltForNewAltFrags, suggestedOrigAlternatives, rating)
 
     // find the best alt from the subset of the orig alts
-    MorpherStrategy.fittestAlternative(srcInstanceRef.instance, chosenAlts) match {
+    MorphingStrategy.fittestAlternative(srcInstanceRef.instance, chosenAlts) match {
       case Some(bestOrigAlt) =>
         // find the template for the chosen alternative
         val bestOrigAltIds = bestOrigAlt._1.map(_.id)
@@ -328,10 +328,10 @@ case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: CompositeInstanceRe
 }
 
 
-//case class ForkAlternativeComposer[M](ci1: CompositeProtoInstance[M], ci2: CompositeProtoInstance[M]) extends AlternativeComposer[M] {
-//  override def convertToHolders(instance: CompositeInstance[M], alternative: List[FragmentNode], rating: Double, altStruct: Option[List[Node]]): List[FragmentHolder[_]] = {
+//case class ForkAlternativeComposer[M](ci1: MorphKernelBase[M], ci2: MorphKernelBase[M]) extends AlternativeComposer[M] {
+//  override def convertToHolders(instance: MorphKernel[M], alternative: List[FragmentNode], rating: Double, altStruct: Option[List[Node]]): List[FragmentHolder[_]] = {
 //
-//    def pickWinner(): CompositeProtoInstance[M] = {
+//    def pickWinner(): MorphKernelBase[M] = {
 //      // calculate the distance between the chosen alternative and either source corresponding alternative as
 //      // the rating difference
 //
@@ -354,7 +354,7 @@ case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: CompositeInstanceRe
 //        ci2
 //    }
 //
-//    val winner: CompositeProtoInstance[M] = pickWinner()
+//    val winner: MorphKernelBase[M] = pickWinner()
 //    winner.altComposer.convertToHolders(winner, alternative, rating, altStruct)
 //
 //    //    // the holders contain dummy fragment factories, we need to replace them
@@ -410,32 +410,32 @@ case class FindFragment(targetFragTpe: Type, factor: (Boolean, Double) => Double
 //  }
 //}
 
-trait TraversingMorpherStrategy[M] extends MorpherStrategy[M] {
+trait TraversingMorphingStrategy[M] extends MorphingStrategy[M] {
 
   // coupling with the stategy on the same model
-  def orElse(other: TraversingMorpherStrategy[M]): TraversingMorpherStrategy[M] = {
+  def orElse(other: TraversingMorphingStrategy[M]): TraversingMorphingStrategy[M] = {
     new CoupledStrategy[M](this, other)
   }
 
   // coupling with the stategy on a orthogonal model
-  //  def join[M2](other: TraversingMorpherStrategy[M2]): TraversingMorpherStrategy[M with M2] = {
+  //  def join[M2](other: TraversingMorphingStrategy[M2]): TraversingMorphingStrategy[M with M2] = {
   //    new JoinedStrategy[M, M2](this, other)
   //  }
   //
-  def compareNodes[N <: M](instance: CompositeProtoInstance[N])(x: CompositeModelNode, y: CompositeModelNode): Int
+  def compareNodes[N <: M](instance: MorphKernelBase[N])(x: MorphModelNode, y: MorphModelNode): Int
 
-  def isDefinedFor[N <: M](instance: CompositeProtoInstance[N])(x: CompositeModelNode, y: CompositeModelNode): Boolean
+  def isDefinedFor[N <: M](instance: MorphKernelBase[N])(x: MorphModelNode, y: MorphModelNode): Boolean
 
-  def chooseAlternatives(instance: CompositeInstance[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = {
+  def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = {
 
-    val ord = new Ordering[CompositeModelNode] {
-      override def compare(x: CompositeModelNode, y: CompositeModelNode): Int = {
+    val ord = new Ordering[MorphModelNode] {
+      override def compare(x: MorphModelNode, y: MorphModelNode): Int = {
         val cmp: Int = compareNodes(instance)(x, y)
         cmp
       }
     }
 
-    def traverse(node: CompositeModelNode): List[FragmentNode] = node match {
+    def traverse(node: MorphModelNode): List[FragmentNode] = node match {
       case ConjNode(children) =>
         children.flatMap(ch => traverse(ch))
       case DisjNode(children) =>
@@ -473,12 +473,12 @@ trait TraversingMorpherStrategy[M] extends MorpherStrategy[M] {
 
 }
 
-object MorpherStrategy {
+object MorphingStrategy {
 
-  type GlobalStrategy = (CompositeProtoInstance[_], List[(List[FragmentNode], Double)]) => List[(List[FragmentNode], Double)]
+  type GlobalStrategy = (MorphKernelBase[_], List[(List[FragmentNode], Double)]) => List[(List[FragmentNode], Double)]
 
   object DefaultGlobalStrategy extends GlobalStrategy {
-    override def apply(instance: CompositeProtoInstance[_], altRating: List[(List[FragmentNode], Double)]): List[(List[FragmentNode], Double)] = altRating
+    override def apply(instance: MorphKernelBase[_], altRating: List[(List[FragmentNode], Double)]): List[(List[FragmentNode], Double)] = altRating
   }
 
   private val globalStrategy = new DynamicVariable[GlobalStrategy](DefaultGlobalStrategy)
@@ -486,7 +486,7 @@ object MorpherStrategy {
   def withGlobalStrategy[S](gs: GlobalStrategy)(thunk: => S): S = {
     val prevGS = globalStrategy.value
 
-    def wrappedGS(instance: CompositeProtoInstance[_], altRating: List[(List[FragmentNode], Double)]): List[(List[FragmentNode], Double)] =
+    def wrappedGS(instance: MorphKernelBase[_], altRating: List[(List[FragmentNode], Double)]): List[(List[FragmentNode], Double)] =
       gs(instance, prevGS(instance, altRating))
 
     globalStrategy.withValue(wrappedGS) {
@@ -494,7 +494,7 @@ object MorpherStrategy {
     }
   }
 
-  def compositeStrategy[M]: MorpherStrategy[M] = macro MorpherMacros.compositeStrategy[M]
+  def compositeStrategy[M]: MorphingStrategy[M] = macro MorpherMacros.compositeStrategy[M]
 
   /**
    * It returns the first alternative with the highest rating.
@@ -502,7 +502,7 @@ object MorpherStrategy {
    * @tparam M
    * @return
    */
-  def fittestAlternative[M](instance: CompositeProtoInstance[M], alts: List[(List[FragmentNode], Double)]): Option[(List[FragmentNode], Double)] = {
+  def fittestAlternative[M](instance: MorphKernelBase[M], alts: List[(List[FragmentNode], Double)]): Option[(List[FragmentNode], Double)] = {
 
     val finalAlts = globalStrategy.value.apply(instance, alts)
 
@@ -521,11 +521,11 @@ object MorpherStrategy {
     fittestOpt
   }
 
-  //implicit def implicitStrategy[M]: MorpherStrategy[M] = macro MorpherMacros.implicitStrategy[M]
+  //implicit def implicitStrategy[M]: MorphingStrategy[M] = macro MorpherMacros.implicitStrategy[M]
 }
 
-class CoupledStrategy[M](strat1: TraversingMorpherStrategy[M], strat2: TraversingMorpherStrategy[M]) extends TraversingMorpherStrategy[M] {
-  def compareNodes[N <: M](model: CompositeProtoInstance[N])(x: CompositeModelNode, y: CompositeModelNode): Int = {
+class CoupledStrategy[M](strat1: TraversingMorphingStrategy[M], strat2: TraversingMorphingStrategy[M]) extends TraversingMorphingStrategy[M] {
+  def compareNodes[N <: M](model: MorphKernelBase[N])(x: MorphModelNode, y: MorphModelNode): Int = {
     if (strat1.isDefinedFor(model)(x, y)) {
       strat1.compareNodes(model)(x, y)
     } else if (strat2.isDefinedFor(model)(x, y)) {
@@ -535,15 +535,15 @@ class CoupledStrategy[M](strat1: TraversingMorpherStrategy[M], strat2: Traversin
     }
   }
 
-  def isDefinedFor[N <: M](model: CompositeProtoInstance[N])(x: CompositeModelNode, y: CompositeModelNode): Boolean = {
+  def isDefinedFor[N <: M](model: MorphKernelBase[N])(x: MorphModelNode, y: MorphModelNode): Boolean = {
     strat1.isDefinedFor(model)(x, y) || strat2.isDefinedFor(model)(x, y)
   }
 
 }
 
-//class JoinedStrategy[M1, M2](strat1: TraversingMorpherStrategy[M1], strat2: TraversingMorpherStrategy[M2]) extends TraversingMorpherStrategy[M1 with M2] {
+//class JoinedStrategy[M1, M2](strat1: TraversingMorphingStrategy[M1], strat2: TraversingMorphingStrategy[M2]) extends TraversingMorphingStrategy[M1 with M2] {
 //
-//  override def compareNodes[N <: M1 with M2](model: CompositeInstance[N])(x: CompositeModelNode, y: CompositeModelNode): Int = {
+//  override def compareNodes[N <: M1 with M2](model: MorphKernel[N])(x: MorphModelNode, y: MorphModelNode): Int = {
 //    if (strat1.isDefinedFor(model)(x, y)) {
 //      strat1.compareNodes(model)(x, y)
 //    } else if (strat2.isDefinedFor(model)(x, y)) {
@@ -553,73 +553,73 @@ class CoupledStrategy[M](strat1: TraversingMorpherStrategy[M], strat2: Traversin
 //    }
 //  }
 //
-//  override def isDefinedFor[N <: M1 with M2](model: CompositeInstance[N])(x: CompositeModelNode, y: CompositeModelNode): Boolean = {
+//  override def isDefinedFor[N <: M1 with M2](model: MorphKernel[N])(x: MorphModelNode, y: MorphModelNode): Boolean = {
 //    strat1.isDefinedFor(model)(x, y) || strat2.isDefinedFor(model)(x, y)
 //  }
 //
-//  override def extendBy[M3]: MorpherStrategy[M1 with M2 with M3] = new JoinedStrategy[M1 with M2, M3](this, strat2.extendBy[M3])
+//  override def extendBy[M3]: MorphingStrategy[M1 with M2 with M3] = new JoinedStrategy[M1 with M2, M3](this, strat2.extendBy[M3])
 //}
 
-//class PartialMorpherStrategy[M](chain: PartialFunction[CompositeModel[M], Int]) extends MorpherStrategy[M] {
-////class PartialMorpherStrategy[M](chain: PartialFunction[(CompositeModel[M], CompositeModelNode, CompositeModelNode), Int]) extends MorpherStrategy[M] {
-//  //override protected def compareNodes[N <: M](model: CompositeModel[N])(x: CompositeModelNode, y: CompositeModelNode): Int = chain.apply((model, x, y))
-//  override protected def compareNodes[N <: M](model: CompositeModel[N])(x: CompositeModelNode, y: CompositeModelNode): Int = chain.apply(model)
+//class PartialMorphingStrategy[M](chain: PartialFunction[MorphModel[M], Int]) extends MorphingStrategy[M] {
+////class PartialMorphingStrategy[M](chain: PartialFunction[(MorphModel[M], MorphModelNode, MorphModelNode), Int]) extends MorphingStrategy[M] {
+//  //override protected def compareNodes[N <: M](model: MorphModel[N])(x: MorphModelNode, y: MorphModelNode): Int = chain.apply((model, x, y))
+//  override protected def compareNodes[N <: M](model: MorphModel[N])(x: MorphModelNode, y: MorphModelNode): Int = chain.apply(model)
 //
-//  override protected def isDefinedFor[N <: M](model: CompositeModel[N])(x: CompositeModelNode, y: CompositeModelNode): Boolean = chain.isDefinedAt((model, x, y))
+//  override protected def isDefinedFor[N <: M](model: MorphModel[N])(x: MorphModelNode, y: MorphModelNode): Boolean = chain.isDefinedAt((model, x, y))
 //}
 
-case class LeftAltsMorpherStrategy[M]() extends TraversingMorpherStrategy[M] {
+case class LeftAltsMorphingStrategy[M]() extends TraversingMorphingStrategy[M] {
 
-  override def compareNodes[N <: M](model: CompositeProtoInstance[N])(x: CompositeModelNode, y: CompositeModelNode): Int = 1
+  override def compareNodes[N <: M](model: MorphKernelBase[N])(x: MorphModelNode, y: MorphModelNode): Int = 1
 
-  override def isDefinedFor[N <: M](model: CompositeProtoInstance[N])(x: CompositeModelNode, y: CompositeModelNode): Boolean = true
-
-}
-
-case class RightAltsMorpherStrategy[M]() extends TraversingMorpherStrategy[M] {
-
-  override def compareNodes[N <: M](model: CompositeProtoInstance[N])(x: CompositeModelNode, y: CompositeModelNode): Int = -1
-
-  override def isDefinedFor[N <: M](model: CompositeProtoInstance[N])(x: CompositeModelNode, y: CompositeModelNode): Boolean = true
+  override def isDefinedFor[N <: M](model: MorphKernelBase[N])(x: MorphModelNode, y: MorphModelNode): Boolean = true
 
 }
 
-case class AlternatingMorpherStrategy[M](alts: MorpherStrategy[M]*) extends MorpherStrategy[M] {
+case class RightAltsMorphingStrategy[M]() extends TraversingMorphingStrategy[M] {
+
+  override def compareNodes[N <: M](model: MorphKernelBase[N])(x: MorphModelNode, y: MorphModelNode): Int = -1
+
+  override def isDefinedFor[N <: M](model: MorphKernelBase[N])(x: MorphModelNode, y: MorphModelNode): Boolean = true
+
+}
+
+case class AlternatingMorphingStrategy[M](alts: MorphingStrategy[M]*) extends MorphingStrategy[M] {
 
   require(alts.nonEmpty, "List of alternatives is empty")
 
-  private var current: MorpherStrategy[M] = alts.head
+  private var current: MorphingStrategy[M] = alts.head
 
   def switch(index: Int): Unit = {
     require(index < alts.size, s"Index out of range: $index<${alts.size}")
     current = alts(index)
   }
 
-  def morph_~(comp: CompositeInstance[M]) = new {
-    val proxy = comp.morph_~(AlternatingMorpherStrategy.this)
+  def morph_~(comp: MorphKernel[M]) = new {
+    val proxy = comp.morph_~(AlternatingMorphingStrategy.this)
 
     def switch(index: Int): Unit = {
-      AlternatingMorpherStrategy.this.switch(index)
+      AlternatingMorphingStrategy.this.switch(index)
       proxy.remorph()
     }
   }
 
-  //  override def compareNodes[N <: M](model: CompositeInstance[N])(x: CompositeModelNode, y: CompositeModelNode): Int =
+  //  override def compareNodes[N <: M](model: MorphKernel[N])(x: MorphModelNode, y: MorphModelNode): Int =
   //    current.compareNodes(model)(x, y)
   //
-  //  override def isDefinedFor[N <: M](model: CompositeInstance[N])(x: CompositeModelNode, y: CompositeModelNode): Boolean =
+  //  override def isDefinedFor[N <: M](model: MorphKernel[N])(x: MorphModelNode, y: MorphModelNode): Boolean =
   //    current.isDefinedFor(model)(x, y)
 
-  def chooseAlternatives(instance: CompositeInstance[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = current.chooseAlternatives(instance)(owningMutableProxy)
+  def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = current.chooseAlternatives(instance)(owningMutableProxy)
 
 }
 
-//class NodePotentialStrategy[M, P](potentialFn: (CompositeModel[M], CompositeModelNode) => P)(implicit ord: Ordering[P]) extends MorpherStrategy[M]  {
-//  override def compareNodes[N <: M](model: CompositeModel[N])(x: CompositeModelNode, y: CompositeModelNode): Int = {
+//class NodePotentialStrategy[M, P](potentialFn: (MorphModel[M], MorphModelNode) => P)(implicit ord: Ordering[P]) extends MorphingStrategy[M]  {
+//  override def compareNodes[N <: M](model: MorphModel[N])(x: MorphModelNode, y: MorphModelNode): Int = {
 //    ord.compare(potentialFn(model, x), potentialFn(model, y))
 //  }
 //
-//  override def isDefinedFor[N <: M](model: CompositeModel[N])(x: CompositeModelNode, y: CompositeModelNode): Boolean = true
+//  override def isDefinedFor[N <: M](model: MorphModel[N])(x: MorphModelNode, y: MorphModelNode): Boolean = true
 //}
 
 object FragmentSelector {
@@ -645,23 +645,23 @@ object FragmentSelector {
 
   //  def apply[M](activator: PartialFunction[Frag[_, _], Boolean]): FragmentSelector[M] = {
   //    new FragmentSelector[M](activator) {
-  //      def registerMutator[M2 <: M](mutator: MutableCompositeMirror[M2]): Unit = ()
+  //      def registerMutator[M2 <: M](mutator: MutableMorpherMirror[M2]): Unit = ()
   //    }
   //  }
 }
 
-class FragmentSelector[M](activator: PartialFunction[Frag[_, _], Boolean]) extends TraversingMorpherStrategy[M] {
+class FragmentSelector[M](activator: PartialFunction[Frag[_, _], Boolean]) extends TraversingMorphingStrategy[M] {
 
-  private def isDef[N](model: CompositeProtoInstance[N], n: CompositeModelNode) = n match {
+  private def isDef[N](model: MorphKernelBase[N], n: MorphModelNode) = n match {
     case fn@FragmentNode(_, _) =>
       val fh = model.fragmentHolder(fn).get
       activator.isDefinedAt(fh.fragment)
     case _ => false
   }
 
-  def compareNodes[N <: M](model: CompositeProtoInstance[N])(x: CompositeModelNode, y: CompositeModelNode): Int = {
+  def compareNodes[N <: M](model: MorphKernelBase[N])(x: MorphModelNode, y: MorphModelNode): Int = {
 
-    def cmp(n: CompositeModelNode) = n match {
+    def cmp(n: MorphModelNode) = n match {
       case fn@FragmentNode(_, _) =>
         val fh = model.fragmentHolder(fn).get
         if (activator(fh.fragment)) 1 else -1
@@ -676,7 +676,7 @@ class FragmentSelector[M](activator: PartialFunction[Frag[_, _], Boolean]) exten
       sys.error("Should not be here")
   }
 
-  def isDefinedFor[N <: M](model: CompositeProtoInstance[N])(x: CompositeModelNode, y: CompositeModelNode): Boolean = {
+  def isDefinedFor[N <: M](model: MorphKernelBase[N])(x: MorphModelNode, y: MorphModelNode): Boolean = {
     isDef(model, x) || isDef(model, y)
   }
 

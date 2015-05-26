@@ -10,20 +10,20 @@ import scala.util.DynamicVariable
  * Created by zslajchrt on 14/01/15.
  *
  */
-object CompositeContext {
+object MorphContext {
 
-  val stack = new DynamicVariable[CompositeContext](null)
+  val stack = new DynamicVariable[MorphContext](null)
 
   def context(fragment: AnyRef): AnyRef = stack.value.context(fragment)
 
 }
 
-trait CompositeContext {
+trait MorphContext {
 
   protected def context(fragment: AnyRef): AnyRef
 
   def inContext[R](action: => R): R = {
-    CompositeContext.stack.withValue(this) {
+    MorphContext.stack.withValue(this) {
       action
     }
   }
@@ -36,10 +36,10 @@ trait CompositeContext {
  * @param contextDimensions The context dimensions. The first dimension must be the entity class
  * @param contextFragments Implementations of the context dimensions
  */
-class CompleteCompositeContext[M, LUB, ConformLev <: ConformanceLevelMarker](contextDimensions: Array[List[Class[_]]], contextFragments: Array[_],
-                                       compositeInstance: CompositeInstance[M] with ConformLev, alternative: List[FragmentHolder[_]],
-                                       alts: Alternatives[M], usedStrategy: MorpherStrategy[M],
-                                       owningProxy: Option[LUB with MutableCompositeMirror[M, LUB]]) extends CompositeContext {
+class CompleteMorphContext[M, LUB, ConformLev <: ConformanceLevelMarker](contextDimensions: Array[List[Class[_]]], contextFragments: Array[_],
+                                       compositeInstance: MorphKernel[M] with ConformLev, alternative: List[FragmentHolder[_]],
+                                       alts: Alternatives[M], usedStrategy: MorphingStrategy[M],
+                                       owningProxy: Option[LUB with MutableMorpherMirror[M, LUB]]) extends MorphContext {
 
   // check the dimensions and the corresponding instances
   require(contextDimensions.length == contextFragments.length, s"Number if context dimensions and context fragments do not match: ${contextDimensions.length}!=${contextFragments.length}")
@@ -53,9 +53,9 @@ class CompleteCompositeContext[M, LUB, ConformLev <: ConformanceLevelMarker](con
   val (entCls, allInterfaces) = if (contextDimensions.nonEmpty) {
     val entCls: Class[_] = contextDimensions.head.last
     if (entCls.isInterface) {
-      (classOf[AnyRef], contextDimensions.flatMap(fragClasses => fragClasses) ++ Array(classOf[CompositeMirror[M, LUB]]))
+      (classOf[AnyRef], contextDimensions.flatMap(fragClasses => fragClasses) ++ Array(classOf[MorpherMirror[M, LUB]]))
     } else {
-      (entCls, contextDimensions(0).dropRight(1).toArray ++ contextDimensions.tail.flatMap(fragClasses => fragClasses) ++ Array(classOf[CompositeMirror[M, LUB]]))
+      (entCls, contextDimensions(0).dropRight(1).toArray ++ contextDimensions.tail.flatMap(fragClasses => fragClasses) ++ Array(classOf[MorpherMirror[M, LUB]]))
     }
   } else {
     (classOf[AnyRef], Array.empty[Class[_]])
@@ -65,11 +65,11 @@ class CompleteCompositeContext[M, LUB, ConformLev <: ConformanceLevelMarker](con
 
   def proxy = contextProxy
 
-  val compositeMirror = new CompositeMirror[M, LUB] {
+  val compositeMirror = new MorpherMirror[M, LUB] {
 
     override type ConfLev = ConformLev
 
-    override def toCompositeInstance = compositeInstance
+    override def toMorphKernel = compositeInstance
 
     override def myAlternative: List[FragmentHolder[_]] = alternative
 
@@ -78,9 +78,9 @@ class CompleteCompositeContext[M, LUB, ConformLev <: ConformanceLevelMarker](con
     /**
      * @return the strategy used to rank the alternatives
      */
-    override def strategy: MorpherStrategy[M] = usedStrategy
+    override def strategy: MorphingStrategy[M] = usedStrategy
 
-    override def owningMutableProxy: Option[LUB with MutableCompositeMirror[M, LUB]] = owningProxy
+    override def owningMutableProxy: Option[LUB with MutableMorpherMirror[M, LUB]] = owningProxy
   }
 
   override def context(fragment: AnyRef): AnyRef = if (contextProxy == null) {
@@ -100,7 +100,7 @@ class CompleteCompositeContext[M, LUB, ConformLev <: ConformanceLevelMarker](con
     override def getCallback(method: Method): AnyRef = {
       val declaringClass = method.getDeclaringClass
 
-      if (declaringClass == classOf[CompositeMirror[M, LUB]])
+      if (declaringClass == classOf[MorpherMirror[M, LUB]])
         new MethodInterceptor {
           override def intercept(obj: scala.Any, method: Method, args: Array[AnyRef], proxy: MethodProxy): AnyRef = {
             inContext {
@@ -136,7 +136,7 @@ class CompleteCompositeContext[M, LUB, ConformLev <: ConformanceLevelMarker](con
  *
  * @param fragmentTrait the class of the fragment under initialization
  */
-class FragmentInitContext(fragmentTrait: Class[_]) extends CompositeContext {
+class FragmentInitContext(fragmentTrait: Class[_]) extends MorphContext {
 
 //  val contextDimensions: Array[Class[_]] = if (ctxDims.isEmpty)
 //    Array(classOf[AnyRef])
@@ -205,33 +205,33 @@ class FragmentInitContext(fragmentTrait: Class[_]) extends CompositeContext {
 
 }
 
-abstract class MutableCompositeContext[M, LUB, ConformLev <: ConformanceLevelMarker, ImutableLUB <: LUB with CompositeMirror[M, LUB], MutableLUB <: MutableCompositeMirror[M, LUB]](
+abstract class MutableMorphContext[M, LUB, ConformLev <: ConformanceLevelMarker, ImmutableLUB <: LUB with MorpherMirror[M, LUB], MutableLUB <: MutableMorpherMirror[M, LUB]](
                                                             lubComponents: Array[Class[_]],
-                                                            initialStrategy: MorpherStrategy[M]) extends CompositeContext {
+                                                            initialStrategy: MorphingStrategy[M]) extends MorphContext {
 
-  @volatile private[this] var delegate: ImutableLUB = _
+  @volatile private[this] var delegate: ImmutableLUB = _
 
-  def morph(proxy: MutableLUB, strategy: MorpherStrategy[M]): ImutableLUB
+  def morph(proxy: MutableLUB, strategy: MorphingStrategy[M]): ImmutableLUB
 
-  val compositeMirror = new MutableCompositeMirror[M, LUB] {
+  val compositeMirror = new MutableMorpherMirror[M, LUB] {
 
     override type ConfLev = ConformLev
 
     def remorph() {
-      MutableCompositeContext.this.delegate = morph(proxy, MutableCompositeContext.this.delegate.strategy)
+      MutableMorphContext.this.delegate = morph(proxy, MutableMorphContext.this.delegate.strategy)
     }
 
-    def remorph(altStrategy: MorpherStrategy[M]) {
-      MutableCompositeContext.this.delegate = morph(proxy, altStrategy)
+    def remorph(altStrategy: MorphingStrategy[M]) {
+      MutableMorphContext.this.delegate = morph(proxy, altStrategy)
     }
 
-    def delegate: LUB = MutableCompositeContext.this.delegate
+    def delegate: LUB = MutableMorphContext.this.delegate
 
     /**
      * This method is delegated to the wrapped delegate.
      * @return
      */
-    override def toCompositeInstance: CompositeInstance[M] with ConfLev = ???
+    override def toMorphKernel: MorphKernel[M] with ConfLev = ???
 
     /**
      * This method is delegated to the wrapped delegate.
@@ -248,12 +248,12 @@ abstract class MutableCompositeContext[M, LUB, ConformLev <: ConformanceLevelMar
      * This method is delegated to the wrapped delegate.
      * @return the strategy used to rank the alternatives
      */
-    override def strategy: MorpherStrategy[M] = ???
+    override def strategy: MorphingStrategy[M] = ???
 
     /**
      * This method is delegated to the wrapped delegate.
      */
-    override def owningMutableProxy: Option[LUB with MutableCompositeMirror[M, LUB]] = ???
+    override def owningMutableProxy: Option[LUB with MutableMorpherMirror[M, LUB]] = ???
 
 
   }
@@ -261,9 +261,9 @@ abstract class MutableCompositeContext[M, LUB, ConformLev <: ConformanceLevelMar
   val (entCls, allInterfaces) = {
     val firstDim = lubComponents(0)
     if (firstDim.isInterface) {
-      (classOf[AnyRef], lubComponents ++ Array(classOf[MutableCompositeMirror[M, LUB]]))
+      (classOf[AnyRef], lubComponents ++ Array(classOf[MutableMorpherMirror[M, LUB]]))
     } else {
-      (firstDim, lubComponents.tail ++ Array(classOf[MutableCompositeMirror[M, LUB]]))
+      (firstDim, lubComponents.tail ++ Array(classOf[MutableMorpherMirror[M, LUB]]))
     }
   }
 
@@ -288,7 +288,7 @@ abstract class MutableCompositeContext[M, LUB, ConformLev <: ConformanceLevelMar
   class Helper() extends CallbackHelper(entCls, allInterfaces) {
     override def getCallback(method: Method): AnyRef = {
       val declaringClass = method.getDeclaringClass
-      if (declaringClass == classOf[MutableCompositeMirror[M, LUB]] || declaringClass == classOf[Mutator[M]]) // todo: do it better
+      if (declaringClass == classOf[MutableMorpherMirror[M, LUB]] || declaringClass == classOf[Mutator[M]]) // todo: do it better
         new MethodInterceptor {
           override def intercept(obj: scala.Any, method: Method, args: Array[AnyRef], proxy: MethodProxy): AnyRef = {
             inContext {
@@ -304,7 +304,7 @@ abstract class MutableCompositeContext[M, LUB, ConformLev <: ConformanceLevelMar
               if (res eq delegate.asInstanceOf[AnyRef]) {
                 // todo: Document this behavior!!!
                 // The proxy invocation returned 'this'. Change it to this 'this'.
-                MutableCompositeContext.this.proxy
+                MutableMorphContext.this.proxy
               } else {
                 res
               }

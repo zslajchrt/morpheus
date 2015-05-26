@@ -7,15 +7,15 @@ import scala.reflect.runtime.universe._
 /**
  * Created by zslajchrt on 29/04/15.
  */
-abstract class CompositeProtoInstance[M](val rootNode: CompositeModelNode) {
+abstract class MorphKernelBase[M](val rootNode: MorphModelNode) {
 
-  val parent: Option[CompositeProtoInstance[_]]
-  val defaultStrategy: MorpherStrategy[M]
+  val parent: Option[MorphKernelBase[_]]
+  val defaultStrategy: MorphingStrategy[M]
   val altComposer: AlternativeComposer[M]
 
   def fragmentList: List[FragmentHolder[_]]
 
-  val model: CompositeProtoModel[M]
+  val model: MorphModelBase[M]
 
   def fragmentHolder(fragment: FragmentNode): Option[FragmentHolder[_]] = {
     fragmentList.find(fh => fragment.id == fh.fragment.index)
@@ -50,52 +50,52 @@ abstract class CompositeProtoInstance[M](val rootNode: CompositeModelNode) {
 
 }
 
-abstract class CompositeInstance[M](val root: CompositeModelNode) extends CompositeProtoInstance[M](root) with MorphingTools[M] {
+abstract class MorphKernel[M](val root: MorphModelNode) extends MorphKernelBase[M](root) with MorphingTools[M] {
 
   outer =>
 
-  //def this(ci: CompositeInstanceRef[M]) = this(ci.instance.rootNode)
+  //def this(ci: MorphKernelRef[M]) = this(ci.instance.rootNode)
 
   type LUB
   type Model = M
   type ConformLevel <: ConformanceLevelMarker
-  type MutableLUB = LUB with MutableCompositeMirror[M, LUB] { type ConfLev = ConformLevel }
-  type ImutableLUB = LUB with CompositeMirror[M, LUB] { type ConfLev = ConformLevel }
+  type MutableLUB = LUB with MutableMorpherMirror[M, LUB] { type ConfLev = ConformLevel }
+  type ImmutableLUB = LUB with MorpherMirror[M, LUB] { type ConfLev = ConformLevel }
 
   val fragmentDescriptors: HList
   val fragments: HList
   val proxies: AnyRef
-  val model: CompositeModel[M]
+  val model: MorphModel[M]
 
   val lubComponents: Array[Class[_]]
 
   lazy val ! = make
   lazy val ~ = make_~
 
-  def morph(implicit strategy: MorpherStrategy[M]): ImutableLUB = {
+  def morph(implicit strategy: MorphingStrategy[M]): ImmutableLUB = {
     Morpher.morph[M](this, Some(strategy))(None)
   }
 
-  def make: ImutableLUB = {
+  def make: ImmutableLUB = {
     Morpher.morph[M](this, None)(None)
   }
 
-  def morph_~(implicit strategy: MorpherStrategy[M]): MutableLUB = mutableProxy
+  def morph_~(implicit strategy: MorphingStrategy[M]): MutableLUB = mutableProxy
 
   def make_~ : MutableLUB = mutableProxy_(None)
 
-  def mutableProxy(implicit strategy: MorpherStrategy[M]): MutableLUB = mutableProxy_(Some(strategy))
+  def mutableProxy(implicit strategy: MorphingStrategy[M]): MutableLUB = mutableProxy_(Some(strategy))
 
-  private def mutableProxy_(customStrategy: Option[MorpherStrategy[M]]): MutableLUB = {
+  private def mutableProxy_(customStrategy: Option[MorphingStrategy[M]]): MutableLUB = {
     val initialStrategy = customStrategy match {
       case None => this.defaultStrategy
       case Some(custStrat) => custStrat
     }
 
-    val mp = new MutableCompositeContext[M, LUB, ConformLevel, ImutableLUB, MutableLUB](lubComponents, initialStrategy) {
+    val mp = new MutableMorphContext[M, LUB, ConformLevel, ImmutableLUB, MutableLUB](lubComponents, initialStrategy) {
 
-      //override def morph(proxy: this.ci.MutableLUB, strategy: org.morpheus.MorpherStrategy[M]): this.ci.ImutableLUB
-      override def morph(proxy: MutableLUB, actualStrategy: MorpherStrategy[M]): ImutableLUB = {
+      //override def morph(proxy: this.ci.MutableLUB, strategy: org.morpheus.MorphingStrategy[M]): this.ci.ImmutableLUB
+      override def morph(proxy: MutableLUB, actualStrategy: MorphingStrategy[M]): ImmutableLUB = {
         Morpher.morph[M](outer, actualStrategy)(Some(proxy))
       }
     }
@@ -106,7 +106,7 @@ abstract class CompositeInstance[M](val root: CompositeModelNode) extends Compos
   @deprecated
   def lazyProxy = {
     new LazyRef[MutableLUB] {
-      def create(implicit strategy: MorpherStrategy[M]) = {
+      def create(implicit strategy: MorphingStrategy[M]) = {
         val mp = mutableProxy
         apply(mp)
         mp match {

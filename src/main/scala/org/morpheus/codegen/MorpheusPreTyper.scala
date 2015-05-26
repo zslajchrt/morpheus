@@ -185,7 +185,7 @@ with TreeDSL {
               case _ => cfgParentTree
             }
 
-            inform(s"Found config parent: $configParent")
+            //inform(s"Found config parent: $configParent")
 
             val fragClsAnnot = generateFragmentClassAnnotation(depsFromSelf, configParent)
 

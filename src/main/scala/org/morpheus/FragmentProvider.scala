@@ -20,7 +20,7 @@ case object InstanceProvider extends FragmentProvider
  * @param placeholderFactMap
  * @param conformanceLevel
  * @param conformanceLevelTpe
- * @param delegation if true the `src` field carries an instance of `CompositeProtoInstance`, otherwise it carries a `CompositeInstanceRef`.
+ * @param delegation if true the `src` field carries an instance of `MorphKernelBase`, otherwise it carries a `MorphKernelRef`.
  *
  */
 case class CopyProvider(src: Any, placeholderFactMap: Any, conformanceLevel: Morpheus.ConformanceLevel, conformanceLevelTpe: Any, delegation: Boolean) extends FragmentProvider

@@ -10,10 +10,10 @@ import scala.language.experimental.macros
 
 class Morpher[M]() {
 
-  def morph(instance: CompositeInstance[M], strategy: MorpherStrategy[M])(owningMutableProxy: Option[instance.MutableLUB]): instance.ImutableLUB = {
+  def morph(instance: MorphKernel[M], strategy: MorphingStrategy[M])(owningMutableProxy: Option[instance.MutableLUB]): instance.ImmutableLUB = {
 
     val alternatives: Alternatives[M] = strategy.chooseAlternatives(instance)(owningMutableProxy)
-    val altsHolders: List[FragmentHolder[_]] = MorpherStrategy.fittestAlternative(instance, alternatives.toList) match {
+    val altsHolders: List[FragmentHolder[_]] = MorphingStrategy.fittestAlternative(instance, alternatives.toList) match {
       case None => sys.error("No alternative chosen")
       case Some(alternative) =>
         //strategy.convertToHolders(instance, alternative._1, alternative._2, None)
@@ -27,7 +27,7 @@ class Morpher[M]() {
     owningMutableProxy match {
       case Some(proxy) if proxy.delegate != null && proxy.myAlternative == altsHolders =>
         // There is no need to instantiate a new proxy's delegate, provided that the delegate composition is same as the current one.
-        proxy.delegate.asInstanceOf[instance.ImutableLUB]
+        proxy.delegate.asInstanceOf[instance.ImmutableLUB]
 
       case _ =>
 
@@ -60,9 +60,9 @@ class Morpher[M]() {
         //todo: Change it to a debug logging
         //println(s"Morph fragments: ${altsProxies.flatMap(_._1).map(_.getName)}")
 
-        val compInst = CompositeFactory.newComposite[M, instance.LUB, instance.ConformLevel](altsProxies.toArray, instance, altsHolders, alternatives, strategy, owningMutableProxy)
+        val compInst = MorphFactory.newComposite[M, instance.LUB, instance.ConformLevel](altsProxies.toArray, instance, altsHolders, alternatives, strategy, owningMutableProxy)
 
-        compInst.asInstanceOf[instance.ImutableLUB]
+        compInst.asInstanceOf[instance.ImmutableLUB]
 
     }
 
@@ -82,11 +82,11 @@ object Morpher {
 
   def activator[M](activator: PartialFunction[Frag[_, _], Boolean]) = new FragmentSelector[M](activator)
 
-  def left[M] = new LeftAltsMorpherStrategy[M]()
+  def left[M] = new LeftAltsMorphingStrategy[M]()
 
-  def right[M] = new RightAltsMorpherStrategy[M]()
+  def right[M] = new RightAltsMorphingStrategy[M]()
 
-  def morph[M](instance: CompositeInstance[M], customStrategy: Option[MorpherStrategy[M]])(owningMutableProxy: Option[instance.MutableLUB]): instance.ImutableLUB = {
+  def morph[M](instance: MorphKernel[M], customStrategy: Option[MorphingStrategy[M]])(owningMutableProxy: Option[instance.MutableLUB]): instance.ImmutableLUB = {
     val strategy = customStrategy match {
       case None => instance.defaultStrategy
       case Some(custStrat) => custStrat
@@ -94,7 +94,7 @@ object Morpher {
     morph(instance, strategy)(owningMutableProxy)
   }
 
-  def morph[M](instance: CompositeInstance[M], strategy: MorpherStrategy[M])(owningMutableProxy: Option[instance.MutableLUB]): instance.ImutableLUB = {
+  def morph[M](instance: MorphKernel[M], strategy: MorphingStrategy[M])(owningMutableProxy: Option[instance.MutableLUB]): instance.ImmutableLUB = {
     new Morpher[M]().morph(instance, strategy)(owningMutableProxy)
   }
 
@@ -113,7 +113,7 @@ class MorpherMacros(val c: whitebox.Context) {
     val partialStrategies: List[Tree] = modelTag.tpe match {
       case RefinedType(parents, _) =>
         parents.map(tp => {
-          q"implicitly[MorpherStrategy[$tp]]"
+          q"implicitly[MorphingStrategy[$tp]]"
         })
       case _ => c.abort(c.enclosingPosition, "Composite strategy supports refined types only: ie. T1 with T2 with ...")
     }

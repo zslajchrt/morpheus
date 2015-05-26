@@ -31,7 +31,7 @@ object FactoryProviderImplicits {
 /**
  * This provider takes fragment instances from the source composite instance.
  */
-class CopyProviderImplicits[M](val src: CompositeProtoInstance[M], val placeholderFactMap: Map[Int, (Frag[_, _] => _)], modelRoot: CompositeModelNode) {
+class CopyProviderImplicits[M](val src: MorphKernelBase[M], val placeholderFactMap: Map[Int, (Frag[_, _] => _)], modelRoot: MorphModelNode) {
 
   implicit def implicitFragmentFactory[T, Cfg]: (Frag[T, Cfg]) => T = {
     (frag) => {
@@ -42,7 +42,7 @@ class CopyProviderImplicits[M](val src: CompositeProtoInstance[M], val placehold
         }
       } else {
 
-        def findHolder(inst: CompositeProtoInstance[_]): Option[FragmentHolder[_]] = {
+        def findHolder(inst: MorphKernelBase[_]): Option[FragmentHolder[_]] = {
           inst.fragmentHolder(frag) match {
             case Some(holder) =>
               Some(holder)
@@ -73,16 +73,16 @@ class CopyProviderImplicits[M](val src: CompositeProtoInstance[M], val placehold
 //  }
 //}
 
-//class ForkCompositeProtoInstance[M](src1: CompositeProtoInstance[M], src2: CompositeProtoInstance[M]) extends CompositeProtoInstance[M](src1.rootNode) {
-//  override val parent: Option[CompositeProtoInstance[_]] = active.parent
+//class ForkMorphKernelBase[M](src1: MorphKernelBase[M], src2: MorphKernelBase[M]) extends MorphKernelBase[M](src1.rootNode) {
+//  override val parent: Option[MorphKernelBase[_]] = active.parent
 //
 //  override def fragmentList: List[FragmentHolder[_]] = active.fragmentList
 //
 //  override val altComposer: AlternativeComposer[M] = active.altComposer
-//  override val model: CompositeProtoModel[M] = active.model
-//  override val defaultStrategy: MorpherStrategy[M] = active.defaultStrategy
+//  override val model: MorphModelBase[M] = active.model
+//  override val defaultStrategy: MorphingStrategy[M] = active.defaultStrategy
 //
-//  def active: CompositeProtoInstance[M] = src1
+//  def active: MorphKernelBase[M] = src1
 //}
 
 class FactoryProviderImplicitsImpl(val c: whitebox.Context) {

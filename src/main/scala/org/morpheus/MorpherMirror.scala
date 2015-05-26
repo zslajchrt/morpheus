@@ -5,13 +5,13 @@ import scala.reflect.runtime.universe._
 /**
  * Created by zslajchrt on 29/04/15.
  */
-trait CompositeMirror[M, L] {
+trait MorpherMirror[M, L] {
 
   type ConfLev <: ConformanceLevelMarker
   type Model = M
   type LUB = L
 
-  def toCompositeInstance: CompositeInstance[M] with ConfLev
+  def toMorphKernel: MorphKernel[M] with ConfLev
 
   def myAlternative: List[FragmentHolder[_]]
 
@@ -24,14 +24,14 @@ trait CompositeMirror[M, L] {
   /**
    * @return the strategy used to rank the alternatives
    */
-  def strategy: MorpherStrategy[M]
+  def strategy: MorphingStrategy[M]
 
   def findFragmentHolder[F: WeakTypeTag]: Option[FragmentHolder[_]] = {
     val fragTpe = implicitly[WeakTypeTag[F]].tpe
     myAlternative.find(_.fragment.fragTag.tpe <:< fragTpe)
   }
 
-  def owningMutableProxy: Option[LUB with MutableCompositeMirror[M, LUB]]
+  def owningMutableProxy: Option[LUB with MutableMorpherMirror[M, LUB]]
 }
 
 
@@ -42,10 +42,10 @@ trait Mutator[M] {
    */
   def remorph(): Unit
 
-  def remorph(altStrategy: MorpherStrategy[M])
+  def remorph(altStrategy: MorphingStrategy[M])
 }
 
-trait MutableCompositeMirror[M, LUB] extends CompositeMirror[M, LUB] with Mutator[M] {
+trait MutableMorpherMirror[M, LUB] extends MorpherMirror[M, LUB] with Mutator[M] {
 
   private lazy val changeListener = new MutableFragmentListener {
 

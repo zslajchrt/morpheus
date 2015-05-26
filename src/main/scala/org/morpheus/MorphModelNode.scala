@@ -5,13 +5,13 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * Created by zslajchrt on 29/04/15.
  */
-sealed trait CompositeModelNode {
+sealed trait MorphModelNode {
 
-  def ++(other: CompositeModelNode): CompositeModelNode = {
+  def ++(other: MorphModelNode): MorphModelNode = {
 
     val idCounter = new AtomicInteger()
 
-    def renumberFragments(node: CompositeModelNode): CompositeModelNode = node match {
+    def renumberFragments(node: MorphModelNode): MorphModelNode = node match {
       case DisjNode(children) => DisjNode(children.map(renumberFragments(_)))
       case ConjNode(children) => ConjNode(children.map(renumberFragments(_)))
       case FragmentNode(id, _) => FragmentNode(idCounter.getAndIncrement)
@@ -23,21 +23,21 @@ sealed trait CompositeModelNode {
 
   val fragments: List[FragmentNode]
 
-  private def flattenConj(cn: ConjNode): List[CompositeModelNode] = {
+  private def flattenConj(cn: ConjNode): List[MorphModelNode] = {
     cn.children.flatMap({
       case cn2@ConjNode(_) => flattenConj(cn2)
       case other => List(other.flatten)
     })
   }
 
-  private def flattenDisj(cn: DisjNode): List[CompositeModelNode] = {
+  private def flattenDisj(cn: DisjNode): List[MorphModelNode] = {
     cn.children.flatMap({
       case cn2@DisjNode(_) => flattenDisj(cn2)
       case other => List(other.flatten)
     })
   }
 
-  def flatten: CompositeModelNode = this match {
+  def flatten: MorphModelNode = this match {
     case cn@ConjNode(_) => ConjNode(flattenConj(cn))
     case dn@DisjNode(children) => DisjNode(flattenDisj(dn))
     case other => other
@@ -69,8 +69,8 @@ sealed trait CompositeModelNode {
 
 }
 
-//case class ConjNode(children: List[CompositeModelNode]) extends CompositeModelNode
-case class ConjNode(children: List[CompositeModelNode]) extends CompositeModelNode {
+//case class ConjNode(children: List[MorphModelNode]) extends MorphModelNode
+case class ConjNode(children: List[MorphModelNode]) extends MorphModelNode {
   def toAltNode: AltNode[FragmentNode] = {
     SeqAltNode[FragmentNode](children.map(_.toAltNode))
   }
@@ -78,7 +78,7 @@ case class ConjNode(children: List[CompositeModelNode]) extends CompositeModelNo
   override val fragments: List[FragmentNode] = children.flatMap(_.fragments)
 }
 
-case class DisjNode(children: List[CompositeModelNode]) extends CompositeModelNode {
+case class DisjNode(children: List[MorphModelNode]) extends MorphModelNode {
   def toAltNode: AltNode[FragmentNode] = {
     ChoiceAltNode[FragmentNode](children.map(_.toAltNode))
   }
@@ -86,7 +86,7 @@ case class DisjNode(children: List[CompositeModelNode]) extends CompositeModelNo
   override val fragments: List[FragmentNode] = children.flatMap(_.fragments)
 }
 
-case class FragmentNode(id: Int, placeholder: Boolean = false) extends CompositeModelNode {
+case class FragmentNode(id: Int, placeholder: Boolean = false) extends MorphModelNode {
 
   def toAltNode: AltNode[FragmentNode] = {
     LeafAltNode[FragmentNode](this)
@@ -95,7 +95,7 @@ case class FragmentNode(id: Int, placeholder: Boolean = false) extends Composite
   override val fragments: List[FragmentNode] = List(this)
 }
 
-case object UnitNode extends CompositeModelNode {
+case object UnitNode extends MorphModelNode {
   def isUnit(tpName: String) = tpName == "scala.Unit"
 
   def toAltNode: AltNode[FragmentNode] = NoneAltNode
