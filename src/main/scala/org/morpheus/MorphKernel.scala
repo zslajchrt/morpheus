@@ -59,8 +59,8 @@ abstract class MorphKernel[M](val root: MorphModelNode) extends MorphKernelBase[
   type LUB
   type Model = M
   type ConformLevel <: ConformanceLevelMarker
-  type MutableLUB = LUB with MutableMorpherMirror[M, LUB] { type ConfLev = ConformLevel }
-  type ImmutableLUB = LUB with MorpherMirror[M, LUB] { type ConfLev = ConformLevel }
+  type MutableLUB = LUB with MutableMorpherMirror[M] { type ConfLev = ConformLevel }
+  type ImmutableLUB = LUB with MorpherMirror[M] { type ConfLev = ConformLevel }
 
   val fragmentDescriptors: HList
   val fragments: HList
@@ -92,15 +92,15 @@ abstract class MorphKernel[M](val root: MorphModelNode) extends MorphKernelBase[
       case Some(custStrat) => custStrat
     }
 
-    val mp = new MutableMorphContext[M, LUB, ConformLevel, ImmutableLUB, MutableLUB](lubComponents, initialStrategy) {
+    val mp = new MutableMorphContext[M](this, lubComponents, initialStrategy) {
 
-      //override def morph(proxy: this.ci.MutableLUB, strategy: org.morpheus.MorphingStrategy[M]): this.ci.ImmutableLUB
-      override def morph(proxy: MutableLUB, actualStrategy: MorphingStrategy[M]): ImmutableLUB = {
-        Morpher.morph[M](outer, actualStrategy)(Some(proxy))
+      //override def morph(proxy: MutableLUB, actualStrategy: MorphingStrategy[M]): owningKernel.ImmutableLUB = {
+      override def morph(proxy: owningKernel.MutableLUB, actualStrategy: MorphingStrategy[M]): owningKernel.ImmutableLUB = {
+        Morpher.morph[M](owningKernel, actualStrategy)(Some(proxy))
       }
     }
 
-    mp.proxy
+    mp.proxy.asInstanceOf[MutableLUB]
   }
 
   @deprecated
@@ -110,7 +110,7 @@ abstract class MorphKernel[M](val root: MorphModelNode) extends MorphKernelBase[
         val mp = mutableProxy
         apply(mp)
         mp match {
-          case mut: MutableFragment with Mutator[M] =>
+          case mut: MutableFragment =>
             mut.addListener(new MutableFragmentListener {
               override def onEvent(eventName: String, eventValue: Any, eventSource: Any) = {
                 mut.remorph()

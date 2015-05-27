@@ -5,13 +5,20 @@ import scala.reflect.runtime.universe._
 /**
  * Created by zslajchrt on 29/04/15.
  */
-trait MorpherMirror[M, L] {
+trait MorpherMirror[M] {
 
   type ConfLev <: ConformanceLevelMarker
   type Model = M
-  type LUB = L
+//  type LUB = L
+//
+  val kernel: MorphKernel[M] { type ConformLevel = ConfLev }
+//  val kernel: MorphKernel[M]
 
-  def toMorphKernel: MorphKernel[M] with ConfLev
+  //def remorph(): L with MorpherMirror[M, L]
+  def remorph(): kernel.ImmutableLUB
+
+  //def remorph(altStrategy: MorphingStrategy[M]): L with MorpherMirror[M, L]
+  def remorph(altStrategy: MorphingStrategy[M]): kernel.ImmutableLUB
 
   def myAlternative: List[FragmentHolder[_]]
 
@@ -31,21 +38,22 @@ trait MorpherMirror[M, L] {
     myAlternative.find(_.fragment.fragTag.tpe <:< fragTpe)
   }
 
-  def owningMutableProxy: Option[LUB with MutableMorpherMirror[M, LUB]]
+  //def owningMutableProxy: Option[L with MutableMorpherMirror[M, L]]
+  def owningMutableProxy: Option[kernel.MutableLUB]
 }
 
 
-trait Mutator[M] {
+//trait Mutator[M] {
+//
+//  /**
+//   * It causes a re-instantiation only if the new composition of the proxy's delegate differs from the current one.
+//   */
+//  def remorph(): LUB with MorpherMirror[M, LUB]
+//
+//  def remorph(altStrategy: MorphingStrategy[M])
+//}
 
-  /**
-   * It causes a re-instantiation only if the new composition of the proxy's delegate differs from the current one.
-   */
-  def remorph(): Unit
-
-  def remorph(altStrategy: MorphingStrategy[M])
-}
-
-trait MutableMorpherMirror[M, LUB] extends MorpherMirror[M, LUB] with Mutator[M] {
+trait MutableMorpherMirror[M] extends MorpherMirror[M] {
 
   private lazy val changeListener = new MutableFragmentListener {
 
@@ -78,7 +86,7 @@ trait MutableMorpherMirror[M, LUB] extends MorpherMirror[M, LUB] with Mutator[M]
     }
   }
 
-  def delegate: LUB
+  def delegate: kernel.ImmutableLUB
 
   def startListening(eventSelector: PartialFunction[CompositeEvent[Any], Boolean] = { case _ => true }): Boolean = {
     delegate match {

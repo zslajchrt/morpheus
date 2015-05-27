@@ -1,7 +1,5 @@
 package org.morpheus
 
-import org.morpheus.{Alternatives, MorphKernel, MorphingStrategy}
-
 /**
  *
  * Created by zslajchrt on 17/03/15.

@@ -22,7 +22,7 @@ object Morpheus {
   type \?[F] = or[Unit, F]
   type /?[F] = or[F, Unit]
 
-  type ~[M, LUB] = MutableMorpherMirror[M, LUB]
+  type ~[M] = MutableMorpherMirror[M]
 
   type Delegate[T] = T
 
@@ -110,14 +110,13 @@ object Morpheus {
 
   def remorph[S](arg: S, altNum: Int): Unit = macro remorph_impl[S]
 
-  // todo: support not only MutableMorpherMirror, but also MorpherMirror for immutable composite proxies
   def select[F](mutableProxy: Any): Option[F] = macro select_impl[F]
 
-  def inspect[T <: MutableMorpherMirror[_, _], R](mutableProxy: T)(fork: PartialFunction[Any, R]): Any = macro inspect_impl[T, R]
+  def inspect[T <: MutableMorpherMirror[_], R](mutableProxy: T)(fork: PartialFunction[Any, R]): Any = macro inspect_impl[T, R]
 
-  implicit def convertMorphToPartialRef[M1, M2](morph: MorpherMirror[M1, _]): ~&[M2] = macro convertMorphToPartialRef_impl[M1, M2]
+  implicit def convertMorphToPartialRef[M1, M2](morph: MorpherMirror[M1]): ~&[M2] = macro convertMorphToPartialRef_impl[M1, M2]
 
-  implicit def convertMorphToTotalRef[M1, M2](morph: MorpherMirror[M1, _]): &[M2] = macro convertMorphToTotalRef_impl[M1, M2]
+  implicit def convertMorphToTotalRef[M1, M2](morph: MorpherMirror[M1]): &[M2] = macro convertMorphToTotalRef_impl[M1, M2]
 
   implicit def convertMorphKernelToPartialRef[M1, M2](ci: MorphKernel[M1]): ~&[M2] = macro convertMorphKernelToPartialRef_impl[M1, M2]
 
@@ -187,7 +186,7 @@ object Morpheus {
              import org.morpheus.Morpheus._
              for (m <- mirror(this); mm <- m.owningMutableProxy) {
                val self = &&(this)
-               val ci = m.toMorphKernel
+               val ci = m.kernel
                val defaultStrategy = FixedStrategy[m.Model](m.alternatives)
                val am = self.altMappings
                val swModel = parse[$thisSelfTpe](false)
@@ -325,8 +324,8 @@ object Morpheus {
           mirror(this) match {
             case None => None
             case Some(m) =>
-              val depsMaps = m.toMorphKernel.fragmentHolder[$fragTpe].get.fragment.depsMappings.get
-              Some(new $refTpe(m.toMorphKernel.asInstanceOf[MorphKernel[Any]], depsMaps))
+              val depsMaps = m.kernel.fragmentHolder[$fragTpe].get.fragment.depsMappings.get
+              Some(new $refTpe(m.kernel.asInstanceOf[MorphKernel[Any]], depsMaps))
           }
         }
 
@@ -723,7 +722,7 @@ object Morpheus {
 
   }
 
-  def convertMorphToPartialRef_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(morph: c.Expr[MorpherMirror[M1, _]]): c.Expr[~&[M2]] = {
+  def convertMorphToPartialRef_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(morph: c.Expr[MorpherMirror[M1]]): c.Expr[~&[M2]] = {
     import c.universe._
 
     val tgtTpe = implicitly[WeakTypeTag[M2]].tpe.dealias
@@ -731,14 +730,14 @@ object Morpheus {
     val res = q"""
       {
         import org.morpheus._
-        val ref: ~&[$tgtTpe] = convertMorphKernelToPartialRef[$srcTpe, $tgtTpe]($morph.toMorphKernel)
-        ref.copy(sourceStrategy = Some(new LastRatingStrategy($morph.asInstanceOf[MorpherMirror[Any, _]]))).asInstanceOf[~&[$tgtTpe]]
+        val ref: ~&[$tgtTpe] = convertMorphKernelToPartialRef[$srcTpe, $tgtTpe]($morph.kernel)
+        ref.copy(sourceStrategy = Some(new LastRatingStrategy($morph.asInstanceOf[MorpherMirror[Any]]))).asInstanceOf[~&[$tgtTpe]]
       }
     """
     c.Expr[~&[M2]](res)
   }
 
-  def convertMorphToTotalRef_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(morph: c.Expr[MorpherMirror[M1, _]]): c.Expr[&[M2]] = {
+  def convertMorphToTotalRef_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(morph: c.Expr[MorpherMirror[M1]]): c.Expr[&[M2]] = {
     import c.universe._
 
     val tgtTpe = implicitly[WeakTypeTag[M2]].tpe.dealias
@@ -746,8 +745,8 @@ object Morpheus {
     val res = q"""
       {
         import org.morpheus._
-        val ref: &[$tgtTpe] = convertMorphKernelToTotalRef[$srcTpe, $tgtTpe]($morph.toMorphKernel)
-        ref.copy(sourceStrategy = Some(new LastRatingStrategy($morph.asInstanceOf[MorpherMirror[Any, _]]))).asInstanceOf[&[$tgtTpe]]
+        val ref: &[$tgtTpe] = convertMorphKernelToTotalRef[$srcTpe, $tgtTpe]($morph.kernel)
+        ref.copy(sourceStrategy = Some(new LastRatingStrategy($morph.asInstanceOf[MorpherMirror[Any]]))).asInstanceOf[&[$tgtTpe]]
       }
     """
     c.Expr[&[M2]](res)
@@ -834,7 +833,13 @@ object Morpheus {
     val withHiddenFragmentsTpe = c.typeOf[WithHiddenFragments]
     val containsHiddenFragments = ci.actualType <:< withHiddenFragmentsTpe
 
-    val srcConfLev = ci.actualType match {
+    val confLevSym: Symbol = ci.actualType.member(TypeName("ConformLevel"))
+    require(confLevSym != NoSymbol, s"ConformLevel type member not found in kernel type ${ci.actualType}")
+    val srcConfLevTpe = confLevSym.asType.toType
+    //c.info(c.enclosingPosition, s"Source conf level tpe: ${srcConfLevTpe}, is total: ${srcConfLevTpe <:< implicitly[WeakTypeTag[TotalConformance]].tpe}", true)
+
+    val srcConfLev = srcConfLevTpe match {
+    //val srcConfLev = ci.actualType match {
       case t if t <:< implicitly[WeakTypeTag[TotalConformance]].tpe => Total
       case _ => Partial
 //      case t if t <:< implicitly[WeakTypeTag[PartialConformance]].tpe => Partial
@@ -1429,7 +1434,7 @@ object Morpheus {
 
   }
 
-  //def mirror_impl[S: c.WeakTypeTag](c: whitebox.Context)(self: c.Expr[Any]): c.Expr[Option[S with MorpherMirror[\?[S], Any]]] = {
+  //def mirror_impl[S: c.WeakTypeTag](c: whitebox.Context)(self: c.Expr[Any]): c.Expr[Option[S with MorpherMirror[\?[S]]]] = {
   def mirror_impl[S: c.WeakTypeTag](c: whitebox.Context)(self: c.Expr[Any]): c.Expr[Any] = {
     import c.universe._
 
@@ -1444,7 +1449,7 @@ object Morpheus {
 
     val conformanceLevelMarker = implicitly[WeakTypeTag[ConformanceLevelMarker]]
 
-    val mirrorTpe = tq"$tp with MorpherMirror[or[$tp, Unit], Any] with $conformanceLevelMarker"
+    val mirrorTpe = tq"$tp with MorpherMirror[or[$tp, Unit]] with $conformanceLevelMarker"
 
     val res =
       q"""
@@ -1452,7 +1457,7 @@ object Morpheus {
             import org.morpheus._
             import org.morpheus.Morpheus._
             $self match {
-              case mirror: org.morpheus.MorpherMirror[_, _] =>
+              case mirror: org.morpheus.MorpherMirror[_] =>
                 Some(mirror.asInstanceOf[$mirrorTpe]).asInstanceOf[Option[$mirrorTpe]]
               case _ => None
             }
@@ -1461,7 +1466,7 @@ object Morpheus {
 
     //val res = q"if (true) None else Some(null.asInstanceOf[$fragmentTpe])"
 
-    //c.Expr[Option[S with MorpherMirror[\?[S], Any]]](res)
+    //c.Expr[Option[S with MorpherMirror[\?[S]]]](res)
     c.Expr(res)
 
   }
@@ -1483,8 +1488,8 @@ object Morpheus {
 
     val fragmentTpe = implicitly[WeakTypeTag[F]].tpe
 
-    val immutableMirrorTpe = implicitly[TypeTag[MorpherMirror[_, _]]].tpe
-    val mutableMirrorTpe = implicitly[TypeTag[MutableMorpherMirror[_, _]]].tpe
+    val immutableMirrorTpe = implicitly[TypeTag[MorpherMirror[_]]].tpe
+    val mutableMirrorTpe = implicitly[TypeTag[MutableMorpherMirror[_]]].tpe
 
     if (!(proxy.actualType <:< immutableMirrorTpe)) {
       c.abort(c.enclosingPosition, s"Illegal argument type ${proxy.actualType} (${showRaw(proxy.tree)}}). Expected instance of $immutableMirrorTpe")
@@ -1505,7 +1510,7 @@ object Morpheus {
             c.abort(c.enclosingPosition, s"Illegal argument type. Expected instance of $immutableMirrorTpe")
           case Some(actualMirror) =>
             actualMirror.typeArgs match {
-              case compModelTpe :: _ :: Nil =>
+              case compModelTpe :: Nil =>
                 compModelTpe
               case _ =>
                 c.abort(c.enclosingPosition, s"Unknown composite mirror: $actualMirror")
@@ -1564,7 +1569,7 @@ object Morpheus {
       q"""
           {
             val morphOpt = $self match {
-              case mirror: org.morpheus.MorpherMirror[_, _] =>
+              case mirror: org.morpheus.MorpherMirror[_] =>
                 mirror.owningMutableProxy match {
                   case None => Some($self)
                   case Some(proxy) => Some(proxy.delegate)
@@ -2332,7 +2337,7 @@ object Morpheus {
         val cl = confLevelName match {
           case "Total" => (Total, tq"org.morpheus.TotalConformance")
           case "Partial" => (Partial, tq"org.morpheus.PartialConformance")
-          case _ => c.abort(c.enclosingPosition, s"Invalid conformace level $confLevelName")
+          case _ => c.abort(c.enclosingPosition, s"Invalid conformance level $confLevelName")
         }
         cl
     }

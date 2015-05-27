@@ -1,6 +1,5 @@
 package org.morpheus
 
-import org.morpheus.{ConjNode, DisjNode, FragmentNode}
 import org.junit.Test
 
 /**

@@ -1,6 +1,5 @@
 package org.morpheus
 
-import org.morpheus.{ChoiceAltNode, CoupledCounters, LeafAltNode, SeqAltNode}
 import org.junit.Assert._
 import org.junit.Test
 

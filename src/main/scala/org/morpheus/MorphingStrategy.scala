@@ -42,11 +42,11 @@ case class FixedStrategy[M](alternatives: Alternatives[M]) extends MorphingStrat
 
 }
 
-case class LastRatingStrategy[M](mirrorOpt: Option[MorpherMirror[M, _]]) extends MorphingStrategy[M] {
+case class LastRatingStrategy[M](mirrorOpt: Option[MorpherMirror[M]]) extends MorphingStrategy[M] {
 
   def this() = this(None)
 
-  def this(mirror: MorpherMirror[M, _]) = this(Some(mirror))
+  def this(mirror: MorpherMirror[M]) = this(Some(mirror))
 
   override def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = mirrorOpt match {
     case Some(mirror) => mirror.alternatives

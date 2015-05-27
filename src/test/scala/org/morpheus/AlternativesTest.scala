@@ -1,6 +1,5 @@
 package org.morpheus
 
-import org.morpheus.{Alternatives, ConjNode, DisjNode, FragmentNode}
 import org.junit.Assert._
 import org.junit.Test
 

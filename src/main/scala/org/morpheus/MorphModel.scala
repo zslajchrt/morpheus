@@ -48,8 +48,8 @@ abstract class MorphModel[M](rn: MorphModelNode) extends MorphModelBase[M](rn) w
   type LUB
   type Model = M
   type ConformLevel <: ConformanceLevelMarker
-  type MutableLUB = LUB with MutableMorpherMirror[M, LUB] { type ConfLev = ConformLevel }
-  type ImmutableLUB = LUB with MorpherMirror[M, LUB] { type ConfLev = ConformLevel }
+  type MutableLUB = LUB with MutableMorpherMirror[M] { type ConfLev = ConformLevel }
+  type ImmutableLUB = LUB with MorpherMirror[M] { type ConfLev = ConformLevel }
 
   val fragmentDescriptors: HList
 

@@ -1,6 +1,5 @@
 package org.morpheus
 
-import org.morpheus.{Counter, CoupledCounters}
 import org.junit.Assert._
 import org.junit.Test
 

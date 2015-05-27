@@ -60,7 +60,7 @@ class Morpher[M]() {
         //todo: Change it to a debug logging
         //println(s"Morph fragments: ${altsProxies.flatMap(_._1).map(_.getName)}")
 
-        val compInst = MorphFactory.newComposite[M, instance.LUB, instance.ConformLevel](altsProxies.toArray, instance, altsHolders, alternatives, strategy, owningMutableProxy)
+        val compInst = MorphFactory.newComposite[M, instance.LUB, instance.ConformLevel](altsProxies.toArray, instance, altsHolders, alternatives, strategy)(owningMutableProxy)
 
         compInst.asInstanceOf[instance.ImmutableLUB]
 

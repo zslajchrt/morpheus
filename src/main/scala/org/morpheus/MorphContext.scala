@@ -36,10 +36,13 @@ trait MorphContext {
  * @param contextDimensions The context dimensions. The first dimension must be the entity class
  * @param contextFragments Implementations of the context dimensions
  */
-class CompleteMorphContext[M, LUB, ConformLev <: ConformanceLevelMarker](contextDimensions: Array[List[Class[_]]], contextFragments: Array[_],
-                                       compositeInstance: MorphKernel[M] with ConformLev, alternative: List[FragmentHolder[_]],
-                                       alts: Alternatives[M], usedStrategy: MorphingStrategy[M],
-                                       owningProxy: Option[LUB with MutableMorpherMirror[M, LUB]]) extends MorphContext {
+abstract class CompleteMorphContext[M, L, ConformLev <: ConformanceLevelMarker](contextDimensions: Array[List[Class[_]]], contextFragments: Array[_],
+                                                                       val compositeInstance: MorphKernel[M] { type LUB = L; type ConformLevel = ConformLev },
+                                                                       alternative: List[FragmentHolder[_]],
+                                                                       alts: Alternatives[M],
+                                                                       usedStrategy: MorphingStrategy[M]) extends MorphContext {
+
+  val owningProxy: Option[compositeInstance.MutableLUB]
 
   // check the dimensions and the corresponding instances
   require(contextDimensions.length == contextFragments.length, s"Number if context dimensions and context fragments do not match: ${contextDimensions.length}!=${contextFragments.length}")
@@ -53,9 +56,9 @@ class CompleteMorphContext[M, LUB, ConformLev <: ConformanceLevelMarker](context
   val (entCls, allInterfaces) = if (contextDimensions.nonEmpty) {
     val entCls: Class[_] = contextDimensions.head.last
     if (entCls.isInterface) {
-      (classOf[AnyRef], contextDimensions.flatMap(fragClasses => fragClasses) ++ Array(classOf[MorpherMirror[M, LUB]]))
+      (classOf[AnyRef], contextDimensions.flatMap(fragClasses => fragClasses) ++ Array(classOf[MorpherMirror[M]]))
     } else {
-      (entCls, contextDimensions(0).dropRight(1).toArray ++ contextDimensions.tail.flatMap(fragClasses => fragClasses) ++ Array(classOf[MorpherMirror[M, LUB]]))
+      (entCls, contextDimensions(0).dropRight(1).toArray ++ contextDimensions.tail.flatMap(fragClasses => fragClasses) ++ Array(classOf[MorpherMirror[M]]))
     }
   } else {
     (classOf[AnyRef], Array.empty[Class[_]])
@@ -65,11 +68,19 @@ class CompleteMorphContext[M, LUB, ConformLev <: ConformanceLevelMarker](context
 
   def proxy = contextProxy
 
-  val compositeMirror = new MorpherMirror[M, LUB] {
+  val compositeMirror = new MorpherMirror[compositeInstance.Model] {
 
-    override type ConfLev = ConformLev
+    override type ConfLev = compositeInstance.ConformLevel
 
-    override def toMorphKernel = compositeInstance
+    override def remorph() = {
+      Morpher.morph[compositeInstance.Model](compositeInstance, usedStrategy)(None)
+    }
+
+    override def remorph(altStrategy: MorphingStrategy[compositeInstance.Model]) = {
+      Morpher.morph[compositeInstance.Model](kernel, altStrategy)(None)
+    }
+
+    override val kernel = compositeInstance
 
     override def myAlternative: List[FragmentHolder[_]] = alternative
 
@@ -80,7 +91,7 @@ class CompleteMorphContext[M, LUB, ConformLev <: ConformanceLevelMarker](context
      */
     override def strategy: MorphingStrategy[M] = usedStrategy
 
-    override def owningMutableProxy: Option[LUB with MutableMorpherMirror[M, LUB]] = owningProxy
+    override def owningMutableProxy = owningProxy
   }
 
   override def context(fragment: AnyRef): AnyRef = if (contextProxy == null) {
@@ -100,7 +111,7 @@ class CompleteMorphContext[M, LUB, ConformLev <: ConformanceLevelMarker](context
     override def getCallback(method: Method): AnyRef = {
       val declaringClass = method.getDeclaringClass
 
-      if (declaringClass == classOf[MorpherMirror[M, LUB]])
+      if (declaringClass == classOf[MorpherMirror[M]])
         new MethodInterceptor {
           override def intercept(obj: scala.Any, method: Method, args: Array[AnyRef], proxy: MethodProxy): AnyRef = {
             inContext {
@@ -205,33 +216,37 @@ class FragmentInitContext(fragmentTrait: Class[_]) extends MorphContext {
 
 }
 
-abstract class MutableMorphContext[M, LUB, ConformLev <: ConformanceLevelMarker, ImmutableLUB <: LUB with MorpherMirror[M, LUB], MutableLUB <: MutableMorpherMirror[M, LUB]](
+//abstract class MutableMorphContext[M, L, ConformLev <: ConformanceLevelMarker, ImmutableLUB <: L with MorpherMirror[M, L], MutableLUB <: MutableMorpherMirror[M, L]](
+abstract class MutableMorphContext[M](
+                                                            val owningKernel: MorphKernel[M],
                                                             lubComponents: Array[Class[_]],
                                                             initialStrategy: MorphingStrategy[M]) extends MorphContext {
 
-  @volatile private[this] var delegate: ImmutableLUB = _
+  @volatile private[this] var delegate: owningKernel.ImmutableLUB = _
 
-  def morph(proxy: MutableLUB, strategy: MorphingStrategy[M]): ImmutableLUB
+  def morph(proxy: owningKernel.MutableLUB, strategy: MorphingStrategy[M]): owningKernel.ImmutableLUB
 
-  val compositeMirror = new MutableMorpherMirror[M, LUB] {
+  val compositeMirror = new MutableMorpherMirror[owningKernel.Model] {
 
-    override type ConfLev = ConformLev
+    override type ConfLev = owningKernel.ConformLevel
 
-    def remorph() {
+    override def remorph() = {
       MutableMorphContext.this.delegate = morph(proxy, MutableMorphContext.this.delegate.strategy)
+      MutableMorphContext.this.delegate.asInstanceOf[kernel.ImmutableLUB]
     }
 
-    def remorph(altStrategy: MorphingStrategy[M]) {
+    override def remorph(altStrategy: MorphingStrategy[M]) = {
       MutableMorphContext.this.delegate = morph(proxy, altStrategy)
+      MutableMorphContext.this.delegate.asInstanceOf[kernel.ImmutableLUB]
     }
 
-    def delegate: LUB = MutableMorphContext.this.delegate
+    def delegate: kernel.ImmutableLUB = MutableMorphContext.this.delegate.asInstanceOf[kernel.ImmutableLUB]
 
     /**
      * This method is delegated to the wrapped delegate.
      * @return
      */
-    override def toMorphKernel: MorphKernel[M] with ConfLev = ???
+    override val kernel: MorphKernel[M] { type ConformLevel = owningKernel.ConformLevel } = owningKernel
 
     /**
      * This method is delegated to the wrapped delegate.
@@ -253,7 +268,7 @@ abstract class MutableMorphContext[M, LUB, ConformLev <: ConformanceLevelMarker,
     /**
      * This method is delegated to the wrapped delegate.
      */
-    override def owningMutableProxy: Option[LUB with MutableMorpherMirror[M, LUB]] = ???
+    override def owningMutableProxy = ???
 
 
   }
@@ -261,20 +276,20 @@ abstract class MutableMorphContext[M, LUB, ConformLev <: ConformanceLevelMarker,
   val (entCls, allInterfaces) = {
     val firstDim = lubComponents(0)
     if (firstDim.isInterface) {
-      (classOf[AnyRef], lubComponents ++ Array(classOf[MutableMorpherMirror[M, LUB]]))
+      (classOf[AnyRef], lubComponents ++ Array(classOf[MutableMorpherMirror[M]]))
     } else {
-      (firstDim, lubComponents.tail ++ Array(classOf[MutableMorpherMirror[M, LUB]]))
+      (firstDim, lubComponents.tail ++ Array(classOf[MutableMorpherMirror[M]]))
     }
   }
 
-  lazy val proxy: MutableLUB = {
+  lazy val proxy: owningKernel.MutableLUB = {
     val enhancer = new Enhancer
     enhancer.setSuperclass(entCls)
     enhancer.setInterfaces(allInterfaces)
     val helper: Helper = new Helper()
     enhancer.setCallbackFilter(helper)
     enhancer.setCallbacks(helper.getCallbacks)
-    val px = enhancer.create().asInstanceOf[MutableLUB]
+    val px = enhancer.create().asInstanceOf[owningKernel.MutableLUB]
 
     delegate = morph(px, initialStrategy)
 
@@ -288,7 +303,7 @@ abstract class MutableMorphContext[M, LUB, ConformLev <: ConformanceLevelMarker,
   class Helper() extends CallbackHelper(entCls, allInterfaces) {
     override def getCallback(method: Method): AnyRef = {
       val declaringClass = method.getDeclaringClass
-      if (declaringClass == classOf[MutableMorpherMirror[M, LUB]] || declaringClass == classOf[Mutator[M]]) // todo: do it better
+      if (declaringClass == classOf[MutableMorpherMirror[_]] || "remorph" == method.getName) // todo: do it better
         new MethodInterceptor {
           override def intercept(obj: scala.Any, method: Method, args: Array[AnyRef], proxy: MethodProxy): AnyRef = {
             inContext {
