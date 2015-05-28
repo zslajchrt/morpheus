@@ -59,8 +59,8 @@ abstract class MorphKernel[M](val root: MorphModelNode) extends MorphKernelBase[
   type LUB
   type Model = M
   type ConformLevel <: ConformanceLevelMarker
-  type MutableLUB = LUB with MutableMorpherMirror[M] { type ConfLev = ConformLevel }
-  type ImmutableLUB = LUB with MorpherMirror[M] { type ConfLev = ConformLevel }
+  type MutableLUB = LUB with MutableMorphMirror[M] { type ConfLev = ConformLevel }
+  type ImmutableLUB = LUB with MorphMirror[M] { type ConfLev = ConformLevel }
 
   val fragmentDescriptors: HList
   val fragments: HList

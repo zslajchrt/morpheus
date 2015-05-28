@@ -112,7 +112,7 @@ For example, the following statement will not compile since there is no alternat
 
 Now another question must come to mind. How can we change the current alternative? Well, there are several ways to do it. However because of the limited scope of this introduction we will deal with the simplest one.
 
-Besides the LUB of the morph model, every morph object also implements `org.morpheus.MutableMorpherMirror` trait. This trait contains a couple of methods providing reflective access to the morph and its active alternative form. One of such methods is `remorph(MorphingStrategy)`. This method is used for changing the underlying alternative form of the morph with the help of a given morphing strategy passed as the method argument. So before we invoke the remorph method we have to create a morphing strategy.
+Besides the LUB of the morph model, every morph object also implements `org.morpheus.MutableMorphMirror` trait. This trait contains a couple of methods providing reflective access to the morph and its active alternative form. One of such methods is `remorph(MorphingStrategy)`. This method is used for changing the underlying alternative form of the morph with the help of a given morphing strategy passed as the method argument. So before we invoke the remorph method we have to create a morphing strategy.
 
 Every morphing strategy implements `org.morpheus.MorphingStrategy` trait.  Although it is possible and quite easy to implement this trait directly, there is a couple of predefined handy strategies. Here, we will use the *promoting* strategy. As the name suggests this strategy promotes the alternative explicitly selected by passing its ordinal number as the argument. This strategy is created by macro `promote`. There are two overloaded versions of this macro and we are using one where the type argument specifies a compatible sub-model type of the morph model and the other argument takes a function returning the ordinal number selecting an alternative from the sub-model. In this case we use the original morph model type as the type argument, which is compatible by definition, and as the function selecting the alternative we pass the `contactAlt` variable, which, thanks to some implicit conversions, gets converted to a parameterless function returning Int. Variable `contactAlt` is initialised to `1` indicating that we are interested in the second alternative, which is `OnlineContact`.
 
@@ -138,7 +138,7 @@ We expect that the morph is now adopting the alternative with the `OnlineContact
 
 Since we have initialised all members, we can use the common `sendMessage` method regardless the alternative form the morph is taking on.
 
-First, we are going to activate the `OfflineContact` again, what brings us to another method from `MutableMorpherMirror`. The no-args `remorph` method causes re-morphing of the morph by means of the strategy used to assemble the last alternative. Before we call it, we have to change the value of `contactAlt` to `0` indicating the first alternative.
+First, we are going to activate the `OfflineContact` again, what brings us to another method from `MutableMorphMirror`. The no-args `remorph` method causes re-morphing of the morph by means of the strategy used to assemble the last alternative. Before we call it, we have to change the value of `contactAlt` to `0` indicating the first alternative.
 
 ```scala
   contactAlt = 0

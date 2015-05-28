@@ -27,14 +27,3 @@ case class CopyProvider(src: Any, placeholderFactMap: Any, conformanceLevel: Mor
 
 //case class ForkProvider(src1: Any, src2: Any) extends FragmentProvider
 
-trait SingletonFragmentFactory[F, C] extends (Frag[F, C] => F) {
-  private[this] var cachedProxy: Option[F] = None
-
-  abstract override def apply(frag: Frag[F, C]): F = cachedProxy match {
-    case None =>
-      cachedProxy = Some(super.apply(frag))
-      cachedProxy.get
-    case Some(cached) =>
-      cached
-  }
-}

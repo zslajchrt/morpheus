@@ -22,7 +22,7 @@ object Morpheus {
   type \?[F] = or[Unit, F]
   type /?[F] = or[F, Unit]
 
-  type ~[M] = MutableMorpherMirror[M]
+  type ~[M] = MutableMorphMirror[M]
 
   type Delegate[T] = T
 
@@ -36,32 +36,15 @@ object Morpheus {
 
   def expose[F](ci: MorphKernel[_]): Any = macro expose_impl[F]
 
-  def frag[F] = new FragmentFactory[F, Unit](None)
-  def fragAsDim[F] = macro fragAsDimNoCfg_impl[F]
+  def frag[F]: FragmentFactory[F, Unit] = macro fragNoConf[F]
 
-  def frag[F, C](cfg: C) = new FragmentFactory[F, C](cfg)
-  def fragAsDim[F, C](cfg: C) = macro fragAsDim_impl[F, C]
+  def frag[F, C](cfg: C): FragmentFactory[F, C] = macro fragWithConf[F, C]
 
-  def single[F] = new FragmentFactory[F, Unit](None) with SingletonFragmentFactory[F, Unit]
-  def singleAsDim[F] = macro singleAsDim_impl[F]
+  def single[F]: FragmentFactory[F, Unit] = macro singleNoConf[F]
 
-  def single[F, C](cfg: C) = new FragmentFactory[F, C](cfg) with SingletonFragmentFactory[F, C]
+  def single[F, C](cfg: C): FragmentFactory[F, C] = macro singleWithConf[F, C]
 
   def mutableFragment(lst: MutableFragmentListener*): Frag[MutableFragment, MutableFragmentConfig] => MutableFragment = macro mutableFragment_impl
-
-  class FragmentFactory[F, C](cfgOpt: Option[C]) extends (Frag[F, C] => F) {
-    def this(cfg: C) = this(if (cfg ==()) None else Some(cfg))
-
-    override def apply(frag: Frag[F, C]): F = ReflectHelper.newFragment(frag, cfgOpt)
-  }
-
-  class DimFactory[D, F <: D, C](fragFactory: (Frag[F, C] => F)) extends (Frag[D, Unit] => D) {
-    override def apply(dimFrag: Frag[D, Unit]): D = {
-      fragFactory(dimFrag.asInstanceOf[Frag[F, C]])
-    }
-  }
-
-  def toDimFrag[F, C](fragFactory: (Frag[F, C] => F)): Any = macro toDimFrag_impl[F, C]
 
   def selectProxy[F](ci: MorphKernel[_]): Any = macro selectProxy_impl[F]
 
@@ -105,18 +88,18 @@ object Morpheus {
 
   //def \/[M1, M2](ci1: MorphKernelBase[M1], ci2: MorphKernelBase[M2]): Any = macro fork_impl[M1, M2]
 
-  //def mirror[S](self: S): Option[S with MorpherMirror[\?[S], Any]] = macro mirror_impl[S]
+  //def mirror[S](self: S): Option[S with MorphMirror[\?[S], Any]] = macro mirror_impl[S]
   def mirror[S](self: S): Any = macro mirror_impl[S]
 
   def remorph[S](arg: S, altNum: Int): Unit = macro remorph_impl[S]
 
   def select[F](mutableProxy: Any): Option[F] = macro select_impl[F]
 
-  def inspect[T <: MutableMorpherMirror[_], R](mutableProxy: T)(fork: PartialFunction[Any, R]): Any = macro inspect_impl[T, R]
+  def inspect[T <: MutableMorphMirror[_], R](mutableProxy: T)(fork: PartialFunction[Any, R]): Any = macro inspect_impl[T, R]
 
-  implicit def convertMorphToPartialRef[M1, M2](morph: MorpherMirror[M1]): ~&[M2] = macro convertMorphToPartialRef_impl[M1, M2]
+  implicit def convertMorphToPartialRef[M1, M2](morph: MorphMirror[M1]): ~&[M2] = macro convertMorphToPartialRef_impl[M1, M2]
 
-  implicit def convertMorphToTotalRef[M1, M2](morph: MorpherMirror[M1]): &[M2] = macro convertMorphToTotalRef_impl[M1, M2]
+  implicit def convertMorphToTotalRef[M1, M2](morph: MorphMirror[M1]): &[M2] = macro convertMorphToTotalRef_impl[M1, M2]
 
   implicit def convertMorphKernelToPartialRef[M1, M2](ci: MorphKernel[M1]): ~&[M2] = macro convertMorphKernelToPartialRef_impl[M1, M2]
 
@@ -166,6 +149,54 @@ object Morpheus {
   def rate[S](delegate: MorphingStrategy[_], sw: () => Set[(Int, Int)]): Any = macro ratePos_impl[S]
 
   def rate_![S](delegate: MorphingStrategy[_], sw: () => Set[(Int, Int)]): Any = macro rateNeg_impl[S]
+
+  def fragNoConf[F: c.WeakTypeTag](c: whitebox.Context): c.Expr[FragmentFactory[F, Unit]] = {
+    import c.universe._
+
+    val fragTpe = implicitly[WeakTypeTag[F]].tpe
+    if (!isFragment(c)(fragTpe) && !isWrapper(c)(fragTpe)) {
+      c.abort(c.enclosingPosition, s"Type $fragTpe is neither fragment or wrapper")
+    }
+
+    c.Expr[FragmentFactory[F, Unit]](q"new org.morpheus.FragmentFactory[$fragTpe, Unit](None)")
+  }
+
+  def fragWithConf[F: c.WeakTypeTag, C: c.WeakTypeTag](c: whitebox.Context)(cfg: c.Expr[C]): c.Expr[FragmentFactory[F, C]] = {
+    import c.universe._
+
+    val fragTpe = implicitly[WeakTypeTag[F]].tpe
+    if (!isFragment(c)(fragTpe) && !isWrapper(c)(fragTpe)) {
+      c.abort(c.enclosingPosition, s"Type $fragTpe is neither fragment or wrapper")
+    }
+
+    val cfgTpe = implicitly[WeakTypeTag[C]].tpe
+
+    c.Expr[FragmentFactory[F, C]](q"new org.morpheus.FragmentFactory[$fragTpe, $cfgTpe](Some($cfg))")
+  }
+
+  def singleNoConf[F: c.WeakTypeTag](c: whitebox.Context): c.Expr[FragmentFactory[F, Unit]] = {
+    import c.universe._
+
+    val fragTpe = implicitly[WeakTypeTag[F]].tpe
+    if (!isFragment(c)(fragTpe) && !isWrapper(c)(fragTpe)) {
+      c.abort(c.enclosingPosition, s"Type $fragTpe is neither fragment or wrapper")
+    }
+
+    c.Expr[FragmentFactory[F, Unit]](q"new org.morpheus.FragmentFactory[$fragTpe, Unit](None) with org.morpheus.SingletonFragmentFactory[$fragTpe, Unit]")
+  }
+
+  def singleWithConf[F: c.WeakTypeTag, C: c.WeakTypeTag](c: whitebox.Context)(cfg: c.Expr[C]): c.Expr[FragmentFactory[F, C]] = {
+    import c.universe._
+
+    val fragTpe = implicitly[WeakTypeTag[F]].tpe
+    if (!isFragment(c)(fragTpe) && !isWrapper(c)(fragTpe)) {
+      c.abort(c.enclosingPosition, s"Type $fragTpe is neither fragment or wrapper")
+    }
+
+    val cfgTpe = implicitly[WeakTypeTag[C]].tpe
+
+    c.Expr[FragmentFactory[F, C]](q"new org.morpheus.FragmentFactory[$fragTpe, $cfgTpe](Some($cfg)) with org.morpheus.SingletonFragmentFactory[$fragTpe, $cfgTpe]")
+  }
 
   def remorph_impl[S: c.WeakTypeTag](c: whitebox.Context)(arg: c.Expr[Any], altNum: c.Expr[Int]): c.Expr[Unit] = {
     import c.universe._
@@ -232,61 +263,25 @@ object Morpheus {
     c.Expr(q"org.morpheus.Morpheus.external($ci.fragments.select[org.morpheus.FragmentHolder[${implicitly[WeakTypeTag[F]]}]].proxy)")
   }
 
+//  def expose_impl2[F: c.WeakTypeTag](c: whitebox.Context)(morph: c.Expr[MorphMirror[_]]): c.Expr[Any] = {
+//    import c.universe._
+//
+//    //c.Expr(q"org.morpheus.Morpheus.external($ci.fragments.select[org.morpheus.FragmentHolder[${implicitly[WeakTypeTag[F]]}]].proxy)")
+//    c.Expr(q"""
+//              {
+//                $.kernel.fragmentHolder[Contact] match {
+//                  case None => sys.error("")
+//                  case Some(holder) => holder.proxy
+//                }
+//              }
+//           org.morpheus.Morpheus.external($ci.fragments.select[org.morpheus.FragmentHolder[${implicitly[WeakTypeTag[F]]}]].proxy)
+//      """)
+//  }
+
   def selectProxy_impl[F: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[_]]): c.Expr[Any] = {
     import c.universe._
 
     c.Expr(q"$ci.fragments.select[org.morpheus.FragmentHolder[${implicitly[WeakTypeTag[F]]}]].proxy")
-  }
-
-  def singleAsDim_impl[F: c.WeakTypeTag](c: whitebox.Context): c.Expr[Any] = {
-    import c.universe._
-
-    c.Expr(q"""
-        {
-          import org.morpheus.Morpheus._
-          val sf = single[${implicitly[WeakTypeTag[F]]}]
-          toDimFrag(sf)
-        }
-    """)
-  }
-
-  def fragAsDim_impl[F: c.WeakTypeTag, C: c.WeakTypeTag](c: whitebox.Context)(cfg: c.Expr[C]): c.Expr[Any] = {
-    import c.universe._
-
-    c.Expr(q"""
-        {
-          import org.morpheus.Morpheus._
-          val ff = frag[${implicitly[WeakTypeTag[F]]}, ${implicitly[WeakTypeTag[C]]}]($cfg)
-          toDimFrag(ff)
-        }
-    """)
-  }
-
-  def fragAsDimNoCfg_impl[F: c.WeakTypeTag](c: whitebox.Context): c.Expr[Any] = {
-    import c.universe._
-
-    c.Expr(q"""
-        {
-          import org.morpheus.Morpheus._
-          val ff = frag[${implicitly[WeakTypeTag[F]]}]
-          toDimFrag(ff)
-        }
-    """)
-  }
-
-  def toDimFrag_impl[F: c.WeakTypeTag, C: c.WeakTypeTag](c: whitebox.Context)(fragFactory: c.Expr[(Frag[F, C] => F)]): c.Expr[Any] = {
-    import c.universe._
-
-    val fragTpe = implicitly[WeakTypeTag[F]].tpe
-    val cfgTpe = implicitly[WeakTypeTag[C]].tpe
-    val dimTpe = findDimension(c)(fragTpe) match {
-      case None => c.abort(c.enclosingPosition, s"Cannot find dimension of fragment $fragTpe")
-      case Some(dimTp) =>
-        dimTp
-    }
-
-    c.Expr(q"new org.morpheus.Morpheus.DimFactory[$dimTpe, $fragTpe, $cfgTpe]($fragFactory)")
-
   }
 
   def self_impl(c: whitebox.Context)(self: c.Expr[Any]): c.Expr[Any] = {
@@ -722,7 +717,7 @@ object Morpheus {
 
   }
 
-  def convertMorphToPartialRef_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(morph: c.Expr[MorpherMirror[M1]]): c.Expr[~&[M2]] = {
+  def convertMorphToPartialRef_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(morph: c.Expr[MorphMirror[M1]]): c.Expr[~&[M2]] = {
     import c.universe._
 
     val tgtTpe = implicitly[WeakTypeTag[M2]].tpe.dealias
@@ -731,13 +726,13 @@ object Morpheus {
       {
         import org.morpheus._
         val ref: ~&[$tgtTpe] = convertMorphKernelToPartialRef[$srcTpe, $tgtTpe]($morph.kernel)
-        ref.copy(sourceStrategy = Some(new LastRatingStrategy($morph.asInstanceOf[MorpherMirror[Any]]))).asInstanceOf[~&[$tgtTpe]]
+        ref.copy(sourceStrategy = Some(new LastRatingStrategy($morph.asInstanceOf[MorphMirror[Any]]))).asInstanceOf[~&[$tgtTpe]]
       }
     """
     c.Expr[~&[M2]](res)
   }
 
-  def convertMorphToTotalRef_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(morph: c.Expr[MorpherMirror[M1]]): c.Expr[&[M2]] = {
+  def convertMorphToTotalRef_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(morph: c.Expr[MorphMirror[M1]]): c.Expr[&[M2]] = {
     import c.universe._
 
     val tgtTpe = implicitly[WeakTypeTag[M2]].tpe.dealias
@@ -746,7 +741,7 @@ object Morpheus {
       {
         import org.morpheus._
         val ref: &[$tgtTpe] = convertMorphKernelToTotalRef[$srcTpe, $tgtTpe]($morph.kernel)
-        ref.copy(sourceStrategy = Some(new LastRatingStrategy($morph.asInstanceOf[MorpherMirror[Any]]))).asInstanceOf[&[$tgtTpe]]
+        ref.copy(sourceStrategy = Some(new LastRatingStrategy($morph.asInstanceOf[MorphMirror[Any]]))).asInstanceOf[&[$tgtTpe]]
       }
     """
     c.Expr[&[M2]](res)
@@ -941,9 +936,16 @@ object Morpheus {
     var newFragToOrigFrag = Map.empty[Int, Int]
     for ((srcFragId, (srcFragTpe, _)) <- srcFragmentTypesMap;
          (tgtFragId, (tgtFragTpe, _)) <- tgtFragmentTypesMap) {
-      if (srcFragTpe =:= tgtFragTpe) {
-        newFragToOrigFrag += (tgtFragId -> srcFragId)
-        origFragToNewFrag += (srcFragId -> tgtFragId)
+      if (isAbstractFragment(c)(tgtFragTpe)) {
+        if (srcFragTpe <:< tgtFragTpe && !isWrapper(c)(srcFragTpe)) {
+          newFragToOrigFrag += (tgtFragId -> srcFragId)
+          origFragToNewFrag += (srcFragId -> tgtFragId)
+        }
+      } else {
+        if (srcFragTpe =:= tgtFragTpe) {
+          newFragToOrigFrag += (tgtFragId -> srcFragId)
+          origFragToNewFrag += (srcFragId -> tgtFragId)
+        }
       }
     }
 
@@ -1434,7 +1436,7 @@ object Morpheus {
 
   }
 
-  //def mirror_impl[S: c.WeakTypeTag](c: whitebox.Context)(self: c.Expr[Any]): c.Expr[Option[S with MorpherMirror[\?[S]]]] = {
+  //def mirror_impl[S: c.WeakTypeTag](c: whitebox.Context)(self: c.Expr[Any]): c.Expr[Option[S with MorphMirror[\?[S]]]] = {
   def mirror_impl[S: c.WeakTypeTag](c: whitebox.Context)(self: c.Expr[Any]): c.Expr[Any] = {
     import c.universe._
 
@@ -1449,7 +1451,7 @@ object Morpheus {
 
     val conformanceLevelMarker = implicitly[WeakTypeTag[ConformanceLevelMarker]]
 
-    val mirrorTpe = tq"$tp with MorpherMirror[or[$tp, Unit]] with $conformanceLevelMarker"
+    val mirrorTpe = tq"$tp with MorphMirror[or[$tp, Unit]] with $conformanceLevelMarker"
 
     val res =
       q"""
@@ -1457,7 +1459,7 @@ object Morpheus {
             import org.morpheus._
             import org.morpheus.Morpheus._
             $self match {
-              case mirror: org.morpheus.MorpherMirror[_] =>
+              case mirror: org.morpheus.MorphMirror[_] =>
                 Some(mirror.asInstanceOf[$mirrorTpe]).asInstanceOf[Option[$mirrorTpe]]
               case _ => None
             }
@@ -1466,7 +1468,7 @@ object Morpheus {
 
     //val res = q"if (true) None else Some(null.asInstanceOf[$fragmentTpe])"
 
-    //c.Expr[Option[S with MorpherMirror[\?[S]]]](res)
+    //c.Expr[Option[S with MorphMirror[\?[S]]]](res)
     c.Expr(res)
 
   }
@@ -1488,8 +1490,8 @@ object Morpheus {
 
     val fragmentTpe = implicitly[WeakTypeTag[F]].tpe
 
-    val immutableMirrorTpe = implicitly[TypeTag[MorpherMirror[_]]].tpe
-    val mutableMirrorTpe = implicitly[TypeTag[MutableMorpherMirror[_]]].tpe
+    val immutableMirrorTpe = implicitly[TypeTag[MorphMirror[_]]].tpe
+    val mutableMirrorTpe = implicitly[TypeTag[MutableMorphMirror[_]]].tpe
 
     if (!(proxy.actualType <:< immutableMirrorTpe)) {
       c.abort(c.enclosingPosition, s"Illegal argument type ${proxy.actualType} (${showRaw(proxy.tree)}}). Expected instance of $immutableMirrorTpe")
@@ -1551,7 +1553,7 @@ object Morpheus {
 
     // todo: check if the self is a fragment
 
-    //val mutableMirrorTpe = implicitly[TypeTag[MutableMorpherMirror[_, _]]].tpe
+    //val mutableMirrorTpe = implicitly[TypeTag[MutableMorphMirror[_, _]]].tpe
 
     // Use the type of 'this' as the composite type. It allows checking whether the F argument is valid since
     // F can refer only to the fragment type itself or its dependencies.
@@ -1569,7 +1571,7 @@ object Morpheus {
       q"""
           {
             val morphOpt = $self match {
-              case mirror: org.morpheus.MorpherMirror[_] =>
+              case mirror: org.morpheus.MorphMirror[_] =>
                 mirror.owningMutableProxy match {
                   case None => Some($self)
                   case Some(proxy) => Some(proxy.delegate)

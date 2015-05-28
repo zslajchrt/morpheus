@@ -5,7 +5,7 @@ import scala.reflect.runtime.universe._
 /**
  * Created by zslajchrt on 29/04/15.
  */
-trait MorpherMirror[M] {
+trait MorphMirror[M] {
 
   type ConfLev <: ConformanceLevelMarker
   type Model = M
@@ -14,10 +14,10 @@ trait MorpherMirror[M] {
   val kernel: MorphKernel[M] { type ConformLevel = ConfLev }
 //  val kernel: MorphKernel[M]
 
-  //def remorph(): L with MorpherMirror[M, L]
+  //def remorph(): L with MorphMirror[M, L]
   def remorph(): kernel.ImmutableLUB
 
-  //def remorph(altStrategy: MorphingStrategy[M]): L with MorpherMirror[M, L]
+  //def remorph(altStrategy: MorphingStrategy[M]): L with MorphMirror[M, L]
   def remorph(altStrategy: MorphingStrategy[M]): kernel.ImmutableLUB
 
   def myAlternative: List[FragmentHolder[_]]
@@ -38,7 +38,7 @@ trait MorpherMirror[M] {
     myAlternative.find(_.fragment.fragTag.tpe <:< fragTpe)
   }
 
-  //def owningMutableProxy: Option[L with MutableMorpherMirror[M, L]]
+  //def owningMutableProxy: Option[L with MutableMorphMirror[M, L]]
   def owningMutableProxy: Option[kernel.MutableLUB]
 }
 
@@ -48,12 +48,12 @@ trait MorpherMirror[M] {
 //  /**
 //   * It causes a re-instantiation only if the new composition of the proxy's delegate differs from the current one.
 //   */
-//  def remorph(): LUB with MorpherMirror[M, LUB]
+//  def remorph(): LUB with MorphMirror[M, LUB]
 //
 //  def remorph(altStrategy: MorphingStrategy[M])
 //}
 
-trait MutableMorpherMirror[M] extends MorpherMirror[M] {
+trait MutableMorphMirror[M] extends MorphMirror[M] {
 
   private lazy val changeListener = new MutableFragmentListener {
 

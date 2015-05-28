@@ -90,11 +90,12 @@ class FactoryProviderImplicitsImpl(val c: whitebox.Context) {
   import c.universe._
 
   def implicitFragmentFactory[T: WeakTypeTag]: Tree = {
-    val tp = implicitly[WeakTypeTag[T]].tpe
-    if (Morpheus.isAbstractFragment(c)(tp)) {
-      c.abort(c.enclosingPosition, s"Fragment $tp is abstract. Its instance must be provided via an implicit value.")
-    }
-    q"org.morpheus.Morpheus.frag[$tp]"
+//    val tp = implicitly[WeakTypeTag[T]].tpe
+//    if (Morpheus.isAbstractFragment(c)(tp)) {
+//      c.abort(c.enclosingPosition, s"Fragment $tp is abstract. Its instance must be provided via an implicit value.")
+//    }
+//    q"org.morpheus.Morpheus.frag[$tp]"
+    Morpheus.fragNoConf(c)(implicitly[WeakTypeTag[T]]).tree
   }
 
 }
@@ -110,11 +111,12 @@ class SingletonProviderImplicitsImpl(val c: whitebox.Context) {
   import c.universe._
 
   def implicitFragmentFactory[T: WeakTypeTag]: Tree = {
-    val tp = implicitly[WeakTypeTag[T]].tpe
-    if (Morpheus.isAbstractFragment(c)(tp)) {
-      c.abort(c.enclosingPosition, s"Fragment $tp is abstract. Its instance must be provided via an implicit value.")
-    }
-    q"org.morpheus.Morpheus.single[$tp]"
+//    val tp = implicitly[WeakTypeTag[T]].tpe
+//    if (Morpheus.isAbstractFragment(c)(tp)) {
+//      c.abort(c.enclosingPosition, s"Fragment $tp is abstract. Its instance must be provided via an implicit value.")
+//    }
+//    q"org.morpheus.Morpheus.single[$tp]"
+    Morpheus.singleNoConf(c)(implicitly[WeakTypeTag[T]]).tree
   }
 
 }

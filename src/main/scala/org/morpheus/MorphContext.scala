@@ -56,9 +56,9 @@ abstract class CompleteMorphContext[M, L, ConformLev <: ConformanceLevelMarker](
   val (entCls, allInterfaces) = if (contextDimensions.nonEmpty) {
     val entCls: Class[_] = contextDimensions.head.last
     if (entCls.isInterface) {
-      (classOf[AnyRef], contextDimensions.flatMap(fragClasses => fragClasses) ++ Array(classOf[MorpherMirror[M]]))
+      (classOf[AnyRef], contextDimensions.flatMap(fragClasses => fragClasses) ++ Array(classOf[MorphMirror[M]]))
     } else {
-      (entCls, contextDimensions(0).dropRight(1).toArray ++ contextDimensions.tail.flatMap(fragClasses => fragClasses) ++ Array(classOf[MorpherMirror[M]]))
+      (entCls, contextDimensions(0).dropRight(1).toArray ++ contextDimensions.tail.flatMap(fragClasses => fragClasses) ++ Array(classOf[MorphMirror[M]]))
     }
   } else {
     (classOf[AnyRef], Array.empty[Class[_]])
@@ -68,7 +68,7 @@ abstract class CompleteMorphContext[M, L, ConformLev <: ConformanceLevelMarker](
 
   def proxy = contextProxy
 
-  val compositeMirror = new MorpherMirror[compositeInstance.Model] {
+  val compositeMirror = new MorphMirror[compositeInstance.Model] {
 
     override type ConfLev = compositeInstance.ConformLevel
 
@@ -111,7 +111,7 @@ abstract class CompleteMorphContext[M, L, ConformLev <: ConformanceLevelMarker](
     override def getCallback(method: Method): AnyRef = {
       val declaringClass = method.getDeclaringClass
 
-      if (declaringClass == classOf[MorpherMirror[M]])
+      if (declaringClass == classOf[MorphMirror[M]])
         new MethodInterceptor {
           override def intercept(obj: scala.Any, method: Method, args: Array[AnyRef], proxy: MethodProxy): AnyRef = {
             inContext {
@@ -216,7 +216,7 @@ class FragmentInitContext(fragmentTrait: Class[_]) extends MorphContext {
 
 }
 
-//abstract class MutableMorphContext[M, L, ConformLev <: ConformanceLevelMarker, ImmutableLUB <: L with MorpherMirror[M, L], MutableLUB <: MutableMorpherMirror[M, L]](
+//abstract class MutableMorphContext[M, L, ConformLev <: ConformanceLevelMarker, ImmutableLUB <: L with MorphMirror[M, L], MutableLUB <: MutableMorphMirror[M, L]](
 abstract class MutableMorphContext[M](
                                                             val owningKernel: MorphKernel[M],
                                                             lubComponents: Array[Class[_]],
@@ -226,7 +226,7 @@ abstract class MutableMorphContext[M](
 
   def morph(proxy: owningKernel.MutableLUB, strategy: MorphingStrategy[M]): owningKernel.ImmutableLUB
 
-  val compositeMirror = new MutableMorpherMirror[owningKernel.Model] {
+  val compositeMirror = new MutableMorphMirror[owningKernel.Model] {
 
     override type ConfLev = owningKernel.ConformLevel
 
@@ -276,9 +276,9 @@ abstract class MutableMorphContext[M](
   val (entCls, allInterfaces) = {
     val firstDim = lubComponents(0)
     if (firstDim.isInterface) {
-      (classOf[AnyRef], lubComponents ++ Array(classOf[MutableMorpherMirror[M]]))
+      (classOf[AnyRef], lubComponents ++ Array(classOf[MutableMorphMirror[M]]))
     } else {
-      (firstDim, lubComponents.tail ++ Array(classOf[MutableMorpherMirror[M]]))
+      (firstDim, lubComponents.tail ++ Array(classOf[MutableMorphMirror[M]]))
     }
   }
 
@@ -303,7 +303,7 @@ abstract class MutableMorphContext[M](
   class Helper() extends CallbackHelper(entCls, allInterfaces) {
     override def getCallback(method: Method): AnyRef = {
       val declaringClass = method.getDeclaringClass
-      if (declaringClass == classOf[MutableMorpherMirror[_]] || "remorph" == method.getName) // todo: do it better
+      if (declaringClass == classOf[MutableMorphMirror[_]] || "remorph" == method.getName) // todo: do it better
         new MethodInterceptor {
           override def intercept(obj: scala.Any, method: Method, args: Array[AnyRef], proxy: MethodProxy): AnyRef = {
             inContext {
