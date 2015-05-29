@@ -71,6 +71,7 @@ abstract class CompleteMorphContext[M, L, ConformLev <: ConformanceLevelMarker](
   val compositeMirror = new MorphMirror[compositeInstance.Model] {
 
     override type ConfLev = compositeInstance.ConformLevel
+    override type LUB = compositeInstance.LUB
 
     override def remorph() = {
       Morpher.morph[compositeInstance.Model](compositeInstance, usedStrategy)(None)
@@ -229,10 +230,11 @@ abstract class MutableMorphContext[M](
   val compositeMirror = new MutableMorphMirror[owningKernel.Model] {
 
     override type ConfLev = owningKernel.ConformLevel
+    override type LUB = owningKernel.LUB
 
     override def remorph() = {
       MutableMorphContext.this.delegate = morph(proxy, MutableMorphContext.this.delegate.strategy)
-      MutableMorphContext.this.delegate.asInstanceOf[kernel.ImmutableLUB]
+      MutableMorphContext.this.delegate.asInstanceOf[LUB with MorphMirror[M]]
     }
 
     override def remorph(altStrategy: MorphingStrategy[M]) = {

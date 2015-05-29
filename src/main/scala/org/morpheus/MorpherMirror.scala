@@ -9,13 +9,13 @@ trait MorphMirror[M] {
 
   type ConfLev <: ConformanceLevelMarker
   type Model = M
-//  type LUB = L
+  type LUB
 //
   val kernel: MorphKernel[M] { type ConformLevel = ConfLev }
 //  val kernel: MorphKernel[M]
 
-  //def remorph(): L with MorphMirror[M, L]
-  def remorph(): kernel.ImmutableLUB
+  def remorph(): LUB with MorphMirror[M]
+  //def remorph(): kernel.ImmutableLUB
 
   //def remorph(altStrategy: MorphingStrategy[M]): L with MorphMirror[M, L]
   def remorph(altStrategy: MorphingStrategy[M]): kernel.ImmutableLUB

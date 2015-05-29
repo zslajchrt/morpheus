@@ -134,9 +134,11 @@ object Morpheus {
    * @tparam M
    * @return the LUB of the submodel `M` of the model of the composite instance `ci`
    */
-  def asCompositeOf[M](ci: MorphKernel[_]): Any = macro asCompositeOf_impl[M]
+  def asMorphOf[M](ci: MorphKernel[_]): Any = macro asMorphOf_impl[M]
 
-  def asCompositeOf_~[M](ci: MorphKernel[_]): Any = macro asCompositeOfMutable_impl[M]
+  def asMorphOf[M](morph: MorphMirror[_]): Any = macro asMorphOfFromMorph_impl[M]
+
+  def asMorphOf_~[M](ci: MorphKernel[_]): Any = macro asMorphOfMutable_impl[M]
 
   def promote[M](sw: () => Option[Int]): Any = macro promote_implOneArg[M]
 
@@ -330,11 +332,12 @@ object Morpheus {
 
   }
 
-  def proxies_impl[M: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[Any]): c.Expr[Any] = {
+  def expandAlternatives(c: whitebox.Context)(modelTpe: c.Type): (Set[c.Type], List[(List[FragmentNode], List[c.Type], c.Type)]) = {
     import c.universe._
 
-    //var completeAltLUBs = Set.empty[c.Type]
-    var expandedFragTypes = Set.empty[c.Type]
+    var expandedFragTypes: Set[c.Type] = Set.empty[c.Type]
+
+    var expandedAlts: List[(List[FragmentNode], List[c.Type], c.Type)] = Nil
 
     def expandAlts(altsModelTpe: c.Type): Unit = {
       val altIter = alternativesIterator(c)(altsModelTpe, checkDeps = false, excludePlaceholders = false, Total)._3
@@ -366,24 +369,28 @@ object Morpheus {
           expandAlts(altExpandedTpe)
 
         } else {
-          // no expansion occurred in this alternative, thus add the alt's LUB to the set
-
-          // remove dups
-          var alreadyInLUB = Set.empty[c.Type]
-          val lubTypesNoDups = alt._2.filter(fragTpe => if (alreadyInLUB.contains(fragTpe)) {
-            false
-          } else {
-            alreadyInLUB += fragTpe
-            true
-          })
-
-          //completeAltLUBs += conjunctionLUB(c)(lubTypesNoDups)._1
+          // no expansion occurred in this alternative, thus add the alt to the result list
+          expandedAlts ::= alt
         }
       }
     }
 
+    expandAlts(modelTpe)
+
+    (expandedFragTypes, expandedAlts.reverse)
+  }
+
+  def proxies_impl[M: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[Any]): c.Expr[Any] = {
+    import c.universe._
+
+    //var completeAltLUBs = Set.empty[c.Type]
+
     val compTpe = implicitly[WeakTypeTag[M]].tpe.dealias
-    expandAlts(compTpe)
+    val expandedAlts = expandAlternatives(c)(compTpe)
+    val expandedFragTypes = expandedAlts._1
+
+//    c.info(c.enclosingPosition, s"Expanded frag types: ${expandedAlts._1}", true)
+//    c.info(c.enclosingPosition, s"Expanded alts: ${expandedAlts._2.map(_._2)}", true)
 
     // For each type found when traversing the dependencies create an implicit value
 
@@ -513,7 +520,12 @@ object Morpheus {
     c.Expr(result)
   }
 
-  def asCompositeOf_impl[M: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[_]]): c.Expr[Any] = {
+  def asMorphOfFromMorph_impl[M: c.WeakTypeTag](c: whitebox.Context)(morph: c.Expr[MorphMirror[_]]): c.Expr[Any] = {
+    import c.universe._
+    asMorphOf_impl(c)(c.Expr[MorphKernel[_]](q"$morph.kernel"))(implicitly[WeakTypeTag[M]])
+  }
+
+  def asMorphOf_impl[M: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[_]]): c.Expr[Any] = {
     import c.universe._
 
     val targetTpe = implicitly[WeakTypeTag[M]].tpe
@@ -529,7 +541,7 @@ object Morpheus {
     c.Expr(result)
   }
 
-  def asCompositeOfMutable_impl[M: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[_]]): c.Expr[Any] = {
+  def asMorphOfMutable_impl[M: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[_]]): c.Expr[Any] = {
     import c.universe._
 
     val targetTpe = implicitly[WeakTypeTag[M]].tpe
@@ -1522,12 +1534,14 @@ object Morpheus {
         c.abort(c.enclosingPosition, s"Unsupported argument type ${proxy.actualType}, type class: ${proxy.actualType.getClass}")
     }
 
-    val altIter = alternativesIterator(c)(compositeModelTpe, checkDeps = false, excludePlaceholders = true, Partial)._3
-    var matches: Boolean = false
-    while (altIter.hasNext && !matches) {
-      val altLUB = altIter.next()._3
-      matches = altLUB <:< fragmentTpe
-    }
+    //val altIter = alternativesIterator(c)(compositeModelTpe, checkDeps = false, excludePlaceholders = true, Partial)._3
+    val expandedAlts = expandAlternatives(c)(compositeModelTpe)._2
+    val matches = expandedAlts.exists(_._3 <:< fragmentTpe)
+//    var matches: Boolean = false
+//    while (altIter.hasNext && !matches) {
+//      val altLUB = altIter.next()._3
+//      matches = altLUB <:< fragmentTpe
+//    }
 
     val res = if (matches) {
       q"""
