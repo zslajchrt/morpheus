@@ -59,8 +59,8 @@ abstract class MorphKernel[M](val root: MorphModelNode) extends MorphKernelBase[
   type LUB
   type Model = M
   type ConformLevel <: ConformanceLevelMarker
-  type MutableLUB = LUB with MutableMorphMirror[M] { type ConfLev = ConformLevel }
-  type ImmutableLUB = LUB with MorphMirror[M] { type ConfLev = ConformLevel }
+  type MutableLUB = LUB with MutableMorphMirror[M] { type ConfLev = ConformLevel; type LUB = outer.LUB }
+  type ImmutableLUB = LUB with MorphMirror[M] { type ConfLev = ConformLevel; type LUB = outer.LUB }
 
   val fragmentDescriptors: HList
   val fragments: HList
@@ -92,7 +92,7 @@ abstract class MorphKernel[M](val root: MorphModelNode) extends MorphKernelBase[
       case Some(custStrat) => custStrat
     }
 
-    val mp = new MutableMorphContext[M](this, lubComponents, initialStrategy) {
+    val mp = new MutableMorphContext[M, LUB, ConformLevel](this, lubComponents, initialStrategy) {
 
       //override def morph(proxy: MutableLUB, actualStrategy: MorphingStrategy[M]): owningKernel.ImmutableLUB = {
       override def morph(proxy: owningKernel.MutableLUB, actualStrategy: MorphingStrategy[M]): owningKernel.ImmutableLUB = {

@@ -218,8 +218,8 @@ class FragmentInitContext(fragmentTrait: Class[_]) extends MorphContext {
 }
 
 //abstract class MutableMorphContext[M, L, ConformLev <: ConformanceLevelMarker, ImmutableLUB <: L with MorphMirror[M, L], MutableLUB <: MutableMorphMirror[M, L]](
-abstract class MutableMorphContext[M](
-                                                            val owningKernel: MorphKernel[M],
+abstract class MutableMorphContext[M, L, ConformLev <: ConformanceLevelMarker](
+                                                            val owningKernel: MorphKernel[M] { type LUB = L; type ConformLevel = ConformLev },
                                                             lubComponents: Array[Class[_]],
                                                             initialStrategy: MorphingStrategy[M]) extends MorphContext {
 
@@ -229,17 +229,17 @@ abstract class MutableMorphContext[M](
 
   val compositeMirror = new MutableMorphMirror[owningKernel.Model] {
 
-    override type ConfLev = owningKernel.ConformLevel
-    override type LUB = owningKernel.LUB
+    override type ConfLev = ConformLev
+    override type LUB = L
 
     override def remorph() = {
       MutableMorphContext.this.delegate = morph(proxy, MutableMorphContext.this.delegate.strategy)
-      MutableMorphContext.this.delegate.asInstanceOf[LUB with MorphMirror[M]]
+      MutableMorphContext.this.delegate
     }
 
     override def remorph(altStrategy: MorphingStrategy[M]) = {
       MutableMorphContext.this.delegate = morph(proxy, altStrategy)
-      MutableMorphContext.this.delegate.asInstanceOf[kernel.ImmutableLUB]
+      MutableMorphContext.this.delegate
     }
 
     def delegate: kernel.ImmutableLUB = MutableMorphContext.this.delegate.asInstanceOf[kernel.ImmutableLUB]
@@ -248,7 +248,7 @@ abstract class MutableMorphContext[M](
      * This method is delegated to the wrapped delegate.
      * @return
      */
-    override val kernel: MorphKernel[M] { type ConformLevel = owningKernel.ConformLevel } = owningKernel
+    override val kernel = owningKernel
 
     /**
      * This method is delegated to the wrapped delegate.

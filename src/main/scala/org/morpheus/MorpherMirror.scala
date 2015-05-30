@@ -7,15 +7,17 @@ import scala.reflect.runtime.universe._
  */
 trait MorphMirror[M] {
 
+  outer =>
+
   type ConfLev <: ConformanceLevelMarker
   type Model = M
   type LUB
 //
-  val kernel: MorphKernel[M] { type ConformLevel = ConfLev }
+  val kernel: MorphKernel[M] { type ConformLevel = ConfLev; type LUB = outer.LUB  }
 //  val kernel: MorphKernel[M]
 
-  def remorph(): LUB with MorphMirror[M]
-  //def remorph(): kernel.ImmutableLUB
+  //def remorph(): LUB with MorphMirror[M] { type ConfLev = outer.ConfLev; type LUB = outer.LUB }
+  def remorph(): kernel.ImmutableLUB
 
   //def remorph(altStrategy: MorphingStrategy[M]): L with MorphMirror[M, L]
   def remorph(altStrategy: MorphingStrategy[M]): kernel.ImmutableLUB
