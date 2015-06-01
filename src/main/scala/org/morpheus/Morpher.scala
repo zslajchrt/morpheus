@@ -25,9 +25,9 @@ class Morpher[M]() {
     }
 
     owningMutableProxy match {
-      case Some(proxy) if proxy.delegate != null && proxy.myAlternative == altsHolders =>
+      case Some(proxy) if proxy.delegate != null && proxy.myAlternative == altsHolders && proxy.strategy == strategy =>
         // There is no need to instantiate a new proxy's delegate, provided that the delegate composition is same as the current one.
-        proxy.delegate.asInstanceOf[instance.ImmutableLUB]
+        proxy.delegate
 
       case _ =>
 

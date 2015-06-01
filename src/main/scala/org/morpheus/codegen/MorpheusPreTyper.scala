@@ -172,7 +172,7 @@ with TreeDSL {
 
         // Try to find the config trait among the direct ancestors
         val (fragClassAnnot, classBody) = ctxCls.impl.parents.find {
-          case AppliedTypeTree(Ident(TypeName("Delegate")), List(Ident(TypeName(_)))) =>
+          case AppliedTypeTree(Ident(TypeName("dlg")), List(Ident(TypeName(_)))) =>
             true
           case Ident(TypeName(parentName)) =>
             parentName == ctxCls.name + "Config"
