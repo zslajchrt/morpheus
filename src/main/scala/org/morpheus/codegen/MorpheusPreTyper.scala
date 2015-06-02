@@ -168,7 +168,7 @@ with TreeDSL {
 
         val depsFromSelf: List[MorpheusPreTyper.this.global.Tree] = extractDepsFromSelfType(clsDef)
 
-        //warning(s"Fragment ${ctxCls.name} parents ${ctxCls.impl.parents.map(p => showRaw(p))}")
+        //reporter.info(clsDef.pos, s"Fragment ${ctxCls.name} parents ${ctxCls.impl.parents.map(p => showRaw(p))}", true)
 
         // Try to find the config trait among the direct ancestors
         val (fragClassAnnot, classBody) = ctxCls.impl.parents.find {

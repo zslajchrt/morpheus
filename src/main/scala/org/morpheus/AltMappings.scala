@@ -1,13 +1,28 @@
 package org.morpheus
 
-import scala.collection.immutable.Iterable
 import scala.reflect.macros.whitebox
+import scala.util.parsing.combinator.JavaTokenParsers
 
 /**
  *
  * Created by zslajchrt on 13/04/15.
  */
+object AltMappings {
+  def apply(altMapSerialized: String): AltMappings = {
+    val parser = new AltMappingsParser
+    parser.parseAltMap(altMapSerialized).get
+  }
+}
+
 case class AltMappings(newFragToOrigFrag: Map[Int, Int], newAltToOrigAlt: Map[List[Int], List[OrigAlt]]) {
+
+  import scala.util.parsing.combinator._
+
+  class ReversePolishCalculator extends JavaTokenParsers {
+    def num: Parser[Float] = floatingPointNumber ^^ (_.toFloat)
+  }
+
+  def serialize: String = toString
 
   def preserveDynamics(): AltMappings = {
 
@@ -150,5 +165,62 @@ case class AltMappings(newFragToOrigFrag: Map[Int, Int], newAltToOrigAlt: Map[Li
     c.typecheck(tpeTree, mode = c.TYPEmode).tpe
   }
 
+  override def toString: String = s"am($newFragToOrigFrag, $newAltToOrigAlt)"
 }
+
+class AltMappingsParser extends JavaTokenParsers {
+
+  def num: Parser[Int] = floatingPointNumber ^^ (_.toInt)
+
+  def int2intPair: Parser[(Int, Int)] = num ~ """->""" ~ num ^^ {
+    case n1 ~ arr ~ n2 => (n1.toInt, n2.toInt)
+  }
+
+  def int2intPairDelim: Parser[(Int, Int)] = int2intPair ~ "," ^^ { case p1 ~ comma => p1 } | int2intPair
+
+  def intDelim: Parser[Int] = num ~ "," ^^ { case n ~ _ => n } | num
+
+  def numbers: Parser[List[Int]] = rep(intDelim)
+
+  def intList: Parser[List[Int]] = "List(" ~ numbers ~ ")" ^^ { case _ ~ nums ~ _ => nums }
+
+  def int2intPairList: Parser[List[(Int, Int)]] = rep(int2intPairDelim)
+
+  def int2intMap: Parser[Map[Int, Int]] = "Map(" ~ int2intPairList ~ ")" ^^ { case _ ~ pairs ~ _ => pairs.toMap }
+
+  def origInstSrc: Parser[OriginalInstanceSource] = "o(" ~ num ~ ")" ^^ { case _ ~ fragId ~ _ => OriginalInstanceSource(FragmentNode(fragId)) }
+
+  def placeholderSrc: Parser[PlaceholderSource] = "p(" ~ num ~ ")" ^^ { case _ ~ fragId ~ _ => PlaceholderSource(FragmentNode(fragId, placeholder = true)) }
+
+  def fragSrc: Parser[FragInstSource] = origInstSrc | placeholderSrc
+
+  def fragSrcDelim: Parser[FragInstSource] = fragSrc ~ "," ^^ { case fs ~ _ => fs } | fragSrc
+
+  def fragSrcList: Parser[List[FragInstSource]] = "List(" ~ rep(fragSrcDelim) ~ ")" ^^ { case _ ~ srcLst ~ _ => srcLst }
+
+  def origAlt: Parser[OrigAlt] = "a(" ~ intList ~ "," ~ fragSrcList ~ ")" ^^ { case _ ~ l1 ~ _ ~ l2 ~ _ => OrigAlt(l1, l2) }
+
+  def origAltDelim: Parser[OrigAlt] = origAlt ~ "," ^^ { case oa ~ _ => oa } | origAlt
+
+  def origAltList: Parser[List[OrigAlt]] = "List(" ~ rep(origAltDelim) ~ ")" ^^ { case _ ~ origAlts ~ _ => origAlts }
+
+  def alt2altPair: Parser[(List[Int], List[OrigAlt])] = intList ~ """->""" ~ origAltList ^^ { case l1 ~ arr ~ l2 => (l1, l2) }
+
+  def alt2altPairDelim: Parser[(List[Int], List[OrigAlt])] = alt2altPair ~ "," ^^ { case p1 ~ comma => p1 } | alt2altPair
+
+  def alt2altPairList: Parser[List[(List[Int], List[OrigAlt])]] = rep(alt2altPairDelim)
+
+  def newAltToOrigAlt: Parser[Map[List[Int], List[OrigAlt]]] = "Map(" ~ alt2altPairList ~ ")" ^^ { case _ ~ pairs ~ _ => pairs.toMap }
+
+  def altMappings: Parser[AltMappings] = "am(" ~ int2intMap ~ "," ~ newAltToOrigAlt ~ ")" ^^ { case _ ~ m1 ~ _ ~ m2 ~ _ => AltMappings(m1, m2) }
+
+  def parseAltMap(s: String) = {
+    parseAll(altMappings, s)
+  }
+
+
+  //def int2intMap: Parser[Map[Int, Int]] =
+
+}
+
 

@@ -7,8 +7,14 @@ sealed trait FragInstSource {
   val fragment: FragmentNode
 }
 
-case class PlaceholderSource(fragment: FragmentNode) extends FragInstSource
+case class PlaceholderSource(fragment: FragmentNode) extends FragInstSource {
+  override def toString: String = s"p(${fragment.id})"
+}
 
-case class OriginalInstanceSource(fragment: FragmentNode) extends FragInstSource
+case class OriginalInstanceSource(fragment: FragmentNode) extends FragInstSource {
+  override def toString: String = s"o(${fragment.id})"
+}
 
-case class OrigAlt(fragments: List[Int], template: List[FragInstSource])
+case class OrigAlt(fragments: List[Int], template: List[FragInstSource]) {
+  override def toString: String = s"a($fragments,$template)"
+}
