@@ -269,15 +269,29 @@ case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: MorphKernelRef[MT, 
     case None => srcInstanceRef.instance.defaultStrategy
   }
 
-  private def restrictRatedAltsToSpecifiedAlts(specifiedAlts: List[List[Int]], ratedAlts: List[(List[FragmentNode], Double)], emptyAltRating: Double): List[(List[FragmentNode], Double)] = {
+  private def restrictRatedAltsToSpecifiedAlts(matchingAlts: List[List[Int]], ratedOrigAlts: List[(List[FragmentNode], Double)], emptyAltRating: Double): List[(List[FragmentNode], Double)] = {
+    if (matchingAlts.size == 1 && matchingAlts.head == Nil) {
+      List((Nil, emptyAltRating))
+    } else {
 
-    for (specAlt <- specifiedAlts) yield ratedAlts.find(_._1.map(_.id) == specAlt) match {
-      case Some(foundRated) => foundRated
-      case None =>
-        // there can be an empty alternative corresponding to an alternatives consisting of placeholders only
-        require(specAlt == Nil, s"Cannot find specified alt $specAlt among rated alts $ratedAlts")
-        (Nil, emptyAltRating)
+      // We must preserve the order of the ratedOrigAlts, which originate from the source model morphing strategy.
+      // Thus we have to iterate the ratedAlts list and filter out those which do not have their counterpart in matchingAlts.
+
+      def isMatching(origAlt: List[Int]): Boolean = {
+        matchingAlts.contains(origAlt)
+      }
+
+      for (ratedOrigAlt <- ratedOrigAlts if isMatching(ratedOrigAlt._1.map(_.id))) yield ratedOrigAlt
+
     }
+
+//    for (matchAlt <- matchingAlts) yield ratedOrigAlts.find(_._1.map(_.id) == matchAlt) match {
+//      case Some(foundRated) => foundRated
+//      case None =>
+//        // there can be an empty alternative corresponding to an alternatives consisting of placeholders only
+//        require(matchAlt == Nil, s"Cannot find matching alt $matchAlt among rated alts $ratedOrigAlts")
+//        (Nil, emptyAltRating)
+//    }
 
   }
 
