@@ -60,6 +60,18 @@ object Morpheus {
     () => Some(t)
   }
 
+  def dependOnAlt[M, S](parentStrategy: PromotingStrategy[M, S], parentAlt: Int, switchFn: () => Option[Int]): () => Option[Int] = {
+    dependOnAlt(parentStrategy.switchFn, parentAlt, switchFn)
+  }
+
+  def dependOnAlt(parentSwitchFn: () => Option[Int], parentAlt: Int, switchFn: () => Option[Int]): () => Option[Int] = {
+    () => parentSwitchFn() match {
+      case None => None
+      case Some(channel) if channel == parentAlt => switchFn()
+      case _ => None
+    }
+  }
+
   def parse[M](checkDeps: Boolean): MorphModel[M] = macro parse_impl[M]
 
   def build[M](compositeModel: MorphModel[M], checkDeps: Boolean, fragmentProvider: FragmentProvider,
@@ -492,7 +504,13 @@ object Morpheus {
     val switchModelTree = parseMorphModelFromType(c)(switchTpe, false, false, None, Total)._1
     val altMapTree = checkMorphKernelAssignment(c)(modelTpe, switchTpe, false, Total, Total, false)._1
 
-    val result = q"org.morpheus.AltMapRatingStrategy($delegate, $switchModelTree, $altMapTree, $sw, $negative)"
+    //val result = q"org.morpheus.AltMapRatingStrategy($delegate, $switchModelTree, $altMapTree, $sw, $negative)"
+    val result = q"""
+        {
+          def createStrategy() = org.morpheus.AltMapRatingStrategy($delegate, $switchModelTree, $altMapTree, $sw, $negative)
+          createStrategy
+        }
+       """
 
     c.Expr(result)
   }
@@ -515,7 +533,17 @@ object Morpheus {
     val switchModelTree = parseMorphModelFromType(c)(switchTpe, false, false, None, Total)._1
     val altMapTree = checkMorphKernelAssignment(c)(modelTpe, switchTpe, false, Total, Total, false)._1
 
-    val result = q"org.morpheus.PromotingStrategy($delegate, $switchModelTree, $altMapTree, $sw)"
+    //val result = q"org.morpheus.PromotingStrategy($delegate, $switchModelTree, $altMapTree, $sw)"
+
+    // Wrapping the creation of the strategy to the local method helps spreading the JVM code accross the class.
+    // Otherwise it would tend to the accumulation of enormous number of instructions as long as this macro would
+    // be invoked several times in the same method.
+    val result =  q"""
+         {
+            def createStrategy() = org.morpheus.PromotingStrategy($delegate, $switchModelTree, $altMapTree, $sw)
+            createStrategy
+         }
+       """
 
     c.Expr(result)
   }
