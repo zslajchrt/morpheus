@@ -278,13 +278,13 @@ with TreeDSL {
             val isDim = annots.contains("dimension")
             val isWrapper = annots.contains("wrapper")
             val isFragment = annots.contains("fragment")
+            val isIgnored = annots.contains("ignore")
 
-
-            if (isDim && !isWrapper) {
+            if (!isIgnored && isDim && !isWrapper) {
 
               generateDimClass()
 
-            } else if (isFragment || (isDim && isWrapper)) {
+            } else if (!isIgnored && (isFragment || (isDim && isWrapper))) {
 
               generateFragmentClass(cls, isDim, isWrapper, isFragment)
 

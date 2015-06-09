@@ -24,6 +24,12 @@ object Morpheus {
 
   type ~[M] = MutableMorphMirror[M]
 
+  /**
+   * Using the identity type constructor help preserve type annotations in morph model types. See CompositeMappingsTest.
+   * @tparam T
+   */
+  type ident[T] = T
+
   type dlg[T] = T
 
   def external[E](implicit instance: E): (Frag[E, Unit]) => E = _ => {
@@ -816,6 +822,7 @@ object Morpheus {
 
     //val srcTpe = implicitly[WeakTypeTag[M1]].tpe.dealias
     val tgtTpe = implicitly[WeakTypeTag[M2]].tpe.dealias
+
     //c.info(c.enclosingPosition, s"convertMorphKernelToTotalRef: $srcTpe -> $tgtTpe", true)
 
     val isDereferenced = ci.actualType <:< c.typeOf[WithHiddenFragments]
@@ -865,6 +872,7 @@ object Morpheus {
 
     val srcTpe = implicitly[WeakTypeTag[M1]].tpe.dealias
     val tgtTpe = implicitly[WeakTypeTag[M2]].tpe.dealias
+
     val withHiddenFragmentsTpe = c.typeOf[WithHiddenFragments]
     val containsHiddenFragments = ci.actualType <:< withHiddenFragmentsTpe
 
@@ -969,7 +977,9 @@ object Morpheus {
 
     }
 
-    val (srcRoot, srcFragmentTypesMap, srcAltIter) = alternativesIterator(c)(srcTpe, checkDepsInSrcModel, excludePlaceholders = true /*irrelevant, there are no placeholder in src*/, srcConfLev)
+    // todo: UNCOMMENT!
+    //val (srcRoot, srcFragmentTypesMap, srcAltIter) = alternativesIterator(c)(srcTpe, checkDepsInSrcModel, excludePlaceholders = true /*irrelevant, there are no placeholder in src*/, srcConfLev)
+    val (srcRoot, srcFragmentTypesMap, srcAltIter) = alternativesIterator(c)(srcTpe, checkDeps = false, excludePlaceholders = true /*irrelevant, there are no placeholder in src*/, srcConfLev)
     val (tgtRoot, tgtFragmentTypesMap, tgtAltIter) = alternativesIterator(c)(tgtTpe, checkDeps = false, excludePlaceholders = true, tgtConfLev)
 
     // find and associate corresponding fragments in both models
@@ -1224,6 +1234,56 @@ object Morpheus {
     // todo: through B and C listens to this event on B. If the garbage collection were in place the C would be removed and
     // todo: its side effects would vanish causing some unexpected consequences.
 
+    def checkTypeAnnotations(tgtFragTypes: List[c.Type], srcFragTypes: List[c.Type]): Boolean = {
+
+      def annotationsMatch(srcTpe: c.Type, tgtAnn: List[Annotation]): Boolean = {
+        val srcAnn = getTypeAnnotations(c)(srcTpe).toSet ++ getAnnotations(c)(srcTpe).toSet
+        val res = tgtAnn.forall(tgtAn => {
+          srcAnn.exists(_.tree.equalsStructure(tgtAn.tree))
+        })
+        //c.info(c.enclosingPosition, s"Source fragment type $srcTpe annotations: $srcAnn for target anns: $tgtAnn, result=$res", true)
+        res
+      }
+
+      val res = tgtFragTypes.forall(tgtFragTpe => {
+//        if (tgtFragTpe.isInstanceOf[AnnotatedType]) {
+//          c.info(c.enclosingPosition, s"Found annotated type: $tgtFragTpe", true)
+//        }
+
+        val tgtAnn: List[Annotation] = getTypeAnnotations(c)(tgtFragTpe)
+        if (tgtAnn.isEmpty) {
+          true
+        } else {
+
+          val res = srcFragTypes.exists(srcFragTpe => if (srcFragTpe <:< tgtFragTpe) {
+            annotationsMatch(srcFragTpe, tgtAnn)
+          } else {
+            false
+          })
+
+          //c.info(c.enclosingPosition, s"Searching type annotations: $tgtAnn, res: $res", true)
+          res
+        }
+
+
+        //        tgtAnn match {
+//          case Nil =>
+//            true
+//          case tgtAnn =>
+//            c.info(c.enclosingPosition, s"Checking target annotations $tgtAnn", true)
+//            srcFragTypes.exists(srcTpe => {
+//              annotationsMatch(srcTpe, tgtAnn)
+//            })
+//        }
+      })
+
+      //c.info(c.enclosingPosition, s"Checking type annotations: src: $srcFragTypes, tgt: $tgtFragTypes, res: $res", true)
+
+      res
+
+
+    }
+
     /*
      * @return the alternative template
      */
@@ -1233,78 +1293,85 @@ object Morpheus {
       val srcAltLUB = srcAlt._3
 
       val ret = if (srcAltLUB <:< tgtAltLUB) {
-        // check if no placeholder violates inner dependencies in the source composite
-        val placeholders = tgtAlt._1.filter(_.placeholder)
-        // a list of replacements by placeholders. The first fragment is the placeholder,
-        // the second is the source alt node being replaced or appended (in case of a wrapper) by the placeholder
-        val placeholdersApplication: List[Option[(FragmentNode, Option[FragmentNode])]] = placeholders.map(isViolatingDeps(_, srcAlt._1))
-        if (placeholdersApplication.exists(!_.isDefined)) {
-          // some placeholders cannot be applied
-          // provide some explanation which placeholders and why they do not match
-          c.info(c.enclosingPosition, s"Some placeholders cannot be applied: ${placeholdersApplication.filter(!_.isDefined)}", true)
+
+        //if (!checkTypeAnnotations(tgtAlt._1.map(f => tgtFragmentTypesMap(f.id)._1), srcAlt._2)) {
+        if (!checkTypeAnnotations(tgtAlt._2, srcAlt._2)) {
+          c.warning(c.enclosingPosition, s"Some target annotations not found in the source model")
           None
         } else {
-          // all placeholders can be applied
 
-          //c.info(c.enclosingPosition, s"placeholdersApplication: $placeholdersApplication", true)
-
-          // orig frag -> placeholder replacement mapping
-          val replacements: List[(FragmentNode, FragmentNode)] = placeholdersApplication.
-            filter(_.get._2.isDefined).
-            map(appl => (appl.get._1, appl.get._2.get))
-
-          // 'orphan' placeholders
-          val notInterferingPlaceholders = placeholdersApplication.filter(!_.get._2.isDefined).map(_.get._1)
-          // 'orphan' placeholders converted to PlaceholderSource
-          val notInterferingPlaceholdersAsSources = notInterferingPlaceholders.map(PlaceholderSource)
-
-          var i = 0
-          // for all source alt nodes try to find a placeholder(s) to be replaced with
-          val remainingAltFragsAsSources = srcAlt._1.flatMap(srcAltNode => {
-            // there can be more placeholders for one source node
-            val replForSrc: List[FragmentNode] = replacements.filter(_._2.id == srcAltNode.id).map(_._1)
-            if (replForSrc.isEmpty) {
-              //c.info(c.enclosingPosition, s"No placeholder: srcAltNode: $srcAltNode", true)
-              List(OriginalInstanceSource(srcAltNode))
-            } else {
-
-              /**
-               * A representation of the source alt node replacement.
-               * Param fragSrc the non-wrapper fragment source. Initially, it is the original fragment src.
-               * Param wrappers the new wrappers of the non-wrapper fragment. Initially it is Nil.
-               */
-              case class SrcFragReplacement(fragSrc: FragInstSource = OriginalInstanceSource(srcAltNode), wrappers: List[FragInstSource] = Nil)
-
-              val initialSrcFragRepl = SrcFragReplacement()
-
-              val r = replForSrc.foldLeft(initialSrcFragRepl)((repl, placeholder) => {
-                val placeholderTpe = tgtFragmentTypesMap(placeholder.id)._1
-                val altNodeTpe = srcFragmentTypesMap(srcAltNode.id)._1
-
-                if (!(altNodeTpe =:= placeholderTpe) && isWrapper(c)(placeholderTpe)) {
-                  // append the wrapper only if the altNodeTpe and placeholderTpe are different
-                  i += 1
-                  repl.copy(wrappers = repl.wrappers ::: List(PlaceholderSource(placeholder)))
-                } else {
-                  repl.copy(fragSrc = PlaceholderSource(placeholder))
-                }
-              })
-              r.fragSrc :: r.wrappers
-            }
-          })
-
-
-          // the alternative template
-          val altTemplate = notInterferingPlaceholdersAsSources ::: remainingAltFragsAsSources
-
-          if (templateContainsAntagonists(altTemplate)) {
+          // check if no placeholder violates inner dependencies in the source composite
+          val placeholders = tgtAlt._1.filter(_.placeholder)
+          // a list of replacements by placeholders. The first fragment is the placeholder,
+          // the second is the source alt node being replaced or appended (in case of a wrapper) by the placeholder
+          val placeholdersApplication: List[Option[(FragmentNode, Option[FragmentNode])]] = placeholders.map(isViolatingDeps(_, srcAlt._1))
+          if (placeholdersApplication.exists(!_.isDefined)) {
+            // some placeholders cannot be applied
+            // provide some explanation which placeholders and why they do not match
+            c.info(c.enclosingPosition, s"Some placeholders cannot be applied: ${placeholdersApplication.filter(!_.isDefined)}", true)
             None
           } else {
-            Some(altTemplate)
+            // all placeholders can be applied
+
+            //c.info(c.enclosingPosition, s"placeholdersApplication: $placeholdersApplication", true)
+
+            // orig frag -> placeholder replacement mapping
+            val replacements: List[(FragmentNode, FragmentNode)] = placeholdersApplication.
+              filter(_.get._2.isDefined).
+              map(appl => (appl.get._1, appl.get._2.get))
+
+            // 'orphan' placeholders
+            val notInterferingPlaceholders = placeholdersApplication.filter(!_.get._2.isDefined).map(_.get._1)
+            // 'orphan' placeholders converted to PlaceholderSource
+            val notInterferingPlaceholdersAsSources = notInterferingPlaceholders.map(PlaceholderSource)
+
+            var i = 0
+            // for all source alt nodes try to find a placeholder(s) to be replaced with
+            val remainingAltFragsAsSources = srcAlt._1.flatMap(srcAltNode => {
+              // there can be more placeholders for one source node
+              val replForSrc: List[FragmentNode] = replacements.filter(_._2.id == srcAltNode.id).map(_._1)
+              if (replForSrc.isEmpty) {
+                //c.info(c.enclosingPosition, s"No placeholder: srcAltNode: $srcAltNode", true)
+                List(OriginalInstanceSource(srcAltNode))
+              } else {
+
+                /**
+                 * A representation of the source alt node replacement.
+                 * Param fragSrc the non-wrapper fragment source. Initially, it is the original fragment src.
+                 * Param wrappers the new wrappers of the non-wrapper fragment. Initially it is Nil.
+                 */
+                case class SrcFragReplacement(fragSrc: FragInstSource = OriginalInstanceSource(srcAltNode), wrappers: List[FragInstSource] = Nil)
+
+                val initialSrcFragRepl = SrcFragReplacement()
+
+                val r = replForSrc.foldLeft(initialSrcFragRepl)((repl, placeholder) => {
+                  val placeholderTpe = tgtFragmentTypesMap(placeholder.id)._1
+                  val altNodeTpe = srcFragmentTypesMap(srcAltNode.id)._1
+
+                  if (!(altNodeTpe =:= placeholderTpe) && isWrapper(c)(placeholderTpe)) {
+                    // append the wrapper only if the altNodeTpe and placeholderTpe are different
+                    i += 1
+                    repl.copy(wrappers = repl.wrappers ::: List(PlaceholderSource(placeholder)))
+                  } else {
+                    repl.copy(fragSrc = PlaceholderSource(placeholder))
+                  }
+                })
+                r.fragSrc :: r.wrappers
+              }
+            })
+
+
+            // the alternative template
+            val altTemplate = notInterferingPlaceholdersAsSources ::: remainingAltFragsAsSources
+
+            if (templateContainsAntagonists(altTemplate)) {
+              None
+            } else {
+              Some(altTemplate)
+            }
+
           }
-
         }
-
       } else {
         None
       }
@@ -1701,6 +1768,12 @@ object Morpheus {
     (lubTpe, lubComponents)
   }
 
+  def getAnnotations(c: whitebox.Context)(tpe: c.Type): List[c.universe.Annotation] = {
+    import c.universe._
+
+    tpe.typeSymbol.annotations
+  }
+
   def getAnnotation[A: WeakTypeTag](c: whitebox.Context)(tpe: c.Type) = {
     import c.universe._
 
@@ -1708,6 +1781,17 @@ object Morpheus {
     tpe.typeSymbol.annotations.find(ann => {
       ann.tree.tpe =:= annotTag.tpe
     })
+  }
+
+  def getTypeAnnotations(c: whitebox.Context)(tpe: c.Type): List[c.universe.Annotation] = {
+    import c.universe._
+
+    tpe match {
+      case aTpe: AnnotatedType =>
+        aTpe.annotations
+      case _ => Nil
+    }
+
   }
 
   def getTypeAnnotation[A: WeakTypeTag](c: whitebox.Context)(tpe: c.Type) = {
@@ -1733,7 +1817,7 @@ object Morpheus {
     import c.universe._
 
     if (getTypeAnnotation[dimension](c)(tpe).isDefined) {
-      // it the support for the annotated placeholder types
+      // the support for the annotated placeholder types
       Some(tpe.asInstanceOf[AnnotatedType].underlying)
     } else {
       val bcIter = tpe.baseClasses.tail.toIterator // exclude the head which is the type itself
@@ -1854,10 +1938,37 @@ object Morpheus {
 
     }
 
+    // Check whether for each wrapper there exists a wrappable fragment in all alternatives where the wrapper occurs
+
+    val altIter = alternativesIterator(c)(compTpe, false, false, Partial)._3
+    while (altIter.hasNext) {
+      val alt = altIter.next()
+      for (wrapperTpe <- alt._2 if isWrapper(c)(wrapperTpe)) {
+        val wrappedFragment = if (isDimensionWrapper(c)(wrapperTpe)) {
+          // a dimension wrapper
+          findDimension(c)(wrapperTpe)
+        } else {
+          // a fragment wrapper
+          findFragment(c)(wrapperTpe)
+        }
+
+        require(wrappedFragment.isDefined, s"No fragment found for wrapper $wrapperTpe")
+
+        if (!alt._2.exists(fragTpe => {
+          fragTpe.erasure <:< wrappedFragment.get.erasure &&
+            !c.universe.lub(List(fragTpe, wrapperTpe)).isInstanceOf[ExistentialType] &&
+            isFragment(c)(fragTpe)
+        })) {
+          c.abort(c.enclosingPosition, s"No fragment implementing ${wrappedFragment.get} found for wrapper $wrapperTpe in alternative ${alt._2}")
+        }
+
+      }
+    }
+
+
     fragToDepsMaps
 
-    //    val altIter = alternativesIterator(c)(compTpe, false, false, Partial)._3
-//    checkDependenciesInAlternatives(c)(altIter, conformanceLevel)
+
   }
 
 //  def checkDependenciesInAlternatives(c: whitebox.Context)(altIter: Iterator[(List[FragmentNode], List[c.Type], c.Type)], conformanceLevel: ConformanceLevel): Unit = {
@@ -2009,6 +2120,11 @@ object Morpheus {
     def createFragmentNode(frgTpe: Type, isPlaceholder: Boolean): FragmentNode = {
       val fragId: Int = fragCounter.getAndIncrement
       fragmentTypes += (fragId -> fragDesc(frgTpe, fragId))
+
+//      if (frgTpe.isInstanceOf[AnnotatedType]) {
+//        c.info(c.enclosingPosition, s"Found annotated type: $frgTpe", true)
+//      }
+
       FragmentNode(fragId, isPlaceholder)
     }
 
@@ -2024,8 +2140,10 @@ object Morpheus {
           case None => plHldTpe
           case Some(phTpeTrans) => if (phTpeTrans.isDefinedAt(plHldTpe)) phTpeTrans(plHldTpe) else plHldTpe
         }
+
         createFragmentNode(actPlHldTpe, true)
       case tr@TypeRef(_, sym, _) =>
+
         val symCls: Symbols#ClassSymbol = sym.asClass.asInstanceOf[Symbols#ClassSymbol]
         if (symCls.isRefinementClass) {
           val parents = symCls.tpe.parents // todo: is there any better way to decompose a type reference?

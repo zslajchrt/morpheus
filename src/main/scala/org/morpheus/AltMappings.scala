@@ -24,6 +24,8 @@ case class AltMappings(newFragToOrigFrag: Map[Int, Int], newAltToOrigAlt: Map[Li
 
   def serialize: String = toString
 
+  lazy val sketch = newAltToOrigAlt.map(e => (e._1, e._2.map(_.fragments)))
+
   def preserveDynamics(): AltMappings = {
 
     val origFragToNewFrag: Map[Int, Int] = newFragToOrigFrag.map(new2old => (new2old._2, new2old._1))
