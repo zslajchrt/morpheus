@@ -1,29 +1,57 @@
 package org.morpheus
 
+import scala.collection.BitSet
+
 /**
  *
  * Created by zslajchrt on 19/05/15.
  */
-class Alternatives[M] private (rootNode: MorphModelNode, ratedAlts: Map[List[FragmentNode], Double]) {
+
+case class AltRating(rating: Double, fragmentBits: BitSet)
+
+class Alternatives[M] private (private [morpheus] val rootNode: MorphModelNode, private [morpheus] val ratedAlts: Map[List[FragmentNode], AltRating]) {
 
   private [morpheus] def filter(f: (List[FragmentNode], Double) => Boolean): Alternatives[M] = {
-    val newRatedAlts = ratedAlts.filter(e => f(e._1, e._2))
+    val newRatedAlts = ratedAlts.filter(e => f(e._1, e._2.rating))
     new Alternatives[M](rootNode, newRatedAlts)
   }
 
   def rate(ratingFn: (List[FragmentNode], Double) => Double): Alternatives[M] = {
     val altIter = new IdentAltIterator(rootNode.toAltNode)
-    var newRatedAlts = Map.empty[List[FragmentNode], Double]
+    var newRatedAlts = Map.empty[List[FragmentNode], AltRating]
     while (altIter.hasNext) {
       val alt: List[FragmentNode] = altIter.next()
       ratedAlts.get(alt) match {
         case None =>
         case Some(altRating) =>
-          newRatedAlts += (alt -> ratingFn(alt, altRating))
+          newRatedAlts += (alt -> altRating.copy(rating = ratingFn(alt, altRating.rating)))
       }
     }
 
     new Alternatives[M](rootNode, newRatedAlts)
+  }
+
+  private def bitoper(fragments: Set[Int], mask: Boolean): Alternatives[M] = {
+    val newRatedAlts = for (ratedAlt <- ratedAlts) yield {
+      val fragIntersect: Set[Int] = ratedAlt._1.map(_.id).toSet.intersect(fragments)
+      val newMask = if (mask)
+        ratedAlt._2.fragmentBits.`|`(fragIntersect)
+      else
+        ratedAlt._2.fragmentBits.--(fragIntersect)
+
+      ratedAlt._1 -> ratedAlt._2.copy(fragmentBits = newMask)
+    }
+
+    new Alternatives[M](rootNode, newRatedAlts)
+
+  }
+
+  def mask(maskedFragments: Set[Int]): Alternatives[M] = {
+    bitoper(maskedFragments, true)
+  }
+
+  def unmask(unmaskedFragments: Set[Int]): Alternatives[M] = {
+    bitoper(unmaskedFragments, false)
   }
 
   def promote(promotedAlts: Set[List[Int]]): Alternatives[M] = {
@@ -60,10 +88,24 @@ class Alternatives[M] private (rootNode: MorphModelNode, ratedAlts: Map[List[Fra
 
   }
 
-  lazy val toList: List[(List[FragmentNode], Double)] = {
+  lazy val toMaskedList: List[(List[FragmentNode], Double)] = {
+    val maxFragBits = ratedAlts.foldLeft(0)((maxBits, altRating) => if (altRating._2.fragmentBits.size > maxBits)
+      altRating._2.fragmentBits.size
+    else
+      maxBits)
+
+    // We have to use IdentAltIterator to preserve the order of the alternatives
     val altIter = new IdentAltIterator(rootNode.toAltNode)
     val alts = altIter.toList
-    for (alt <- alts; r <- ratedAlts.get(alt)) yield (alt, r)
+    for (alt <- alts; r <- ratedAlts.get(alt) if r.fragmentBits.size == maxFragBits) yield (alt, r.rating)
+
+  }
+
+  lazy val toList: List[(List[FragmentNode], Double)] = {
+    // We have to use IdentAltIterator to preserve the order of the alternatives
+    val altIter = new IdentAltIterator(rootNode.toAltNode)
+    val alts = altIter.toList
+    for (alt <- alts; r <- ratedAlts.get(alt)) yield (alt, r.rating)
   }
 
 }
@@ -72,7 +114,7 @@ object Alternatives {
 
   private [morpheus] def apply[M](root: MorphModelNode): Alternatives[M] = {
     val altIter = new IdentAltIterator(root.toAltNode)
-    val defaultRatedAlts: Map[List[FragmentNode], Double] = altIter.toList.map(alt => (alt, 0d)).toMap
+    val defaultRatedAlts: Map[List[FragmentNode], AltRating] = altIter.toList.map(alt => (alt, AltRating(0d, BitSet.empty))).toMap
     new Alternatives[M](root, defaultRatedAlts)
   }
 
