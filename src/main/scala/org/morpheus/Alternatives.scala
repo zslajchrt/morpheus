@@ -7,13 +7,15 @@ import scala.collection.BitSet
  * Created by zslajchrt on 19/05/15.
  */
 
-case class AltRating(rating: Double, fragmentBits: BitSet)
+case class AltRating(rating: Double)
 
-class Alternatives[M] private (private [morpheus] val rootNode: MorphModelNode, private [morpheus] val ratedAlts: Map[List[FragmentNode], AltRating]) {
+class Alternatives[M] private (private [morpheus] val rootNode: MorphModelNode,
+                               private [morpheus] val ratedAlts: Map[List[FragmentNode], AltRating],
+                               private [morpheus] val fragmentMask: BitSet) {
 
   private [morpheus] def filter(f: (List[FragmentNode], Double) => Boolean): Alternatives[M] = {
     val newRatedAlts = ratedAlts.filter(e => f(e._1, e._2.rating))
-    new Alternatives[M](rootNode, newRatedAlts)
+    new Alternatives[M](rootNode, newRatedAlts, fragmentMask)
   }
 
   def rate(ratingFn: (List[FragmentNode], Double) => Double): Alternatives[M] = {
@@ -28,30 +30,15 @@ class Alternatives[M] private (private [morpheus] val rootNode: MorphModelNode, 
       }
     }
 
-    new Alternatives[M](rootNode, newRatedAlts)
+    new Alternatives[M](rootNode, newRatedAlts, fragmentMask)
   }
 
-  private def bitoper(fragments: Set[Int], mask: Boolean): Alternatives[M] = {
-    val newRatedAlts = for (ratedAlt <- ratedAlts) yield {
-      val fragIntersect: Set[Int] = ratedAlt._1.map(_.id).toSet.intersect(fragments)
-      val newMask = if (mask)
-        ratedAlt._2.fragmentBits.`|`(fragIntersect)
-      else
-        ratedAlt._2.fragmentBits.--(fragIntersect)
-
-      ratedAlt._1 -> ratedAlt._2.copy(fragmentBits = newMask)
-    }
-
-    new Alternatives[M](rootNode, newRatedAlts)
-
+  def mask(mask: Set[Int]): Alternatives[M] = {
+    new Alternatives[M](rootNode, ratedAlts, fragmentMask.`|`(mask))
   }
 
-  def mask(maskedFragments: Set[Int]): Alternatives[M] = {
-    bitoper(maskedFragments, true)
-  }
-
-  def unmask(unmaskedFragments: Set[Int]): Alternatives[M] = {
-    bitoper(unmaskedFragments, false)
+  def unmask(mask: Set[Int]): Alternatives[M] = {
+    new Alternatives[M](rootNode, ratedAlts, fragmentMask.--(mask))
   }
 
   def promote(promotedAlts: Set[List[Int]]): Alternatives[M] = {
@@ -75,7 +62,7 @@ class Alternatives[M] private (private [morpheus] val rootNode: MorphModelNode, 
       if (promotedAlts.contains(alt)) {
         // The alt found. Reorder the model so that the iterator produces this alt as the first one.
         val newModelRoot: MorphModelNode = reorderModel(altIter.rootAltNode)
-        newAlternatives = Some(new Alternatives[M](newModelRoot, ratedAlts))
+        newAlternatives = Some(new Alternatives[M](newModelRoot, ratedAlts, fragmentMask))
       } else {
         altIter.next()
       }
@@ -89,16 +76,12 @@ class Alternatives[M] private (private [morpheus] val rootNode: MorphModelNode, 
   }
 
   lazy val toMaskedList: List[(List[FragmentNode], Double)] = {
-    val maxFragBits = ratedAlts.foldLeft(0)((maxBits, altRating) => if (altRating._2.fragmentBits.size > maxBits)
-      altRating._2.fragmentBits.size
-    else
-      maxBits)
-
-    // We have to use IdentAltIterator to preserve the order of the alternatives
     val altIter = new IdentAltIterator(rootNode.toAltNode)
     val alts = altIter.toList
-    for (alt <- alts; r <- ratedAlts.get(alt) if r.fragmentBits.size == maxFragBits) yield (alt, r.rating)
-
+    for (alt <- alts;
+         r <- ratedAlts.get(alt);
+         altBits = BitSet.empty ++ alt.map(_.id)
+         if altBits.&(fragmentMask) == fragmentMask) yield (alt, r.rating)
   }
 
   lazy val toList: List[(List[FragmentNode], Double)] = {
@@ -114,8 +97,8 @@ object Alternatives {
 
   private [morpheus] def apply[M](root: MorphModelNode): Alternatives[M] = {
     val altIter = new IdentAltIterator(root.toAltNode)
-    val defaultRatedAlts: Map[List[FragmentNode], AltRating] = altIter.toList.map(alt => (alt, AltRating(0d, BitSet.empty))).toMap
-    new Alternatives[M](root, defaultRatedAlts)
+    val defaultRatedAlts: Map[List[FragmentNode], AltRating] = altIter.toList.map(alt => (alt, AltRating(0d))).toMap
+    new Alternatives[M](root, defaultRatedAlts, BitSet.empty)
   }
 
   def moveChildToHead(children: List[MorphModelNode], index: Int): List[MorphModelNode] = {

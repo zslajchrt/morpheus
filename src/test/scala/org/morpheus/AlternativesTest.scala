@@ -80,64 +80,50 @@ class AlternativesTest {
 
 
   @Test
-  def testMaskUnmask(): Unit = {
-    var fragBitsFn: (Alternatives[Any]) => Map[List[Int], BitSet] = (a: Alternatives[Any]) => a.ratedAlts.map(entry => entry._1.map(_.id) -> entry._2.fragmentBits)
+  def testMask(): Unit = {
 
     // masking
 
-    val alts1 = Alternatives.apply[Any](root)
-    var maskedAlts = alts1.toMaskedList
-    assertEquals(6, maskedAlts.size)
+    var alts = Alternatives.apply[Any](root)
+    var maskedAlts = alts.toMaskedList
 
-    val alts2 = alts1.mask(Set(1))
-    var fragBits = fragBitsFn(alts2)
-    assertEquals(fragBits(List(1, 2)), BitSet(1))
-    assertEquals(fragBits(List(1, 4)), BitSet(1))
-    assertEquals(fragBits(List(0, 4)), BitSet())
-    assertEquals(fragBits(List(0, 2)), BitSet())
-    assertEquals(fragBits(List(1, 3)), BitSet(1))
-    assertEquals(fragBits(List(0, 3)), BitSet())
+    assertEquals(List((List(FragmentNode(0,false), FragmentNode(2,false)),0.0),
+      (List(FragmentNode(1,false), FragmentNode(2,false)),0.0),
+      (List(FragmentNode(0,false), FragmentNode(3,false)),0.0),
+      (List(FragmentNode(1,false), FragmentNode(3,false)),0.0),
+      (List(FragmentNode(0,false), FragmentNode(4,false)),0.0),
+      (List(FragmentNode(1,false), FragmentNode(4,false)),0.0)), maskedAlts)
 
-    maskedAlts = alts2.toMaskedList
-    assertEquals(3, maskedAlts.size)
+    alts = alts.mask(Set(1))
+    maskedAlts = alts.toMaskedList
 
-    val alts3 = alts2.mask(Set(2))
-    fragBits = fragBitsFn(alts3)
-    assertEquals(fragBits(List(1, 2)), BitSet(1, 2))
-    assertEquals(fragBits(List(1, 4)), BitSet(1))
-    assertEquals(fragBits(List(0, 4)), BitSet())
-    assertEquals(fragBits(List(0, 2)), BitSet(2))
-    assertEquals(fragBits(List(1, 3)), BitSet(1))
-    assertEquals(fragBits(List(0, 3)), BitSet())
+    assertEquals(List((List(FragmentNode(1,false), FragmentNode(2,false)),0.0),
+      (List(FragmentNode(1,false), FragmentNode(3,false)),0.0),
+      (List(FragmentNode(1,false), FragmentNode(4,false)),0.0)), maskedAlts)
 
-    maskedAlts = alts3.toMaskedList
-    assertEquals(1, maskedAlts.size)
+
+    alts = alts.mask(Set(2))
+    maskedAlts = alts.toMaskedList
+
+    assertEquals(List((List(FragmentNode(1,false), FragmentNode(2,false)),0.0)), maskedAlts)
 
     // unmasking
 
-    val alts4 = alts3.unmask(Set(1))
-    fragBits = fragBitsFn(alts4)
-    assertEquals(fragBits(List(1, 2)), BitSet(2))
-    assertEquals(fragBits(List(1, 4)), BitSet())
-    assertEquals(fragBits(List(0, 4)), BitSet())
-    assertEquals(fragBits(List(0, 2)), BitSet(2))
-    assertEquals(fragBits(List(1, 3)), BitSet())
-    assertEquals(fragBits(List(0, 3)), BitSet())
+    alts = alts.unmask(Set(1))
+    maskedAlts = alts.toMaskedList
 
-    maskedAlts = alts4.toMaskedList
-    assertEquals(2, maskedAlts.size)
+    assertEquals(List((List(FragmentNode(0,false), FragmentNode(2,false)),0.0),
+      (List(FragmentNode(1,false), FragmentNode(2,false)),0.0)), maskedAlts)
 
-    val alts5 = alts4.unmask(Set(2))
-    fragBits = fragBitsFn(alts5)
-    assertEquals(fragBits(List(1, 2)), BitSet())
-    assertEquals(fragBits(List(1, 4)), BitSet())
-    assertEquals(fragBits(List(0, 4)), BitSet())
-    assertEquals(fragBits(List(0, 2)), BitSet())
-    assertEquals(fragBits(List(1, 3)), BitSet())
-    assertEquals(fragBits(List(0, 3)), BitSet())
+    alts = alts.unmask(Set(2))
+    maskedAlts = alts.toMaskedList
 
-    maskedAlts = alts5.toMaskedList
-    assertEquals(6, maskedAlts.size)
+    assertEquals(List((List(FragmentNode(0,false), FragmentNode(2,false)),0.0),
+      (List(FragmentNode(1,false), FragmentNode(2,false)),0.0),
+      (List(FragmentNode(0,false), FragmentNode(3,false)),0.0),
+      (List(FragmentNode(1,false), FragmentNode(3,false)),0.0),
+      (List(FragmentNode(0,false), FragmentNode(4,false)),0.0),
+      (List(FragmentNode(1,false), FragmentNode(4,false)),0.0)), maskedAlts)
 
   }
 
