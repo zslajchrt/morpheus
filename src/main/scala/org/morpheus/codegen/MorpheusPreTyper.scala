@@ -89,13 +89,6 @@ with TreeDSL {
             Block(List(Apply(Select(Super(This(newClassName), typeNames.EMPTY), termNames.CONSTRUCTOR), List())), Literal(Constant(()))))
         )
 
-        //    ClassDef(Modifiers(SYNTHETIC), TypeName("S$dimension"),
-        //      List(TypeDef(Modifiers(PARAM), TypeName("X"), List(), TypeBoundsTree(EmptyTree, EmptyTree))),
-        //      Template(List(
-        //        AppliedTypeTree(
-        //          Select(Select(Select(Select(Ident(TermName("org")), TermName("cloudio")), TermName("morpheus")), TermName("codegen")), TypeName("SuperBase")), List(Ident(TypeName("S")))),
-        //        AppliedTypeTree(Ident(TypeName("S")), List(Ident(TermName("<none>"))))), noSelfType, List(DefDef(Modifiers(PRIVATE | SYNTHETIC, typeNames.EMPTY, List(Apply(Select(New(Select(Select(Select(Select(Ident(TermName("org")), TermName("cloudio")), TermName("morpheus")), TermName("annot")), TypeName("autoproxy"))), termNames.CONSTRUCTOR), List()))), TermName("_$_"), List(), List(), TypeTree(), Select(This(TypeName("S$dimension")), TermName("$super$"))), DefDef(Modifiers(), termNames.CONSTRUCTOR, List(), List(List()), TypeTree(), Block(List(Apply(Select(Super(This(TypeName("S$dimension")), typeNames.EMPTY), termNames.CONSTRUCTOR), List())), Literal(Constant(())))))))
-
 
         val clsMods: Modifiers = Modifiers(Flag.SYNTHETIC)
         val newCls = generateClass(newClassName, clsMods,
@@ -211,7 +204,7 @@ with TreeDSL {
         val parentSelfType: ValDef = ctxCls.impl.self
         val newClsSelfType = treeCopy.ValDef(parentSelfType, parentSelfType.mods, parentSelfType.name, parentSelfType.tpt, parentSelfType.rhs)
 
-        //inform(s"Fragment's parents: ${ctxCls.impl.parents.map(showRaw(_))}")
+        // TODO: New parent are not fully qualified. See https://github.com/zslajchrt/morpheus/issues/1
         val newParents: List[Tree] = if (isDim && isWrapper) {
           ctxCls.impl.parents match {
             case dimTrait :: others => dimTrait match {
@@ -224,6 +217,7 @@ with TreeDSL {
         } else {
           List(Ident(ctxCls.name))
         }
+        //inform(s"Fragment's new parents: ${newParents.map(showRaw(_))}")
 
         val clsMods: Modifiers = if (isFragment && isWrapper) {
           // We have to mark the "cap" class of a fragment wrapper as abstract since

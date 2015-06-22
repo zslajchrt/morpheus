@@ -1987,9 +1987,21 @@ object Morpheus {
         require(wrappedFragment.isDefined, s"No fragment found for wrapper $wrapperTpe")
 
         if (!alt._2.exists(fragTpe => {
+          // We try to verify that F <:< W <:< A[X], where F is the fragment in the alternative, W is the wrapped fragment
+          // and A[X] is a generic parent of the two. The test for the ExistentialType is a kind of a hack attempting to
+          // detect the situation when F and W have the same generic parent (erased) A but with different type argument X. In such
+          // a case the lowest upper bound of F and W is an existential type (i.e. a bounded type).
           fragTpe.erasure <:< wrappedFragment.get.erasure &&
-            !c.universe.lub(List(fragTpe, wrapperTpe)).isInstanceOf[ExistentialType] &&
-            isFragment(c)(fragTpe)
+            !c.universe.lub(List(fragTpe, wrapperTpe)).isInstanceOf[ExistentialType]
+//          if (isFragment(c)(fragTpe)) {
+//            fragTpe.erasure <:< wrappedFragment.get.erasure &&
+//              !c.universe.lub(List(fragTpe, wrapperTpe)).isInstanceOf[ExistentialType]
+//          } else if (isAbstractFragment(c)(fragTpe)) {
+//
+//          } else {
+//            false
+//          }
+
         })) {
           c.abort(c.enclosingPosition, s"No fragment implementing ${wrappedFragment.get} found for wrapper $wrapperTpe in alternative ${alt._2}")
         }
