@@ -45,11 +45,13 @@ abstract class MorphModelBase[M](val rootNode: MorphModelNode) extends MorphingT
 }
 
 abstract class MorphModel[M](rn: MorphModelNode) extends MorphModelBase[M](rn) with MorphingTools[M] {
+  outer =>
   type LUB
   type Model = M
   type ConformLevel <: ConformanceLevelMarker
   type MutableLUB = LUB with MutableMorphMirror[M] { type ConfLev = ConformLevel }
   type ImmutableLUB = LUB with MorphMirror[M] { type ConfLev = ConformLevel }
+  type Kernel = MorphKernel[Model] { type LUB = outer.LUB; type ConformLevel = TotalConformance }
 
   val fragmentDescriptors: HList
 

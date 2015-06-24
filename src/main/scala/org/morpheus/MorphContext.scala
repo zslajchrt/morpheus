@@ -3,6 +3,7 @@ package org.morpheus
 import java.lang.reflect.Method
 
 import net.sf.cglib.proxy._
+import shapeless.ops.hlist.Modifier
 
 import scala.util.DynamicVariable
 
@@ -37,10 +38,10 @@ trait MorphContext {
  * @param contextFragments Implementations of the context dimensions
  */
 abstract class CompleteMorphContext[M, L, ConformLev <: ConformanceLevelMarker](contextDimensions: Array[List[Class[_]]], contextFragments: Array[_],
-                                                                       val compositeInstance: MorphKernel[M] { type LUB = L; type ConformLevel = ConformLev },
-                                                                       alternative: List[FragmentHolder[_]],
-                                                                       alts: Alternatives[M],
-                                                                       usedStrategy: MorphingStrategy[M]) extends MorphContext {
+                                                                                val compositeInstance: MorphKernel[M] {type LUB = L; type ConformLevel = ConformLev},
+                                                                                alternative: List[FragmentHolder[_]],
+                                                                                alts: Alternatives[M],
+                                                                                usedStrategy: MorphingStrategy[M]) extends MorphContext {
 
   val owningProxy: Option[compositeInstance.MutableLUB]
 
@@ -150,10 +151,10 @@ abstract class CompleteMorphContext[M, L, ConformLev <: ConformanceLevelMarker](
  */
 class FragmentInitContext(fragmentTrait: Class[_]) extends MorphContext {
 
-//  val contextDimensions: Array[Class[_]] = if (ctxDims.isEmpty)
-//    Array(classOf[AnyRef])
-//  else
-//    ctxDims
+  //  val contextDimensions: Array[Class[_]] = if (ctxDims.isEmpty)
+  //    Array(classOf[AnyRef])
+  //  else
+  //    ctxDims
 
   val (entCls, allInterfaces) = {
     if (fragmentTrait.isInterface) {
@@ -219,9 +220,9 @@ class FragmentInitContext(fragmentTrait: Class[_]) extends MorphContext {
 
 //abstract class MutableMorphContext[M, L, ConformLev <: ConformanceLevelMarker, ImmutableLUB <: L with MorphMirror[M, L], MutableLUB <: MutableMorphMirror[M, L]](
 abstract class MutableMorphContext[M, L, ConformLev <: ConformanceLevelMarker](
-                                                            val owningKernel: MorphKernel[M] { type LUB = L; type ConformLevel = ConformLev },
-                                                            lubComponents: Array[Class[_]],
-                                                            initialStrategy: MorphingStrategy[M]) extends MorphContext {
+                                                                                val owningKernel: MorphKernel[M] {type LUB = L; type ConformLevel = ConformLev},
+                                                                                lubComponents: Array[Class[_]],
+                                                                                initialStrategy: MorphingStrategy[M]) extends MorphContext {
 
   @volatile private[this] var delegate: owningKernel.ImmutableLUB = _
 
