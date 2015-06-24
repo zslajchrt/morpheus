@@ -1,6 +1,6 @@
 # Morpheus
 
-Morpheus is a component bringing metamorphosing capabilities into Scala. The main goal of this component is to tackle with the design stiffness rooted in Scala's fusion of the strict type system and functional programming. This two concepts undeniably contribute to the developing of a robust code, however, the downside is that this approach often makes it difficult to model extensively mutable systems. Morpheus addresses this problem by introducing declarative and type-safe dynamics into Scala by means of a Scala compiler extension and a set of macros.
+Morpheus is a component bringing metamorphosing capabilities into Scala. The main goal of this component is to tackle with the design stiffness rooted in Scala's fusion of the strict type system and functional programming. These two concepts undeniably contribute to the developing of a robust code, however, the downside is that this approach often makes it difficult to model extensively mutable systems. Morpheus addresses this problem by introducing declarative and type-safe dynamics into Scala by means of a Scala compiler extension and a set of macros.
 
 ## Motivation
 
