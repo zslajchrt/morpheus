@@ -10,7 +10,7 @@ import org.morpheus.MorphMirror
  */
 object DCI {
 
-  def role[R <: D, D, C](data: D): R = macro role_impl[R, D, C]
+  def role[R, D, C](data: D): R = macro role_impl[R, D, C]
 
   def role_impl[R: c.WeakTypeTag, D: c.WeakTypeTag, C: c.WeakTypeTag](c: whitebox.Context)(data: c.Expr[D]): c.Expr[R] = {
     import c.universe._

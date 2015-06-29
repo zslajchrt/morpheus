@@ -152,11 +152,11 @@ object Morpheus {
    * @tparam M
    * @return the LUB of the submodel `M` of the model of the composite instance `ci`
    */
-  def asMorphOf[M](ci: MorphKernel[_]): Any = macro asMorphOf_impl[M]
+  def asMorphOf[M](ci: MorphKernel[_], placeholders: Any*): Any = macro asMorphOf_impl[M]
 
-  def asMorphOf[M](morph: MorphMirror[_]): Any = macro asMorphOfFromMorph_impl[M]
+  def asMorphOf[M](morph: MorphMirror[_], placeholders: Any*): Any = macro asMorphOfFromMorph_impl[M]
 
-  def asMorphOf_~[M](ci: MorphKernel[_]): Any = macro asMorphOfMutable_impl[M]
+  def asMorphOf_~[M](ci: MorphKernel[_], placeholders: Any*): Any = macro asMorphOfMutable_impl[M]
 
   def promote[M](sw: () => Option[Int]): Any = macro promote_implOneArg[M]
 
@@ -586,13 +586,15 @@ object Morpheus {
     c.Expr(result)
   }
 
-  def asMorphOfFromMorph_impl[M: c.WeakTypeTag](c: whitebox.Context)(morph: c.Expr[MorphMirror[_]]): c.Expr[Any] = {
+  def asMorphOfFromMorph_impl[M: c.WeakTypeTag](c: whitebox.Context)(morph: c.Expr[MorphMirror[_]], placeholders: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
-    asMorphOf_impl(c)(c.Expr[MorphKernel[_]](q"$morph.kernel"))(implicitly[WeakTypeTag[M]])
+    asMorphOf_impl(c)(c.Expr[MorphKernel[_]](q"$morph.kernel"), placeholders:_*)(implicitly[WeakTypeTag[M]])
   }
 
-  def asMorphOf_impl[M: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[_]]): c.Expr[Any] = {
+  def asMorphOf_impl[M: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[_]], placeholders: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
+
+    val plhList = placeholders.toList
 
     val targetTpe = implicitly[WeakTypeTag[M]].tpe
 
@@ -601,14 +603,17 @@ object Morpheus {
             import org.morpheus._
             import org.morpheus.Morpheus._
             val specCompRef: ~&?[$targetTpe] = $ci
-            *(specCompRef).make
+            *(specCompRef, ..$placeholders).make
         }
       """
     c.Expr(result)
   }
 
-  def asMorphOfMutable_impl[M: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[_]]): c.Expr[Any] = {
+  def asMorphOfMutable_impl[M: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[_]], placeholders: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
+
+//    val plhList = placeholders.toList
+//    val plhListTree = q"List(..$plhList)"
 
     val targetTpe = implicitly[WeakTypeTag[M]].tpe
 
@@ -617,7 +622,7 @@ object Morpheus {
             import org.morpheus._
             import org.morpheus.Morpheus._
             val specCompRef: &?[$targetTpe] = $ci
-            *(specCompRef).make_~
+            *(specCompRef, ..$placeholders).make_~
         }
       """
     c.Expr(result)
