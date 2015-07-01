@@ -2219,7 +2219,7 @@ object Morpheus {
       }
       val fragClassTp = c.mirror.staticClass(fragClassTpName)
 
-      val cfgClsOpt: Option[Type] = extractFragmentClassAnnotation(c)(fragClassTp)
+      val cfgClsOpt: Option[Type] = extractConfigType(c)(fragClassTp)
 
       (fragTpe, cfgClsOpt)
     }
@@ -2272,6 +2272,9 @@ object Morpheus {
     val fragmentNodes = collectFragmentNodes(modelRoot).reverse
 
     val res = (compModelTp, modelRoot, fragmentNodes, modelLUB, modelLUBComponents, fragmentTypes)
+
+    //c.info(c.enclosingPosition, s"Fragment types for model $compRawTp:\n $fragmentTypes", true)
+
     res
   }
 
@@ -2422,6 +2425,12 @@ object Morpheus {
                                                        placeholderTpeTransf: Option[PartialFunction[c.Type, c.Type]],
                                                        conformanceLevel: ConformanceLevel): (c.Expr[MorphModel[_]], c.Type) = {
     import c.universe._
+
+
+    // TODO: This is an ugly workaround.
+    // TODO: The model must be parsed twice because of some bug in Scala compiler. Sometimes a type contains no annotations
+    // TODO: even if there are some. It seems that such a type is not fully initialized.
+    buildModel(c)(compTpe, None, conformanceLevel)
 
     val (compModelTpe, modelRoot, fragmentNodes, lub, lubComponentTypes, fragmentTypesMap) = buildModel(c)(compTpe, placeholderTpeTransf, conformanceLevel)
 
@@ -2676,7 +2685,7 @@ object Morpheus {
     c.Expr(compositeInstanceTree)
   }
 
-  def extractFragmentClassAnnotation[F: c.WeakTypeTag](c: whitebox.Context)(fragmentClazz: c.universe.ClassSymbol): Option[c.Type] = {
+  def extractConfigType[F: c.WeakTypeTag](c: whitebox.Context)(fragmentClazz: c.universe.ClassSymbol): Option[c.Type] = {
 
     import scala.reflect.api.Universe
 
@@ -2684,8 +2693,7 @@ object Morpheus {
       override val univ: Universe = c.universe
     }
 
-    ext.extract(fragmentClazz.asInstanceOf[ext.univ.ClassSymbol]).asInstanceOf[Option[c.Type]]
-
+    ext.extractConfigType(fragmentClazz.asInstanceOf[ext.univ.ClassSymbol]).asInstanceOf[Option[c.Type]]
   }
 
 }

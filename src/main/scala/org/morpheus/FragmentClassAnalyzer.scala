@@ -10,15 +10,7 @@ trait FragmentClassAnalyzer {
 
   import univ._
 
-  lazy val orTp = implicitly[WeakTypeTag[or[_, _]]].tpe.erasure
-
-  def extract(fragmentClazz: ClassSymbol): Option[Type] = {
-
-    def splitRefinedType(t: Type): List[Type] = t match {
-      case RefinedType(parents, decls) =>
-        parents.flatMap(splitRefinedType)
-      case _ => List(t)
-    }
+  def extractConfigType(fragmentClazz: ClassSymbol): Option[Type] = {
 
     // We must take the self type from the fragment trait, since the fragment class may not be fully defined yet,
     // in contrast to the fragment trait. The fragment trait is stored at the 2nd position in the base classes list.
