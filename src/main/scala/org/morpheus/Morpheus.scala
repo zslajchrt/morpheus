@@ -512,7 +512,7 @@ object Morpheus {
     val switchTpe = implicitly[WeakTypeTag[S]].tpe.dealias
 
     val switchModelTree = parseMorphModelFromType(c)(switchTpe, false, false, None, Total)._1
-    val altMapTree = checkMorphKernelAssignment(c)(modelTpe, switchTpe, false, Total, Total, false)._1
+    val altMapTree = checkMorphKernelAssignment(c, s"Checking compatibility of switch model $switchTpe with $modelTpe")(modelTpe, switchTpe, false, Total, Total, false)._1
 
     //val result = q"org.morpheus.AltMapRatingStrategy($delegate, $switchModelTree, $altMapTree, $sw, $negative)"
     val result = q"""
@@ -541,7 +541,7 @@ object Morpheus {
     val switchTpe = implicitly[WeakTypeTag[S]].tpe.dealias
 
     val switchModelTree = parseMorphModelFromType(c)(switchTpe, false, false, None, Total)._1
-    val altMapTree = checkMorphKernelAssignment(c)(modelTpe, switchTpe, false, Total, Total, false)._1
+    val altMapTree = checkMorphKernelAssignment(c, s"Checking compatibility of switch model $switchTpe with $modelTpe")(modelTpe, switchTpe, false, Total, Total, false)._1
 
     //val result = q"org.morpheus.PromotingStrategy($delegate, $switchModelTree, $altMapTree, $sw)"
 
@@ -574,7 +574,7 @@ object Morpheus {
     val switchTpe = implicitly[WeakTypeTag[S]].tpe.dealias
 
     val switchModelTree = parseMorphModelFromType(c)(switchTpe, false, false, None, Total)._1
-    val altMapTree = checkMorphKernelAssignment(c)(modelTpe, switchTpe, false, Total, Total, false)._1
+    val altMapTree = checkMorphKernelAssignment(c, s"Checking compatibility of switch model $switchTpe with $modelTpe")(modelTpe, switchTpe, false, Total, Total, false)._1
 
     val result =  q"""
          {
@@ -929,7 +929,7 @@ object Morpheus {
     }
 
     try {
-      checkMorphKernelAssignment(c)(srcTpe, tgtTpe, checkDepsInSrcModel, srcConfLev, refConfLevel, containsHiddenFragments)._1
+      checkMorphKernelAssignment(c, s"Checking compatibility of kernel reference type $tgtTpe with source type $srcTpe")(srcTpe, tgtTpe, checkDepsInSrcModel, srcConfLev, refConfLevel, containsHiddenFragments)._1
     }
     catch {
       case dchk: DependencyCheckException =>
@@ -949,7 +949,7 @@ object Morpheus {
    *                                In such a case the placeholder is rejected unless it is a simple replacement or a wrapper.
    * @return the AltMappings AST or the list of unsatisfied target alternatives
    */
-  private def checkMorphKernelAssignment(c: whitebox.Context)(srcTpe: c.Type, tgtTpe: c.Type,
+  private def checkMorphKernelAssignment(c: whitebox.Context, ctxMsg: String)(srcTpe: c.Type, tgtTpe: c.Type,
                                                                     checkDepsInSrcModel: Boolean, srcConfLev: ConformanceLevel,
                                                                     tgtConfLev: ConformanceLevel, containsHiddenFragments: Boolean): (c.Expr[AltMappings], AltMappings) = {
     import c.universe._
@@ -1036,6 +1036,13 @@ object Morpheus {
       }
     }
 
+    def fragSrcPretty(fragSrc: FragInstSource): String = {
+      fragSrc match {
+        case OriginalInstanceSource(frag) => toShortName(c)(srcFragmentTypesMap(frag.id)._1)
+        case PlaceholderSource(frag) => s"$$[${toShortName(c)(tgtFragmentTypesMap(frag.id)._1)}]"
+      }
+    }
+
     def toFragSrc(fn: FragmentNode): Option[FragInstSource] = if (fn.placeholder)
       Some(PlaceholderSource(fn))
     else newFragToOrigFrag.get(fn.id) match {
@@ -1051,12 +1058,14 @@ object Morpheus {
            fs2 <- toFragSrc(ant2)
       ) yield (fs1, fs2)
 
-    def templateContainsAntagonists(template: List[FragInstSource]): Boolean = {
-      template.exists(f1 => {
-        template.exists(f2 => {
-          antagonists.contains((f1, f2))
-        })
-      })
+    def templateAntagonists(template: List[FragInstSource]): List[(FragInstSource, FragInstSource)] = {
+      for (f1 <- template;
+          f2 <- template if antagonists.contains((f1, f2))) yield (f1, f2)
+//      template.exists(f1 => {
+//        template.exists(f2 => {
+//          antagonists.contains((f1, f2))
+//        })
+//      })
     }
 
     val anyTpe = c.universe.rootMirror.typeOf[Any]
@@ -1324,7 +1333,7 @@ object Morpheus {
     /*
      * @return the alternative template
      */
-    def isTargetAltCompatibleWithSourceAlt(tgtAlt: (List[FragmentNode], List[c.Type], c.Type), srcAlt: (List[FragmentNode], List[c.Type], c.Type)): Option[List[FragInstSource]] = {
+    def isTargetAltCompatibleWithSourceAlt(tgtAlt: (List[FragmentNode], List[c.Type], c.Type), srcAlt: (List[FragmentNode], List[c.Type], c.Type)): Either[List[FragInstSource], String] = {
 
       val tgtAltLUB = tgtAlt._3
       val srcAltLUB = srcAlt._3
@@ -1333,8 +1342,7 @@ object Morpheus {
 
         //if (!checkTypeAnnotations(tgtAlt._1.map(f => tgtFragmentTypesMap(f.id)._1), srcAlt._2)) {
         if (!checkTypeAnnotations(tgtAlt._2, srcAlt._2)) {
-          c.warning(c.enclosingPosition, s"Some target annotations not found in the source model")
-          None
+          Right(s"Some target annotations not found in the source model")
         } else {
 
           // check if no placeholder violates inner dependencies in the source composite
@@ -1345,8 +1353,7 @@ object Morpheus {
           if (placeholdersApplication.exists(!_.isDefined)) {
             // some placeholders cannot be applied
             // provide some explanation which placeholders and why they do not match
-            c.info(c.enclosingPosition, s"Some placeholders cannot be applied: ${placeholdersApplication.filter(!_.isDefined)}", true)
-            None
+            Right(s"Some placeholders cannot be applied: ${placeholdersApplication.filter(!_.isDefined)}")
           } else {
             // all placeholders can be applied
 
@@ -1401,26 +1408,28 @@ object Morpheus {
             // the alternative template
             val altTemplate = notInterferingPlaceholdersAsSources ::: remainingAltFragsAsSources
 
-            if (templateContainsAntagonists(altTemplate)) {
-              None
+            val foundAntagonists: List[(FragInstSource, FragInstSource)] = templateAntagonists(altTemplate)
+            if (foundAntagonists.nonEmpty) {
+              Right(s"Target alternative template ${altTemplate.map(fragSrcPretty(_))} contains antagonists ${foundAntagonists.map(tpl => (fragSrcPretty(tpl._1), fragSrcPretty(tpl._2)))}")
             } else {
-              Some(altTemplate)
+              Left(altTemplate)
             }
 
           }
         }
       } else {
-        None
+        Right(s"Source LUB $srcAltLUB cannot be assigned to $tgtAltLUB")
       }
 
       ret
     }
 
     var targetAltCounter = 0
+    var allTargetAlts = List.empty[List[c.Type]]
     var matchingTargetAltCounter = 0
     var matchingNonTrivialTargetAltCounter = 0
     var sourceAltCounter = 0
-    var unsatisfiedTargetAlts = Set.empty[c.Type]
+    var unsatisfiedTargetAlts = Set.empty[(List[c.Type] /*tgt alt*/, List[c.Type] /*src alt*/, String /*reason*/)]
     var independentTargetAltCounter = 0
 
     val emptySrcAlt: (Nil.type, Nil.type, Type) = (Nil, Nil, anyTpe)
@@ -1429,6 +1438,10 @@ object Morpheus {
 
     while (tgtAltIter.hasNext) {
       val tgtAlt = tgtAltIter.next()
+      // Transform fragment nodes to fragment types
+      val tgtAltFragTypes = tgtAlt._1.map(tgtFrag => tgtFragmentTypesMap(tgtFrag.id)._1)
+      // Used for reporting only now.
+      allTargetAlts ::= tgtAltFragTypes
 
       srcAltIter.reset()
       var matches = false
@@ -1436,12 +1449,16 @@ object Morpheus {
       sourceAltCounter = 0
       while (srcAltIter.hasNext) {
         val srcAlt = srcAltIter.next()
+        // Transform fragment nodes to fragment types
+        val srcAltFragTypes = srcAlt._1.map(srcFrag => srcFragmentTypesMap(srcFrag.id)._1)
+
         sourceAltCounter += 1
 
         isTargetAltCompatibleWithSourceAlt(tgtAlt, srcAlt) match {
-          case None =>
-            unsatisfiedTargetAlts += tgtAlt._3
-          case Some(altTemplate) =>
+          case Right(reason) =>
+            val incompatibleTgtAndSrcAltsWithReason: (List[c.Type], List[c.Type], String) = (tgtAltFragTypes, srcAltFragTypes, reason)
+            unsatisfiedTargetAlts += incompatibleTgtAndSrcAltsWithReason
+          case Left(altTemplate) =>
             updatePseudoCodeAST(tgtAlt, srcAlt, altTemplate)
             val rel: (List[FragmentNode], List[FragmentNode]) = (tgtAlt._1, srcAlt._1)
             altRelation += rel
@@ -1454,9 +1471,9 @@ object Morpheus {
         // No source alt matches the target alt.
         // Attempt to save the situation by offering the empty source alternative.
         isTargetAltCompatibleWithSourceAlt(tgtAlt, emptySrcAlt) match {
-          case None =>
+          case Right(reason) =>
           // the attempt failed
-          case Some(altTemplate) =>
+          case Left(altTemplate) =>
             // the attempt was successful
             updatePseudoCodeAST(tgtAlt, emptySrcAlt, altTemplate)
             independentTargetAltCounter += 1
@@ -1499,7 +1516,7 @@ object Morpheus {
             plhTpe.typeSymbol.asClass.selfType match {
               case RefinedType(parents, scope) =>
                 val depsTpe = internal.refinedType(parents.tail, scope)
-                checkMorphKernelAssignment(c)(mergedTpe, depsTpe, false, tgtConfLev, plhConfLevelMode, false)._1
+                checkMorphKernelAssignment(c, s"Checking placeholder $plhTpe dependencies")(mergedTpe, depsTpe, false, tgtConfLev, plhConfLevelMode, false)._1
               case _ => // no placeholder's dependencies
             }
           }
@@ -1521,13 +1538,27 @@ object Morpheus {
       srcAltIter.reset()
       tgtAltIter.reset()
 
+      def printUnsatisfiedAltsPair(unstfAltPair: (List[c.Type] /*tgt alt*/, List[c.Type] /*src alt*/, String /*reason*/)): String = {
+        val tgtAlt = toShortNames(c)(unstfAltPair._1)
+        val srcAlt = toShortNames(c)(unstfAltPair._2)
+        val reason = unstfAltPair._3
+        s"""
+            Target alt: $tgtAlt
+            Source alt: $srcAlt
+            Reason: $reason
+        """
+      }
+
       throw new DependencyCheckException(s"""
-           Reference of $tgtTpe:$tgtConfLev does not conform $srcTpe:$srcConfLev.\n
-           Unsatisfied target alternatives:\n\t${unsatisfiedTargetAlts.toList.mkString("\n\t")}
+           *** $ctxMsg ***
+
+           Reference of $tgtTpe:$tgtConfLev does not conform $srcTpe:$srcConfLev.
+           Unsatisfied alternatives:${unsatisfiedTargetAlts.toList.map(printUnsatisfiedAltsPair).mkString("---")}
            Source root: $srcRoot
            Target root: $tgtRoot
-           Antagonists: $antagonists
+           Antagonists: ${antagonists.map(tpl => (fragSrcPretty(tpl._1), fragSrcPretty(tpl._2))).mkString(", ")}
            NewFragToOrigFrag: $newFragToOrigFrag
+           Target alternatives:\n\t${allTargetAlts.map(toShortNames(c)(_)).mkString("\n\t")}
          """)
 
     } else {
@@ -1538,6 +1569,16 @@ object Morpheus {
 
     }
 
+  }
+
+  private def toShortNames(c: whitebox.Context)(types: List[c.Type]): List[String] = {
+    import c.universe._
+    types.map(toShortName(c)(_))
+  }
+
+  private def toShortName(c: whitebox.Context)(tpe: c.Type): String = {
+    import c.universe._
+    tpe.typeSymbol.fullName.split("\\.").last
   }
 
   private def alternativesIterator(c: whitebox.Context)(compositeModelTpe: c.Type, checkDeps: Boolean, excludePlaceholders: Boolean, conformanceLevel: ConformanceLevel):
@@ -1963,7 +2004,7 @@ object Morpheus {
         val optDepsTpe = c.typecheck(tq"org.morpheus.Morpheus.or[Unit, $depsTpe]", mode = c.TYPEmode).tpe
 
         val refConfLevel: ConformanceLevel = getConfLevelFromAnnotation(c)(fragTpe)
-        val depsMapsAsStr = checkMorphKernelAssignment(c)(compTpe, optDepsTpe, checkDepsInSrcModel = false, conformanceLevel,
+        val depsMapsAsStr = checkMorphKernelAssignment(c, s"Checking fragment $fragTpe dependencies")(compTpe, optDepsTpe, checkDepsInSrcModel = false, conformanceLevel,
           refConfLevel, containsHiddenFragments = false /* irrelevant, no placeholders in the self-type */)._2.serialize
 
         fragToDepsMaps += (fragNode.id -> c.Expr[String](q"$depsMapsAsStr"))
