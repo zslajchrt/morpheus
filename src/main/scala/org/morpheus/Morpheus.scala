@@ -80,6 +80,8 @@ object Morpheus {
 
   def parse[M](checkDeps: Boolean): MorphModel[M] = macro parse_impl[M]
 
+  def parse[M](checkDeps: Boolean, removePlaceholders: Boolean): Any = macro parseWithRemovePlaceholders_impl[M]
+
   def build[M](compositeModel: MorphModel[M], checkDeps: Boolean, fragmentProvider: FragmentProvider,
                defaultStrategy: MorphingStrategy[M], conformanceLevel: org.morpheus.Morpheus.ConformanceLevel): Any = macro build_impl[M]
 
@@ -714,10 +716,10 @@ object Morpheus {
       None
     }
 
-    def findPlaceholderFragmentTypeForArgument(plArgTpe: c.Type): (FragmentNode, c.Type) = {
+    def findPlaceholderFragmentTypeForArgument(plArgTpe: c.Type): List[(FragmentNode, c.Type)] = {
       val isArgWrapper = isWrapper(c)(plArgTpe)
 
-      placeholderFrags.find(phFragWithTpe => {
+      val plhFragsWitTypes = placeholderFrags.filter(phFragWithTpe => {
         val phFragTpe = phFragWithTpe._2
         val isFragWrapper = isWrapper(c)(phFragTpe)
         if ((isArgWrapper && !isFragWrapper) || (!isArgWrapper && isFragWrapper)) {
@@ -731,9 +733,12 @@ object Morpheus {
             plArgTpe =:= phFragTpe
           }
         }
-      }) match {
-        case None => c.abort(c.enclosingPosition, s"Placeholder fragment not found for placeholder argument $plArgTpe")
-        case Some(plhFragTpeForArg) => plhFragTpeForArg
+      })
+
+      if (plhFragsWitTypes.isEmpty) {
+        c.abort(c.enclosingPosition, s"Placeholder fragment not found for placeholder argument $plArgTpe")
+      } else {
+        plhFragsWitTypes
       }
     }
 
@@ -750,14 +755,16 @@ object Morpheus {
       override def apply(declTpe: c.Type): c.Type = getFragTypeForDeclType(declTpe).get
     }
 
-    val placeholderFactMapEntries: List[Tree] = actualPlaceholders.map(placeholderArg => {
+    val placeholderFactMapEntries: List[Tree] = actualPlaceholders.flatMap(placeholderArg => {
       findFragmentFactoryFunction(placeholderArg.actualType) match {
         case None =>
           c.abort(c.enclosingPosition, s"Placeholder argument $placeholderArg is not a fragment factory function (Frag[F, C] => F)")
         case Some(placeholderFragTpe) =>
-          val plhFragForArg: (FragmentNode, c.Type) = findPlaceholderFragmentTypeForArgument(placeholderFragTpe)
-          placeholderArgTypes ::= (plhFragForArg._2, placeholderFragTpe)
-          q"${plhFragForArg._1.id} -> $placeholderArg.asInstanceOf[org.morpheus.Frag[_, _] => _]"
+          val plhFragmentsForArg: List[(FragmentNode, c.Type)] = findPlaceholderFragmentTypeForArgument(placeholderFragTpe)
+          plhFragmentsForArg.map(plhFragForArg => {
+            placeholderArgTypes ::= (plhFragForArg._2, placeholderFragTpe)
+            q"${plhFragForArg._1.id} -> $placeholderArg.asInstanceOf[org.morpheus.Frag[_, _] => _]"
+          })
       }
     }).toList
 
@@ -2349,6 +2356,16 @@ object Morpheus {
     parseMorphModelFromType(c)(compTpe, check.asInstanceOf[Boolean], removePlaceholders = false, None, Total)._1.asInstanceOf[c.Expr[MorphModel[M]]]
   }
 
+  def parseWithRemovePlaceholders_impl[M: c.WeakTypeTag](c: whitebox.Context)(checkDeps: c.Expr[Boolean], removePlaceholders: c.Expr[Boolean]): c.Expr[Any] = {
+    import c.universe._
+
+    val Literal(Constant(check)) = checkDeps.tree
+    val Literal(Constant(removePlh)) = removePlaceholders.tree
+    val compTpe = implicitly[WeakTypeTag[M]].tpe
+
+    parseMorphModelFromType(c)(compTpe, check.asInstanceOf[Boolean], removePlh.asInstanceOf[Boolean], None, Total)._1.asInstanceOf[c.Expr[Any]]
+  }
+
   def build_impl[M: c.WeakTypeTag](c: whitebox.Context)(compositeModel: c.Expr[MorphModel[M]], checkDeps: c.Expr[Boolean],
                                                         fragmentProvider: c.Expr[FragmentProvider],
                                                         defaultStrategy: c.Expr[MorphingStrategy[M]],
@@ -2446,7 +2463,7 @@ object Morpheus {
         case FragmentNode(id, plh) =>
           val fragDeclTpe = fragmentTypesMap(id)._1
           // try to transform the placeholder's declared type to the actual type by means of placeholderTpeTransf
-          val fragTpe = if (plh) {
+          val fragTpe = if (!plh) {
             fragDeclTpe
           } else placeholderTpeTransf match {
             case None => fragDeclTpe
@@ -2475,8 +2492,16 @@ object Morpheus {
 
     val (compModelTpe, modelRoot, fragmentNodes, lub, lubComponentTypes, fragmentTypesMap) = buildModel(c)(compTpe, placeholderTpeTransf, conformanceLevel)
 
+    val (appliedCompModelTpe, actualModelTpe) = if (removePlaceholders) {
+      val transformedModel = transformToNoPlaceholders(c)(modelRoot, fragmentTypesMap.map(e => (e._1, (e._2._1, e._2._2))), placeholderTpeTransf)
+      val transformedModelTpe = c.typecheck(transformedModel, mode = c.TYPEmode).tpe
+      (tq"org.morpheus.MorphModel[$transformedModel]", transformedModelTpe)
+    } else
+      (tq"org.morpheus.MorphModel[$compTpe]", compTpe)
+
     val fragToDepsMaps: Map[Int, c.Expr[String]] = if (checkDeps) {
-      checkDependenciesInCompositeType(c)(compTpe, conformanceLevel)
+      //checkDependenciesInCompositeType(c)(compTpe, conformanceLevel)
+      checkDependenciesInCompositeType(c)(actualModelTpe, conformanceLevel)
     } else {
       Map.empty
     }
@@ -2534,13 +2559,7 @@ object Morpheus {
     val modelRootTree = convertModelToTree(modelRoot)
     val lubComponents: List[Tree] = for (lubComp <- lubComponentTypes) yield q"classOf[$lubComp]"
 
-    val (appliedCompModelTpe, actualModelTpe) = if (removePlaceholders) {
-      val transformedModel = transformToNoPlaceholders(c)(modelRoot, fragmentTypesMap.map(e => (e._1, (e._2._1, e._2._2))), placeholderTpeTransf)
-      val transformedModelTpe = c.typecheck(transformedModel, mode = c.TYPEmode).tpe
-      (tq"org.morpheus.MorphModel[$transformedModel]", transformedModelTpe)
-    } else
-      (tq"org.morpheus.MorphModel[$compTpe]", compTpe)
-
+    //c.info(c.enclosingPosition, s"Actual morph type: $actualModelTpe", true)
     //val appliedCompModelTpe = c.typecheck(appliedCompModelTpeNoCheck, mode = c.TYPEmode)
 
     val confLevelTpe = conformanceLevel match {
