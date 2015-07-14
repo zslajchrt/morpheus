@@ -1,6 +1,6 @@
 package org.morpheus
 
-import org.morpheus.AltMappingModel.Node
+import org.morpheus.AltMappingModel.{FragmentInsertion, Node}
 
 import scala.reflect.runtime.universe._
 import scala.util.DynamicVariable
@@ -341,7 +341,17 @@ case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: MorphKernelRef[MT, 
 
     val newAltIds: List[Int] = newAlt.map(_.id)
     val origAltsForNewAlt: List[OrigAlt] = altMap.newAltToOrigAlt.get(newAltIds) match {
-      case None => sys.error(s"There is no corresponding original alternative for $newAlt")
+      case None =>
+        if (newAlt.isEmpty && newAltStruct.isDefined) {
+          require(newAltStruct.get.forall({
+            case FragmentInsertion(_) => true
+            case _ => false
+          }), "Empty new alternative structure must be accompanied by its structure composed of fragment insertions only")
+
+          return newAltStruct.get.map(_.holder())
+        } else {
+          sys.error(s"There is no corresponding original alternative for $newAlt")
+        }
       case Some(origAlts) => origAlts
     }
 

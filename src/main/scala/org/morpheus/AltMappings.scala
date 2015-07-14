@@ -155,7 +155,7 @@ case class AltMappings(newFragToOrigFrag: Map[Int, Int], newAltToOrigAlt: Map[Li
     val unitTp = implicitly[WeakTypeTag[Unit]].tpe
 
     val altLUBs: List[c.Type] =
-      (for (altTemplate <- allAltTemplates) yield Morpheus.conjunctionLUB(c)(altTemplate)._1)
+      (for (altTemplate <- allAltTemplates) yield Morpheus.conjunctionLUB(c)(altTemplate))
         .map(tp => if (tp =:= anyTpe) unitTp else tp) // replace Any with Unit
         .toList
 

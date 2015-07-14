@@ -363,7 +363,8 @@ object Morpheus {
 
     var expandedAlts: List[(List[FragmentNode], List[c.Type], c.Type)] = Nil
 
-    def expandAlts(altsModelTpe: c.Type): Unit = {
+    def expandAlts(altsModelTpe: c.Type): Unit = try {
+
       val altIter = alternativesIterator(c)(altsModelTpe, checkDeps = false, excludePlaceholders = false, Total)._3
 
       // For each alternative collect all dependencies of fragments and extend the alternative by the difference
@@ -397,6 +398,9 @@ object Morpheus {
           expandedAlts ::= alt
         }
       }
+    } catch {
+      case e: Exception =>
+        throw new Exception(s"Cannot expand alternatives of morph type $modelTpe", e)
     }
 
     expandAlts(modelTpe)
@@ -1622,7 +1626,7 @@ object Morpheus {
       override protected def mapAlt(alt: List[FragmentNode]): (List[FragmentNode], List[c.Type], c.Type) = {
         val tpeAlt: List[c.Type] = alt.filter(!excludePlaceholders || !_.placeholder).map(fragmentType(_))
         val conj = conjunctionLUB(c)(tpeAlt)
-        (alt, conj._2, conj._1)
+        (alt, decomposeType(c)(conj), conj)
       }
     }
 
@@ -1805,28 +1809,45 @@ object Morpheus {
   }
 
 
-  def conjunctionLUB(c: whitebox.Context)(partTypes: List[c.Type]): (c.Type, List[c.Type]) = {
+  def decomposeType(c: whitebox.Context)(compositeTpe: c.Type): List[c.Type] = {
+    import c.universe._
+
+    val anyRefTpe = c.universe.rootMirror.typeOf[AnyRef]
+    val anyTpe = c.universe.rootMirror.typeOf[Any]
+
+    def decompose(tpe: c.Type): List[c.Type] = {
+      tpe match {
+        case RefinedType(parents, _) => parents.flatMap(decompose(_))
+        case _ => List(tpe)
+      }
+    }
+
+    val partTypes = decompose(compositeTpe)
+    partTypes.filter(pt => pt != anyRefTpe && pt != anyTpe)
+  }
+
+  def conjunctionLUB(c: whitebox.Context)(partTypes: List[c.Type]): c.Type = {
     import c.universe._
 
     val anyTpe = c.universe.rootMirror.typeOf[Any]
     if (partTypes.isEmpty) {
-      (anyTpe, Nil)
+      anyTpe
     } else {
-      val unitTpe = c.universe.rootMirror.typeOf[AnyRef]
-      val partTypesNoUnit = partTypes.filter(_ != unitTpe)
-      if (partTypesNoUnit.isEmpty) {
-        (anyTpe, Nil)
+      val anyRefTpe = c.universe.rootMirror.typeOf[AnyRef]
+      val partTypesNoAnyRef = partTypes.filter(_ != anyRefTpe)
+      if (partTypesNoAnyRef.isEmpty) {
+        anyTpe
       } else {
-        val conjTree = partTypesNoUnit.tail.foldLeft(tq"${partTypesNoUnit.head}")((tr, partTpe) => {
+        val conjTree = partTypesNoAnyRef.tail.foldLeft(tq"${partTypesNoAnyRef.head}")((tr, partTpe) => {
           tq"$tr with $partTpe"
         })
         val lubTpe = c.typecheck(conjTree, silent = true).tpe
-        (lubTpe, partTypesNoUnit)
+        lubTpe
       }
     }
   }
 
-  def disjunctionLUB(c: whitebox.Context)(partTypes: List[c.Type]): (c.Type, List[c.Type]) = {
+  def disjunctionLUB(c: whitebox.Context)(partTypes: List[c.Type]): c.Type = {
     import c.universe._
 
     val unitTpe = c.universe.rootMirror.typeOf[AnyRef]
@@ -1840,17 +1861,7 @@ object Morpheus {
       lubTpe = unitTpe
     }
 
-
-    def decompose(tpe: c.Type): List[c.Type] = {
-      tpe match {
-        case RefinedType(parents, _) => parents.flatMap(decompose(_))
-        case _ => List(tpe)
-      }
-    }
-
-    val lubComponents = decompose(lubTpe)
-
-    (lubTpe, lubComponents)
+    lubTpe
   }
 
   def getAnnotations(c: whitebox.Context)(tpe: c.Type): List[c.universe.Annotation] = {
@@ -1999,6 +2010,17 @@ object Morpheus {
   def checkDependenciesInCompositeType(c: whitebox.Context)(compTpe: c.Type, conformanceLevel: ConformanceLevel): Map[Int, c.Expr[String]] = {
     import c.universe._
 
+    def checkUniqueFragmentTypes(altLub: c.Type, fragTypes: List[c.Type]): Unit = {
+      if (fragTypes.size > 1) {
+        val headTpe = fragTypes.head
+        if (fragTypes.tail.contains(headTpe)) {
+          c.abort(c.enclosingPosition, s"Fragment type $headTpe occurs more than once in alternative $altLub")
+        } else {
+          checkUniqueFragmentTypes(altLub, fragTypes.tail)
+        }
+      }
+    }
+
     val (compModelTpe, modelRoot, fragmentNodes, lub, lubComponentTypes, fragmentTypesMap) = buildModel(c)(compTpe, None, conformanceLevel)
 
     var fragToDepsMaps = Map.empty[Int, c.Expr[String]]
@@ -2028,6 +2050,9 @@ object Morpheus {
     val altIter = alternativesIterator(c)(compTpe, false, false, Partial)._3
     while (altIter.hasNext) {
       val alt = altIter.next()
+
+      checkUniqueFragmentTypes(alt._3, alt._2)
+
       for (wrapperTpe <- alt._2 if isWrapper(c)(wrapperTpe)) {
         val wrappedFragment = if (isDimensionWrapper(c)(wrapperTpe)) {
           // a dimension wrapper
@@ -2114,7 +2139,7 @@ object Morpheus {
 //  }
 
   def buildModel(c: whitebox.Context)(compRawTp: c.Type, placeholderTpeTransf: Option[PartialFunction[c.Type, c.Type]], conformanceLevel: ConformanceLevel):
-  (c.Type, MorphModelNode, List[FragmentNode], c.Type, List[c.Type], Map[Int, (c.Type, Option[c.universe.Type])]) = {
+  (c.Type, MorphModelNode, List[FragmentNode], c.Type, List[c.Type], Map[Int, (c.Type, Option[c.universe.Type])]) = try {
 
     import c.universe._
 
@@ -2129,10 +2154,7 @@ object Morpheus {
 
     type FragDesc = (Type, Option[Type])
 
-    //val unitTpe = c.typecheck(tq"Unit", silent = true).tpe
-    val unitTpe = c.universe.rootMirror.typeOf[AnyRef]
     val anyRefTpe = c.universe.rootMirror.typeOf[AnyRef]
-    //val anyRefTpe = c.typecheck(tq"AnyRef", silent = false).tpe
 
     val fragCounter: AtomicInteger = new AtomicInteger()
     var fragmentTypes: Map[Int, FragDesc] = Map.empty
@@ -2278,25 +2300,28 @@ object Morpheus {
 
     def determineLUB(node: MorphModelNode): (Type, List[Type]) = {
 
-      def determineLUB_(node: MorphModelNode): (c.Type, List[c.Type]) = node match {
+      def determineLUB_(node: MorphModelNode): c.Type = node match {
         case ConjNode(children) =>
-          conjunctionLUB(c)(children.map(c => determineLUB_(c)._1))
+          conjunctionLUB(c)(children.map(c => determineLUB_(c)))
         case DisjNode(children) =>
           if (children.contains(Unit)) {
-            (unitTpe, List(unitTpe))
+            anyRefTpe
           } else {
-            disjunctionLUB(c)(children.map(determineLUB_(_)._1))
+            disjunctionLUB(c)(children.map(determineLUB_(_)))
           }
         case fn@FragmentNode(_, _) =>
           val fTpe = fragmentType(fn)
-          (fTpe, List(fTpe))
+          fTpe
         case UnitNode =>
-          (unitTpe, List(unitTpe))
+          anyRefTpe
       }
 
-      val (lub, lubComponents) = determineLUB_(node)
-      //println(s"LUB: ${lub.typeSymbol}, ${lub.typeSymbol.fullName}")
-      if (lub =:= unitTpe) {
+      val lub = determineLUB_(node)
+      val lubComponents = decomposeType(c)(lub)
+
+      //c.info(c.enclosingPosition, s"LUB $lub, components: $lubComponents", true)
+
+      if (lub =:= anyRefTpe) {
         //println(s"Degenerated LUB")
         (anyRefTpe, List(anyRefTpe))
       } else {
@@ -2324,6 +2349,9 @@ object Morpheus {
     //c.info(c.enclosingPosition, s"Fragment types for model $compRawTp:\n $fragmentTypes", true)
 
     res
+  } catch {
+    case e: Exception =>
+      throw new Exception(s"Cannot parse morph type $compRawTp", e)
   }
 
   private def getConfLevelFromAnnotation(c: whitebox.Context)(fragTpe: c.Type): ConformanceLevel = {
