@@ -1,6 +1,7 @@
 package org.morpheus
 
 import java.util.concurrent.atomic.AtomicInteger
+import scala.collection.{immutable, GenTraversableOnce}
 import scala.language.experimental.macros
 import scala.reflect.internal.Symbols
 import scala.reflect.macros.whitebox
@@ -128,6 +129,8 @@ object Morpheus {
   implicit def convertMorphKernelToTotalRef[M1, M2](ci: MorphKernel[M1]): &[M2] = macro convertMorphKernelToTotalRef_impl[M1, M2]
 
   implicit def convertMorphKernelToTotalRefNoDepsCheck[M1, M2](ci: MorphKernel[M1]): &?[M2] = macro convertMorphKernelToTotalRefNoDepsCheck_impl[M1, M2]
+
+  implicit def convertMorphKernelToTotalRefNoHidden[M1, M2](ci: MorphKernel[M1]): &![M2] = macro convertMorphKernelToTotalRefNoHidden_impl[M1, M2]
 
   def rootStrategy[M](src: Any): Any = macro rootStrategy_impl[M]
 
@@ -518,7 +521,7 @@ object Morpheus {
     val switchTpe = implicitly[WeakTypeTag[S]].tpe.dealias
 
     val switchModelTree = parseMorphModelFromType(c)(switchTpe, false, false, None, Total)._1
-    val altMapTree = checkMorphKernelAssignment(c, s"Checking compatibility of switch model $switchTpe with $modelTpe")(modelTpe, switchTpe, false, Total, Total, false)._1
+    val altMapTree = checkMorphKernelAssignment(c, s"Checking compatibility of switch model $switchTpe with $modelTpe")(modelTpe, switchTpe, false, Total, Total, false, noHiddenFragments = false)._1
 
     //val result = q"org.morpheus.AltMapRatingStrategy($delegate, $switchModelTree, $altMapTree, $sw, $negative)"
     val result = q"""
@@ -547,7 +550,7 @@ object Morpheus {
     val switchTpe = implicitly[WeakTypeTag[S]].tpe.dealias
 
     val switchModelTree = parseMorphModelFromType(c)(switchTpe, false, false, None, Total)._1
-    val altMapTree = checkMorphKernelAssignment(c, s"Checking compatibility of switch model $switchTpe with $modelTpe")(modelTpe, switchTpe, false, Total, Total, false)._1
+    val altMapTree = checkMorphKernelAssignment(c, s"Checking compatibility of switch model $switchTpe with $modelTpe")(modelTpe, switchTpe, false, Total, Total, false, noHiddenFragments = false)._1
 
     //val result = q"org.morpheus.PromotingStrategy($delegate, $switchModelTree, $altMapTree, $sw)"
 
@@ -580,7 +583,7 @@ object Morpheus {
     val switchTpe = implicitly[WeakTypeTag[S]].tpe.dealias
 
     val switchModelTree = parseMorphModelFromType(c)(switchTpe, false, false, None, Total)._1
-    val altMapTree = checkMorphKernelAssignment(c, s"Checking compatibility of switch model $switchTpe with $modelTpe")(modelTpe, switchTpe, false, Total, Total, false)._1
+    val altMapTree = checkMorphKernelAssignment(c, s"Checking compatibility of switch model $switchTpe with $modelTpe")(modelTpe, switchTpe, false, Total, Total, false, noHiddenFragments = false)._1
 
     val result =  q"""
          {
@@ -684,13 +687,18 @@ object Morpheus {
       placeholders
     }
 
-    def conformanceLevel: (Morpheus.ConformanceLevel, c.Tree) = {
-      val existRefTpe = implicitly[WeakTypeTag[~&[_]]].tpe
-      val existRefNoDepsCheckTpe = implicitly[WeakTypeTag[~&?[_]]].tpe
-      val inclRefTpe = implicitly[WeakTypeTag[&[_]]].tpe
-      val inclRefNoDepsCheckTpe = implicitly[WeakTypeTag[&?[_]]].tpe
+    val existRefTpe = implicitly[WeakTypeTag[~&[_]]].tpe
+    val existRefNoDepsCheckTpe = implicitly[WeakTypeTag[~&?[_]]].tpe
+    val inclRefTpe = implicitly[WeakTypeTag[&[_]]].tpe
+    val inclRefNoDepsCheckTpe = implicitly[WeakTypeTag[&?[_]]].tpe
+    val inclRefNoHiddenTpe = implicitly[WeakTypeTag[&![_]]].tpe
 
-      val (confLev, confTpe) = if (existRefTpe.erasure =:= ciRef.actualType.erasure || existRefNoDepsCheckTpe.erasure =:= ciRef.actualType.erasure) {
+    val noHiddenFragments = inclRefNoHiddenTpe.erasure =:= ciRef.actualType.erasure
+
+    def conformanceLevel: (Morpheus.ConformanceLevel, c.Tree) = {
+      val (confLev, confTpe) = if (noHiddenFragments) {
+        (Morpheus.Total, c.universe.rootMirror.typeOf[TotalConformance])
+      } else if (existRefTpe.erasure =:= ciRef.actualType.erasure || existRefNoDepsCheckTpe.erasure =:= ciRef.actualType.erasure) {
         (Morpheus.Partial, c.universe.rootMirror.typeOf[PartialConformance])
       } else if (inclRefTpe.erasure =:= ciRef.actualType.erasure || inclRefNoDepsCheckTpe.erasure =:= ciRef.actualType.erasure) {
         (Morpheus.Total, c.universe.rootMirror.typeOf[TotalConformance])
@@ -791,7 +799,8 @@ object Morpheus {
     else
       Some(strategy)
 
-    composeOrGlean_impl[M](c)(CopyProvider(ciRef, placeholderFactoriesTree, confLev._1, confLev._2, false), checkDeps = false, None, defStrategy, Some(placeholderMapFn), None)
+    composeOrGlean_impl[M](c)(CopyProvider(ciRef, placeholderFactoriesTree, confLev._1, confLev._2, delegation = false, noHiddenFragments),
+      checkDeps = false, None, defStrategy, Some(placeholderMapFn), None)
   }
 
   private def compareFragmentDeclarations(c: whitebox.Context)(fd1: c.Type, fd2: c.Type): Boolean = {
@@ -847,7 +856,7 @@ object Morpheus {
     val tgtTpe = implicitly[WeakTypeTag[M2]].tpe.dealias
     val isDereferenced = ci.actualType <:< c.typeOf[WithHiddenFragments]
 
-    val altMappingsExpr = checkMorphKernelAssignmentUsingTypeArgs[M1, M2](c)(ci, checkDepsInSrcModel = !isDereferenced, refConfLevel = Partial)
+    val altMappingsExpr = checkMorphKernelAssignmentUsingTypeArgs[M1, M2](c)(ci, checkDepsInSrcModel = !isDereferenced, refConfLevel = Partial, noHiddenFragments = false)
 
     val res = q"new ~&[$tgtTpe]($ci.asInstanceOf[org.morpheus.MorphKernel[Any]], $altMappingsExpr)"
     c.Expr[~&[M2]](res)
@@ -859,7 +868,7 @@ object Morpheus {
     val tgtTpe = implicitly[WeakTypeTag[M2]].tpe.dealias
     val isDereferenced = ci.actualType <:< c.typeOf[WithHiddenFragments]
 
-    val altMappingsExpr = checkMorphKernelAssignmentUsingTypeArgs[M1, M2](c)(ci, checkDepsInSrcModel = false, refConfLevel = Partial)
+    val altMappingsExpr = checkMorphKernelAssignmentUsingTypeArgs[M1, M2](c)(ci, checkDepsInSrcModel = false, refConfLevel = Partial, noHiddenFragments = false)
 
     val res = q"new ~&?[$tgtTpe]($ci.asInstanceOf[org.morpheus.MorphKernel[Any]], $altMappingsExpr)"
     c.Expr[~&?[M2]](res)
@@ -881,7 +890,7 @@ object Morpheus {
     // all required dependencies for such a fragment.
     // If the reference's composite type contains a fragment placeholder, the placeholder's dependencies check is carried out independently
     // within the validation of the placeholder.
-    val altMappingsExpr = checkMorphKernelAssignmentUsingTypeArgs[M1, M2](c)(ci, checkDepsInSrcModel = !isDereferenced, refConfLevel = Total)
+    val altMappingsExpr = checkMorphKernelAssignmentUsingTypeArgs[M1, M2](c)(ci, checkDepsInSrcModel = !isDereferenced, refConfLevel = Total, noHiddenFragments = false)
 
     val res = q"new &[$tgtTpe]($ci.asInstanceOf[org.morpheus.MorphKernel[Any]], $altMappingsExpr)"
     c.Expr[&[M2]](res)
@@ -890,11 +899,24 @@ object Morpheus {
   def convertMorphKernelToTotalRefNoDepsCheck_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[M1]]): c.Expr[&?[M2]] = {
     import c.universe._
 
-    val altMappingsExpr = checkMorphKernelAssignmentUsingTypeArgs[M1, M2](c)(ci, checkDepsInSrcModel = false, refConfLevel = Total)
+    val altMappingsExpr = checkMorphKernelAssignmentUsingTypeArgs[M1, M2](c)(ci, checkDepsInSrcModel = false, refConfLevel = Total, noHiddenFragments = false)
 
     val tgtTpe = implicitly[WeakTypeTag[M2]].tpe.dealias
     val res = q"new &?[$tgtTpe]($ci.asInstanceOf[org.morpheus.MorphKernel[Any]], $altMappingsExpr)"
     c.Expr[&?[M2]](res)
+  }
+
+  def convertMorphKernelToTotalRefNoHidden_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[M1]]): c.Expr[&![M2]] = {
+    import c.universe._
+
+    val tgtTpe = implicitly[WeakTypeTag[M2]].tpe.dealias
+
+    val isDereferenced = ci.actualType <:< c.typeOf[WithHiddenFragments]
+
+    val altMappingsExpr = checkMorphKernelAssignmentUsingTypeArgs[M1, M2](c)(ci, checkDepsInSrcModel = !isDereferenced, refConfLevel = Total, noHiddenFragments = true)
+
+    val res = q"new &![$tgtTpe]($ci.asInstanceOf[org.morpheus.MorphKernel[Any]], $altMappingsExpr)"
+    c.Expr[&![M2]](res)
   }
 
   sealed trait ConformanceLevel
@@ -915,7 +937,7 @@ object Morpheus {
   case object Partial extends ConformanceLevel
   case object Total extends ConformanceLevel
 
-  private def checkMorphKernelAssignmentUsingTypeArgs[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[M1]], checkDepsInSrcModel: Boolean, refConfLevel: ConformanceLevel): c.Expr[AltMappings] = {
+  private def checkMorphKernelAssignmentUsingTypeArgs[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[M1]], checkDepsInSrcModel: Boolean, refConfLevel: ConformanceLevel, noHiddenFragments: Boolean): c.Expr[AltMappings] = {
     import c.universe._
 
     val srcTpe = implicitly[WeakTypeTag[M1]].tpe.dealias
@@ -940,7 +962,7 @@ object Morpheus {
     }
 
     try {
-      checkMorphKernelAssignment(c, s"Checking compatibility of kernel reference type $tgtTpe with source type $srcTpe")(srcTpe, tgtTpe, checkDepsInSrcModel, srcConfLev, refConfLevel, containsHiddenFragments)._1
+      checkMorphKernelAssignment(c, s"Checking compatibility of kernel reference type $tgtTpe with source type $srcTpe")(srcTpe, tgtTpe, checkDepsInSrcModel, srcConfLev, refConfLevel, containsHiddenFragments, noHiddenFragments)._1
     }
     catch {
       case dchk: DependencyCheckException =>
@@ -962,7 +984,8 @@ object Morpheus {
    */
   private def checkMorphKernelAssignment(c: whitebox.Context, ctxMsg: String)(srcTpe: c.Type, tgtTpe: c.Type,
                                                                     checkDepsInSrcModel: Boolean, srcConfLev: ConformanceLevel,
-                                                                    tgtConfLev: ConformanceLevel, containsHiddenFragments: Boolean): (c.Expr[AltMappings], AltMappings) = {
+                                                                    tgtConfLev: ConformanceLevel, containsHiddenFragments: Boolean,
+                                                                    noHiddenFragments: Boolean): (c.Expr[AltMappings], AltMappings) = {
     import c.universe._
 
     val printCounter = new AtomicInteger()
@@ -1061,22 +1084,25 @@ object Morpheus {
       case Some(srcFragId) => Some(OriginalInstanceSource(FragmentNode(srcFragId, placeholder = false)))
     }
 
+    def toFragType(fragInst: FragInstSource): c.Type = fragInst match {
+      case PlaceholderSource(fn) => tgtFragmentTypesMap(fn.id)._1
+      case OriginalInstanceSource(fn) => srcFragmentTypesMap(fn.id)._1
+    }
+
     // Take only such antagonists where both sides have their counterparts in the source model
     val tgtAnts = tgtRoot.createAntagonistsMatrix((fn1, fn2) => tgtFragmentTypesMap(fn1.id)._1 =:= tgtFragmentTypesMap(fn2.id)._1)
     val antagonists: Set[(FragInstSource, FragInstSource)] =
-      for ((ant1, ant2) <- tgtAnts;
-           fs1 <- toFragSrc(ant1);
-           fs2 <- toFragSrc(ant2)
-      ) yield (fs1, fs2)
+      for ((ant1, ant2) <- tgtAnts; fs1 <- toFragSrc(ant1); fs2 <- toFragSrc(ant2))
+        yield (fs1, fs2)
+
+    //    val srcAnts = srcRoot.createAntagonistsMatrix((fn1, fn2) => srcFragmentTypesMap(fn1.id)._1 =:= srcFragmentTypesMap(fn2.id)._1)
+//    val antagonists: Set[(FragInstSource, FragInstSource)] =
+//      for ((ant1, ant2) <- srcAnts)
+//        yield (OriginalInstanceSource(ant1), OriginalInstanceSource(ant2))
 
     def templateAntagonists(template: List[FragInstSource]): List[(FragInstSource, FragInstSource)] = {
       for (f1 <- template;
-          f2 <- template if antagonists.contains((f1, f2))) yield (f1, f2)
-//      template.exists(f1 => {
-//        template.exists(f2 => {
-//          antagonists.contains((f1, f2))
-//        })
-//      })
+           f2 <- template if antagonists.contains((f1, f2))) yield (f1, f2)
     }
 
     val anyTpe = c.universe.rootMirror.typeOf[Any]
@@ -1226,7 +1252,7 @@ object Morpheus {
       srcAlt.find(compareWrappedTpeWithPlaceholderWrappedTpe)
     }
 
-    def isViolatingDeps(placeholder: FragmentNode, srcAlt: List[FragmentNode]): Option[(FragmentNode, Option[FragmentNode])] = {
+    def checkIfPlhdViolatesDeps(placeholder: FragmentNode, srcAlt: List[FragmentNode]): Either[(FragmentNode, Option[FragmentNode]), String] = {
       val placeholderTpe = tgtFragmentTypesMap(placeholder.id)._1
 
       // try to find the corresponding fragment to the placeholder in the source alt
@@ -1234,23 +1260,23 @@ object Morpheus {
       srcAlt.find(isSameAltNode(_, placeholderTpe)) match {
         case Some(same) =>
           // a simple replacement
-          Some(placeholder, Some(same))
+          Left(placeholder, Some(same))
         case None =>
 
           if (isWrapper(c)(placeholderTpe)) {
             // Wrappers cannot have dependees by definition. We must only find the corresponding fragment to be wrapped.
 
             findPrecedingNodeForWrapper(placeholderTpe, srcAlt) match {
-              case None => None // there is no fragment to be wrapped by the placeholder TODO: provide some error message
+              case None => Right(s"No fragment to be wrapped by placeholder $placeholderTpe") // there is no fragment to be wrapped by the placeholder TODO: provide some error message
               case Some(wrappedNode) =>
-                Some(placeholder, Some(wrappedNode)) // in the case of placeholder wrapper the second node is interpreted as the one after which the first node is placed
+                Left(placeholder, Some(wrappedNode)) // in the case of placeholder wrapper the second node is interpreted as the one after which the first node is placed
             }
 
           } else {
             // In the case the composite instance contains hidden fragments we must abort the process since
             // we cannot prove there is no fragment dependent on the placeholder.
             if (containsHiddenFragments) {
-              None
+              Right(s"Source model contains hidden fragments, so we cannot prove there is no fragment dependent on the placeholder $placeholderTpe")
             } else {
 
               // try to detect the interfering fragment by analyzing dependencies
@@ -1260,23 +1286,24 @@ object Morpheus {
 
                 srcAlt.find(isCorrespondingSourceAltNode(_, placeholderTpe)) match {
                   case None =>
-                    Some(placeholder, None)
+                    Left(placeholder, None)
                   case Some(corresp) =>
-                    Some(placeholder, Some(corresp))
+                    Left(placeholder, Some(corresp))
                 }
 
               } else {
                 // there is some interference, find out if the placeholder can be used
                 findFragmentWithSameDependees(placeholderTpe, potentialDependees, srcAlt) match {
                   case None if checkDepsInSrcModel =>
-                    None
-                  case None if !checkDepsInSrcModel =>
                     // The checkDepsInSrcModel flag indicates some source fragments may be missing (i.e. the source composite is incomplete).
-                    // Then we assume that the placeholder can be used without interfering the dependencies in the source.
-                    Some(placeholder, None)
+                    // These missing fragment may be in conflict with the placeholder.
+                    Right(s"Source model is incomplete. may be in conflict with placeholder $placeholderTpe")
+                  case None if !checkDepsInSrcModel =>
+                    // So if it is not set then we can assume that the placeholder can be used without interfering with the dependencies in the source.
+                    Left(placeholder, None)
                   case Some(interferingFragment) =>
                     val interFragTpe = srcFragmentTypesMap(interferingFragment.id)
-                    Some(placeholder, Some(interferingFragment))
+                    Left(placeholder, Some(interferingFragment))
                 }
               }
             }
@@ -1341,6 +1368,32 @@ object Morpheus {
 
     }
 
+    def checkDepsOfPlaceholders(altTemplate: List[FragInstSource]): Unit = {
+      val altTemplateTpe = conjunctionLUB(c)(altTemplate.map(toFragType(_)))
+      for (altFragSrc <- altTemplate) {
+
+        altFragSrc match {
+          case OriginalInstanceSource(_) =>
+          case PlaceholderSource(fn) =>
+            val plhTpe = toFragType(altFragSrc)
+            try {
+              val plhConfLevelMode: ConformanceLevel = getConfLevelFromAnnotation(c)(plhTpe)
+              plhTpe.typeSymbol.asClass.selfType match {
+                case RefinedType(parents, scope) =>
+                  val depsTpe = internal.refinedType(parents.tail, scope)
+                  checkMorphKernelAssignment(c, s"Checking placeholder $plhTpe dependencies")(altTemplateTpe, depsTpe, false, tgtConfLev, plhConfLevelMode, false, noHiddenFragments = false)._1
+                case _ => // no placeholder's dependencies
+              }
+            }
+            catch {
+              case dchck: DependencyCheckException =>
+                throw new DependencyCheckException(s"Unsatisfied placeholder $plhTpe dependencies\n: $dchck")
+            }
+        }
+      }
+
+    }
+
     /*
      * @return the alternative template
      */
@@ -1360,23 +1413,24 @@ object Morpheus {
           val placeholders = tgtAlt._1.filter(_.placeholder)
           // a list of replacements by placeholders. The first fragment is the placeholder,
           // the second is the source alt node being replaced or appended (in case of a wrapper) by the placeholder
-          val placeholdersApplication: List[Option[(FragmentNode, Option[FragmentNode])]] = placeholders.map(isViolatingDeps(_, srcAlt._1))
-          if (placeholdersApplication.exists(!_.isDefined)) {
+          val placeholdersApplication: List[Either[(FragmentNode, Option[FragmentNode]), String]] = placeholders.map(checkIfPlhdViolatesDeps(_, srcAlt._1))
+          if (placeholdersApplication.exists(_.isRight)) {
             // some placeholders cannot be applied
             // provide some explanation which placeholders and why they do not match
-            Right(s"Some placeholders cannot be applied: ${placeholdersApplication.filter(!_.isDefined)}")
+            Right(s"Some placeholders cannot be applied: ${placeholdersApplication.filter(_.isRight).map(_.right.get)}")
           } else {
             // all placeholders can be applied
 
             //c.info(c.enclosingPosition, s"placeholdersApplication: $placeholdersApplication", true)
 
             // orig frag -> placeholder replacement mapping
-            val replacements: List[(FragmentNode, FragmentNode)] = placeholdersApplication.
-              filter(_.get._2.isDefined).
-              map(appl => (appl.get._1, appl.get._2.get))
+            val validPlaceholdersApplication: List[(FragmentNode, Option[FragmentNode])] = placeholdersApplication.map(_.left.get)
+            val replacements: List[(FragmentNode, FragmentNode)] = validPlaceholdersApplication.
+              filter(_._2.isDefined).map(pa => (pa._1, pa._2.get))
 
             // 'orphan' placeholders
-            val notInterferingPlaceholders = placeholdersApplication.filter(!_.get._2.isDefined).map(_.get._1)
+            val notInterferingPlaceholders = validPlaceholdersApplication.
+              filter(!_._2.isDefined).map(_._1)
             // 'orphan' placeholders converted to PlaceholderSource
             val notInterferingPlaceholdersAsSources = notInterferingPlaceholders.map(PlaceholderSource)
 
@@ -1432,7 +1486,32 @@ object Morpheus {
         Right(s"Source LUB $srcAltLUB cannot be assigned to $tgtAltLUB")
       }
 
-      ret
+      ret match {
+        case Right(_) => ret
+        case Left(altTemplate) =>
+          try {
+            checkDepsOfPlaceholders(altTemplate)
+
+            if (noHiddenFragments) {
+              // all source fragments must be also in the target alternative template
+              val srcFragsInAltTemplate: Set[FragmentNode] = altTemplate.filter(_.isInstanceOf[OriginalInstanceSource]).map(_.fragment).toSet
+              val srcAltAsSet: Set[FragmentNode] = srcAlt._1.toSet
+              if (srcAltAsSet != srcFragsInAltTemplate) {
+                val hiddenFrags = (srcAltAsSet.--(srcFragsInAltTemplate)).map(hf => srcFragmentTypesMap(hf.id)._1)
+                Right(s"Some hidden source fragments in the target alternative template: ${hiddenFrags.mkString(",")}")
+              } else {
+                ret
+              }
+            } else {
+              ret
+            }
+
+          } catch {
+            case dce: DependencyCheckException =>
+              Right(dce.getMessage)
+          }
+      }
+
     }
 
     var targetAltCounter = 0
@@ -1492,8 +1571,6 @@ object Morpheus {
         }
       }
 
-
-
       if (matches) {
         matchingTargetAltCounter += 1
         if (tgtAlt._1.nonEmpty)
@@ -1508,37 +1585,6 @@ object Morpheus {
       case (Total, Partial) => altRelation.size == targetAltCounter * sourceAltCounter // cartesian product
       case (Total, Total) => matchingTargetAltCounter == targetAltCounter // left-total relation
     }
-
-    //val altMap = AltMappings(newFragToOrigFrag, newAltToOrigAlt)
-
-    def checkDepsOfPlaceholders(): Unit = {
-      // placeholders dependency check
-      val placeholders = tgtRoot.fragments.filter(_.placeholder)
-      if (placeholders.nonEmpty) {
-        val mergedTpe = altMap.toCompositeType(c)(fn => srcFragmentTypesMap(fn.id)._1, fn => tgtFragmentTypesMap(fn.id)._1)
-        //c.info(c.enclosingPosition, s"Merged composite type: $mergedTpe", true)
-        var totalUnsatisfiedDeps = List.empty[(c.Type, Set[c.Type])]
-
-        for (plh <- placeholders;
-             plhTpe = tgtFragmentTypesMap(plh.id)._1) {
-          //c.info(c.enclosingPosition, s"Dependency check for placeholder: $plhTpe", true)
-          try {
-            val plhConfLevelMode: ConformanceLevel = getConfLevelFromAnnotation(c)(plhTpe)
-            plhTpe.typeSymbol.asClass.selfType match {
-              case RefinedType(parents, scope) =>
-                val depsTpe = internal.refinedType(parents.tail, scope)
-                checkMorphKernelAssignment(c, s"Checking placeholder $plhTpe dependencies")(mergedTpe, depsTpe, false, tgtConfLev, plhConfLevelMode, false)._1
-              case _ => // no placeholder's dependencies
-            }
-          }
-          catch {
-            case dchck: DependencyCheckException =>
-              throw new DependencyCheckException(s"Unsatisfied placeholder $plhTpe dependencies\n: $dchck")
-          }
-        }
-      }
-    }
-
 
     def resultTree() = {
       val pcTree: Tree = pseudoCodeTree()
@@ -1574,7 +1620,7 @@ object Morpheus {
 
     } else {
 
-      checkDepsOfPlaceholders()
+//      c.info(c.enclosingPosition, s"AltMapping $altMap", true)
 
       (resultTree(), altMap)
 
@@ -2034,7 +2080,7 @@ object Morpheus {
 
         val refConfLevel: ConformanceLevel = getConfLevelFromAnnotation(c)(fragTpe)
         val depsMapsAsStr = checkMorphKernelAssignment(c, s"Checking fragment $fragTpe dependencies")(compTpe, optDepsTpe, checkDepsInSrcModel = false, conformanceLevel,
-          refConfLevel, containsHiddenFragments = false /* irrelevant, no placeholders in the self-type */)._2.serialize
+          refConfLevel, containsHiddenFragments = false /* irrelevant, no placeholders in the self-type */, noHiddenFragments = false)._2.serialize
 
         fragToDepsMaps += (fragNode.id -> c.Expr[String](q"$depsMapsAsStr"))
 
@@ -2642,7 +2688,7 @@ object Morpheus {
 
     val (conformanceLevel, conformanceLevelMarker) = conformanceLevelExpr match {
       case None => fragmentProvider match {
-        case CopyProvider(_, _, confLev, confLevTpe, _) =>
+        case CopyProvider(_, _, confLev, confLevTpe, _, _) =>
           (confLev, confLevTpe.asInstanceOf[c.Tree])
         case _ => (Total, tq"org.morpheus.TotalConformance")
       }
@@ -2698,15 +2744,16 @@ object Morpheus {
         (q"org.morpheus.SingletonProviderImplicits", defaultRootNode, defaultFragmentList, defaultDefaultStrategy, defaultAltComposer, noHiddenFragmentsMarker, defaultParentInstance)
       case InstanceProvider =>
         (q"org.morpheus.InstanceProviderImplicits", defaultRootNode, defaultFragmentList, defaultDefaultStrategy, defaultAltComposer, noHiddenFragmentsMarker, defaultParentInstance)
-      case CopyProvider(src, placeholderFacts, _, _, delegation) if !delegation =>
+      case CopyProvider(src, placeholderFacts, _, _, delegation, noHiddenFragments) if !delegation =>
         val srcTree = src.asInstanceOf[c.Expr[MorphKernelRef[_, _]]].tree
         val placeholderFactMapTree = placeholderFacts.asInstanceOf[Tree]
+        val hiddenFragMarker = if (noHiddenFragments) noHiddenFragmentsMarker else mayContainHiddenFragmentsMarker
         (q"new org.morpheus.CopyProviderImplicits($srcTree.instance, $placeholderFactMapTree, $defaultRootNode)",
           defaultRootNode, defaultFragmentList,
           q"org.morpheus.BridgeStrategy($srcTree.asInstanceOf[org.morpheus.MorphKernelRef[compositeModel.Model, _]])",
           q"org.morpheus.BridgeAlternativeComposer($srcTree.asInstanceOf[org.morpheus.MorphKernelRef[compositeModel.Model, _]])",
-          mayContainHiddenFragmentsMarker, q"Some($srcTree.instance)")
-      case CopyProvider(src, _, _, _, delegation) if delegation =>
+          hiddenFragMarker, q"Some($srcTree.instance)")
+      case CopyProvider(src, _, _, _, delegation, _) if delegation =>
         val srcTree = src.asInstanceOf[c.Expr[MorphKernelBase[_]]].tree
         (q"new org.morpheus.CopyProviderImplicits($srcTree, Map.empty, $defaultRootNode)",
           defaultRootNode, defaultFragmentList, defaultDefaultStrategy, defaultAltComposer, noHiddenFragmentsMarker, q"Some($srcTree)")

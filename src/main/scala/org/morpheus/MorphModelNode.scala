@@ -62,6 +62,7 @@ sealed trait MorphModelNode {
                         altFrag2 <- equivMap(alt(j))
     ) yield (altFrag1, altFrag2)).toSet
 
+    // the antagonist set is complementary to the friends
     (for (frag1 <- fragments;
           frag2 <- fragments if !friends.contains((frag1, frag2))
     ) yield (frag1, frag2)).toSet

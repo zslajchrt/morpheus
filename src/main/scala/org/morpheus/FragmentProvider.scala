@@ -23,7 +23,8 @@ case object InstanceProvider extends FragmentProvider
  * @param delegation if true the `src` field carries an instance of `MorphKernelBase`, otherwise it carries a `MorphKernelRef`.
  *
  */
-case class CopyProvider(src: Any, placeholderFactMap: Any, conformanceLevel: Morpheus.ConformanceLevel, conformanceLevelTpe: Any, delegation: Boolean) extends FragmentProvider
+case class CopyProvider(src: Any, placeholderFactMap: Any, conformanceLevel: Morpheus.ConformanceLevel,
+                        conformanceLevelTpe: Any, delegation: Boolean, noHiddenFragments: Boolean) extends FragmentProvider
 
 //case class ForkProvider(src1: Any, src2: Any) extends FragmentProvider
 
