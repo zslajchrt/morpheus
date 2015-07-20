@@ -24,6 +24,7 @@ case class &?[M](override val instance: MorphKernel[Any], override val altMappin
 case class ~&?[M](override val instance: MorphKernel[Any], override val altMappings: AltMappings, override val sourceStrategy: Option[MorphingStrategy[Any]] = None) extends MorphKernelRef[M, Any](instance.asInstanceOf[MorphKernel[Any]], altMappings, sourceStrategy)
 
 case class &![M](override val instance: MorphKernel[Any], override val altMappings: AltMappings, override val sourceStrategy: Option[MorphingStrategy[Any]] = None) extends MorphKernelRef[M, Any](instance.asInstanceOf[MorphKernel[Any]], altMappings, sourceStrategy)
+case class ~&![M](override val instance: MorphKernel[Any], override val altMappings: AltMappings, override val sourceStrategy: Option[MorphingStrategy[Any]] = None) extends MorphKernelRef[M, Any](instance.asInstanceOf[MorphKernel[Any]], altMappings, sourceStrategy)
 
 // conformance level marker traits
 trait ConformanceLevelMarker {

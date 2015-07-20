@@ -132,6 +132,8 @@ object Morpheus {
 
   implicit def convertMorphKernelToTotalRefNoHidden[M1, M2](ci: MorphKernel[M1]): &![M2] = macro convertMorphKernelToTotalRefNoHidden_impl[M1, M2]
 
+  implicit def convertMorphKernelToPartialRefNoHidden[M1, M2](ci: MorphKernel[M1]): ~&![M2] = macro convertMorphKernelToPartialRefNoHidden_impl[M1, M2]
+
   def rootStrategy[M](src: Any): Any = macro rootStrategy_impl[M]
 
   //  implicit def convertMorphKernelToExclusiveRef[M1, M2](ci: MorphKernel[M1]): &~[M2] = macro convertMorphKernelToExclusiveRef_impl[M1, M2]
@@ -689,18 +691,17 @@ object Morpheus {
 
     val existRefTpe = implicitly[WeakTypeTag[~&[_]]].tpe
     val existRefNoDepsCheckTpe = implicitly[WeakTypeTag[~&?[_]]].tpe
+    val existRefNoHiddenTpe = implicitly[WeakTypeTag[~&![_]]].tpe
     val inclRefTpe = implicitly[WeakTypeTag[&[_]]].tpe
     val inclRefNoDepsCheckTpe = implicitly[WeakTypeTag[&?[_]]].tpe
     val inclRefNoHiddenTpe = implicitly[WeakTypeTag[&![_]]].tpe
 
-    val noHiddenFragments = inclRefNoHiddenTpe.erasure =:= ciRef.actualType.erasure
+    val noHiddenFragments = (inclRefNoHiddenTpe.erasure =:= ciRef.actualType.erasure) || (existRefNoHiddenTpe.erasure =:= ciRef.actualType.erasure)
 
     def conformanceLevel: (Morpheus.ConformanceLevel, c.Tree) = {
-      val (confLev, confTpe) = if (noHiddenFragments) {
-        (Morpheus.Total, c.universe.rootMirror.typeOf[TotalConformance])
-      } else if (existRefTpe.erasure =:= ciRef.actualType.erasure || existRefNoDepsCheckTpe.erasure =:= ciRef.actualType.erasure) {
+      val (confLev, confTpe) = if (existRefTpe.erasure =:= ciRef.actualType.erasure || existRefNoDepsCheckTpe.erasure =:= ciRef.actualType.erasure || existRefNoHiddenTpe.erasure =:= ciRef.actualType.erasure) {
         (Morpheus.Partial, c.universe.rootMirror.typeOf[PartialConformance])
-      } else if (inclRefTpe.erasure =:= ciRef.actualType.erasure || inclRefNoDepsCheckTpe.erasure =:= ciRef.actualType.erasure) {
+      } else if (inclRefTpe.erasure =:= ciRef.actualType.erasure || inclRefNoDepsCheckTpe.erasure =:= ciRef.actualType.erasure || inclRefNoHiddenTpe.erasure =:= ciRef.actualType.erasure) {
         (Morpheus.Total, c.universe.rootMirror.typeOf[TotalConformance])
       } else {
         c.abort(c.enclosingPosition, s"Unexpected reference type ${ciRef.actualType}")
@@ -917,6 +918,19 @@ object Morpheus {
 
     val res = q"new &![$tgtTpe]($ci.asInstanceOf[org.morpheus.MorphKernel[Any]], $altMappingsExpr)"
     c.Expr[&![M2]](res)
+  }
+
+  def convertMorphKernelToPartialRefNoHidden_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[M1]]): c.Expr[~&![M2]] = {
+    import c.universe._
+
+    val tgtTpe = implicitly[WeakTypeTag[M2]].tpe.dealias
+
+    val isDereferenced = ci.actualType <:< c.typeOf[WithHiddenFragments]
+
+    val altMappingsExpr = checkMorphKernelAssignmentUsingTypeArgs[M1, M2](c)(ci, checkDepsInSrcModel = !isDereferenced, refConfLevel = Partial, noHiddenFragments = true)
+
+    val res = q"new ~&![$tgtTpe]($ci.asInstanceOf[org.morpheus.MorphKernel[Any]], $altMappingsExpr)"
+    c.Expr[~&![M2]](res)
   }
 
   sealed trait ConformanceLevel
@@ -1493,15 +1507,19 @@ object Morpheus {
             checkDepsOfPlaceholders(altTemplate)
 
             if (noHiddenFragments) {
-              // all source fragments must be also in the target alternative template
-              val srcFragsInAltTemplate: Set[FragmentNode] = altTemplate.filter(_.isInstanceOf[OriginalInstanceSource]).map(_.fragment).toSet
-              val srcAltAsSet: Set[FragmentNode] = srcAlt._1.toSet
-              if (srcAltAsSet != srcFragsInAltTemplate) {
-                val hiddenFrags = (srcAltAsSet.--(srcFragsInAltTemplate)).map(hf => srcFragmentTypesMap(hf.id)._1)
-                Right(s"Some hidden source fragments in the target alternative template: ${hiddenFrags.mkString(",")}")
+              // all source fragments extracted from the alt template
+              val srcFragTypesInAltTemplate: List[c.Type] = altTemplate.filter(_.isInstanceOf[OriginalInstanceSource]).map(_.fragment).map(sf => srcFragmentTypesMap(sf.id)._1)
+              // all source fragments from the template must have the counterpart in the target alternative
+              val missingSrcFragTypes = srcFragTypesInAltTemplate.filter(srcFragTpe => {
+                !tgtAlt._2.exists(_ =:= srcFragTpe)
+              })
+
+              if (missingSrcFragTypes.nonEmpty) {
+                Right(s"Some hidden source fragments in the target alternative template: ${missingSrcFragTypes.mkString(",")}")
               } else {
                 ret
               }
+
             } else {
               ret
             }
