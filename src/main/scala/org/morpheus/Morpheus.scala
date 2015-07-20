@@ -361,16 +361,27 @@ object Morpheus {
 
   }
 
-  def expandAlternatives(c: whitebox.Context)(modelTpe: c.Type): (Set[c.Type], List[(List[FragmentNode], List[c.Type], c.Type)]) = {
+  def expandAlternatives(c: whitebox.Context)(modelTpe: c.Type): (Set[c.Type], List[(List[FragmentNode], List[c.Type], c.Type)], c.Type) = {
     import c.universe._
+
+    val anyTpe = c.universe.rootMirror.typeOf[Any]
+
+    if (modelTpe =:= anyTpe) {
+      return (Set(anyTpe), Nil, anyTpe)
+    }
 
     var expandedFragTypes: Set[c.Type] = Set.empty[c.Type]
 
     var expandedAlts: List[(List[FragmentNode], List[c.Type], c.Type)] = Nil
 
-    def expandAlts(altsModelTpe: c.Type): Unit = try {
+    def expandAlts(altsModelTpe: c.Type): Option[c.Type] = try {
 
       val altIter = alternativesIterator(c)(altsModelTpe, checkDeps = false, excludePlaceholders = false, Total)._3
+
+
+      var expandedAltTypes = List.empty[c.Type]
+
+      require(altIter.hasNext, "There should be at least one alternative")
 
       // For each alternative collect all dependencies of fragments and extend the alternative by the difference
       // between the set of complete dependencies and the set of types of the fragments constituting the alternative.
@@ -391,26 +402,52 @@ object Morpheus {
           // some expansion occurred, thus dive one level more
 
           val hdTpeTree = tq"${fragsWithSelfTpe.head}"
-          val altExpandedTpeTree = fragsWithSelfTpe.tail.foldLeft(hdTpeTree)((res, fragSelfTpe) => {
+          val altWithSelfTypesTree = fragsWithSelfTpe.tail.foldLeft(hdTpeTree)((res, fragSelfTpe) => {
             tq"$res with $fragSelfTpe"
           })
-          val altExpandedTpe = c.typecheck(altExpandedTpeTree, mode = c.TYPEmode).tpe
+          var altWithSelfTypesTpe = c.typecheck(altWithSelfTypesTree, mode = c.TYPEmode).tpe
+          // get rid off duplicities among fragment types
+          altWithSelfTypesTpe = conjunctionLUB(c)(decomposeType(c)(altWithSelfTypesTpe).toSet.toList)
 
-          expandAlts(altExpandedTpe)
+          // store the expanded model type of all internal alternatives found in the current alternative's type (complemented with the self types of its fragments)
+          expandAlts(altWithSelfTypesTpe) match {
+            case None =>
+              expandedAltTypes ::= altWithSelfTypesTpe
+            case Some(expandedAltType) =>
+              expandedAltTypes ::= expandedAltType
+          }
 
         } else {
           // no expansion occurred in this alternative, thus add the alt to the result list
           expandedAlts ::= alt
+
         }
+
       }
+
+      if (expandedAltTypes.nonEmpty) {
+        // Make a disjunction from all expanded alt types
+        val expandedHeadAltTpeTree = tq"${expandedAltTypes.head}"
+        val expandedModelTypeTree = expandedAltTypes.tail.foldLeft(expandedHeadAltTpeTree)((res, expAltTpe) => {
+          tq"org.morpheus.Morpheus.or[$res, $expAltTpe]"
+        })
+        val expandedModelTpe = c.typecheck(expandedModelTypeTree, mode = c.TYPEmode).tpe
+        Some(expandedModelTpe)
+      } else {
+        None
+      }
+
     } catch {
       case e: Exception =>
         throw new Exception(s"Cannot expand alternatives of morph type $modelTpe", e)
     }
 
-    expandAlts(modelTpe)
+    expandAlts(modelTpe) match {
+      case None => c.abort(c.enclosingPosition, s"Cannot expand morph model $modelTpe")
+      case Some(expandedModelType) =>
+        (expandedFragTypes, expandedAlts.reverse, expandedModelType)
+    }
 
-    (expandedFragTypes, expandedAlts.reverse)
   }
 
   def proxies_impl[M: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[Any]): c.Expr[Any] = {
@@ -1002,8 +1039,6 @@ object Morpheus {
                                                                     noHiddenFragments: Boolean): (c.Expr[AltMappings], AltMappings) = {
     import c.universe._
 
-    val printCounter = new AtomicInteger()
-
     //var newFragToOrigFrag: Map[Int, Int] = Map.empty
     var origFragToNewFrag: Map[Int, Int] = Map.empty
     //var newAltToOrigAlt: Map[List[Int], List[OrigAlt]] = Map.empty
@@ -1061,6 +1096,10 @@ object Morpheus {
       altMap = altMap.copy(newAltToOrigAlt = newAltToOrigAlt)
 
     }
+
+    // Reveal the implicit fragments from the dependencies of the explicit fragment
+//    val srcTpe = expandAlternatives(c)(srcTpeNotExpanded)._3
+//    val tgtTpe = expandAlternatives(c)(tgtTpeNotExpanded)._3
 
     // todo: UNCOMMENT!
     //val (srcRoot, srcFragmentTypesMap, srcAltIter) = alternativesIterator(c)(srcTpe, checkDepsInSrcModel, excludePlaceholders = true /*irrelevant, there are no placeholder in src*/, srcConfLev)
@@ -1287,10 +1326,19 @@ object Morpheus {
             }
 
           } else {
-            // In the case the composite instance contains hidden fragments we must abort the process since
-            // we cannot prove there is no fragment dependent on the placeholder.
             if (containsHiddenFragments) {
-              Right(s"Source model contains hidden fragments, so we cannot prove there is no fragment dependent on the placeholder $placeholderTpe")
+              findDimension(c)(placeholderTpe) match {
+                case Some(plhDim) =>
+                  // In the case the composite instance contains hidden fragments we must abort the process since
+                  // we cannot prove there is no interfering fragment.
+                  Right(s"Source model contains hidden fragments possibly containing one that should be replaced by $placeholderTpe. Only dimension-less placeholders are allowed in this case.")
+                case None =>
+                  // For a dimension-less placeholder there can occur two scenarios:
+                  // 1) There is no fragment (neither visible nor hidden) of the same type in the alternative
+                  // 2) There is a fragment (either visible or hidden) of the same type, which will be replaced by the placeholder at the time of the instantiation of the alternative (i.e. constructing a morph)
+                  Left(placeholder, None)
+              }
+
             } else {
 
               // try to detect the interfering fragment by analyzing dependencies
@@ -1383,7 +1431,19 @@ object Morpheus {
     }
 
     def checkDepsOfPlaceholders(altTemplate: List[FragInstSource]): Unit = {
-      val altTemplateTpe = conjunctionLUB(c)(altTemplate.map(toFragType(_)))
+      // Retrieve the source fragments, which will be expanded to reveal their dependencies. These source dependencies
+      // are treated as if they were normal fragments, i.e. implicit ones
+      val srcFragTypes = altTemplate.filter(_.isInstanceOf[OriginalInstanceSource]).map(toFragType(_))
+      // Create the conjunction of the source explicit fragment types
+      val altTemplateSrcOnlyFragsTpe = conjunctionLUB(c)(srcFragTypes)
+      // Expand the conjuction to reveal the implicit fragments from source fragment dependencies
+      val expandedSrcFragsType = expandAlternatives(c)(altTemplateSrcOnlyFragsTpe)._3
+
+      // Create conjuction of the placeholder type. This conjuction is not expanded, however, since these dependencies will be examined if they are satisfied
+      // by expandedSrcFragsType.
+      val altTemplatePlhdOnlyFragsTpe = conjunctionLUB(c)(altTemplate.filter(_.isInstanceOf[PlaceholderSource]).map(toFragType(_)))
+      val expandedAltTemplateTpe = conjunctionLUB(c)(List(altTemplatePlhdOnlyFragsTpe, expandedSrcFragsType))
+
       for (altFragSrc <- altTemplate) {
 
         altFragSrc match {
@@ -1395,7 +1455,8 @@ object Morpheus {
               plhTpe.typeSymbol.asClass.selfType match {
                 case RefinedType(parents, scope) =>
                   val depsTpe = internal.refinedType(parents.tail, scope)
-                  checkMorphKernelAssignment(c, s"Checking placeholder $plhTpe dependencies")(altTemplateTpe, depsTpe, false, tgtConfLev, plhConfLevelMode, false, noHiddenFragments = false)._1
+                  //c.info(c.enclosingPosition, s"Deps type: $depsTpe\nExpanded type: $expandedAltTemplateTpe", true)
+                  checkMorphKernelAssignment(c, s"Checking placeholder $plhTpe dependencies against alt template type $expandedAltTemplateTpe")(expandedAltTemplateTpe, depsTpe, false, tgtConfLev, plhConfLevelMode, false, noHiddenFragments = false)._1
                 case _ => // no placeholder's dependencies
               }
             }
@@ -1414,13 +1475,20 @@ object Morpheus {
     def isTargetAltCompatibleWithSourceAlt(tgtAlt: (List[FragmentNode], List[c.Type], c.Type), srcAlt: (List[FragmentNode], List[c.Type], c.Type)): Either[List[FragInstSource], String] = {
 
       val tgtAltLUB = tgtAlt._3
-      val srcAltLUB = srcAlt._3
+
+      val expandedSrcAltSubAltLUBs: List[c.Type] = expandAlternatives(c)(srcAlt._3)._2.map(_._3)
+      val srcAltLUB = if (expandedSrcAltSubAltLUBs.isEmpty)
+        anyTpe
+      else
+        lub(expandedSrcAltSubAltLUBs)
+
+      //c.info(c.enclosingPosition, s"tgtAltLUB: $tgtAltLUB\nsrcAltLUB: $srcAltLUB\nexpandedSrcAltSubAltLUBs: $expandedSrcAltSubAltLUBs", true)
 
       val ret = if (srcAltLUB <:< tgtAltLUB) {
 
         //if (!checkTypeAnnotations(tgtAlt._1.map(f => tgtFragmentTypesMap(f.id)._1), srcAlt._2)) {
         if (!checkTypeAnnotations(tgtAlt._2, srcAlt._2)) {
-          Right(s"Some target annotations not found in the source model")
+          Right(s"Some target annotations not found in the source alt $srcAltLUB")
         } else {
 
           // check if no placeholder violates inner dependencies in the source composite
@@ -1504,6 +1572,7 @@ object Morpheus {
         case Right(_) => ret
         case Left(altTemplate) =>
           try {
+
             checkDepsOfPlaceholders(altTemplate)
 
             if (noHiddenFragments) {
@@ -1898,7 +1967,7 @@ object Morpheus {
       anyTpe
     } else {
       val anyRefTpe = c.universe.rootMirror.typeOf[AnyRef]
-      val partTypesNoAnyRef = partTypes.filter(_ != anyRefTpe)
+      val partTypesNoAnyRef = partTypes.filter(pt => pt != anyRefTpe && pt != anyTpe)
       if (partTypesNoAnyRef.isEmpty) {
         anyTpe
       } else {

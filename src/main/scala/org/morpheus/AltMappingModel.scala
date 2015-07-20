@@ -92,7 +92,23 @@ object AltMappingModel {
       case _ => sys.error("Unexpected")
     })
 
-    fragInsInModel1 ::: newModel2
+    var newModel = fragInsInModel1 ::: newModel2
+
+    // It is possible that there is an insertion of a fragment already present as a hidden fragment. In such a case
+    // the hidden fragment is removed. See method checkIfPlhdViolatesDeps in Morpheus.
+    def removeHiddenHavingDuplicityInInsertion(): List[Node] = {
+      newModel.filter({
+        case Hidden(hiddenFragHolderFn) => !newModel.exists({
+          case FragmentInsertion(insFragHolder) => hiddenFragHolderFn().fragment.fragTag.tpe =:= insFragHolder().fragment.fragTag.tpe
+          case _ => false
+        })
+        case _ => true
+      })
+    }
+
+    newModel = removeHiddenHavingDuplicityInInsertion()
+
+    newModel
   }
 
   def apply(template: List[FragInstSource], newFragToOrigFragMap: Map[Int, Int], model1Holders: (FragmentNode) => FragmentHolder[_], model2Holders: (FragmentNode) => FragmentHolder[_]): List[Node] = {

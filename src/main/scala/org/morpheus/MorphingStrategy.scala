@@ -326,14 +326,6 @@ case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: MorphKernelRef[MT, 
 
     }
 
-//    for (matchAlt <- matchingAlts) yield ratedOrigAlts.find(_._1.map(_.id) == matchAlt) match {
-//      case Some(foundRated) => foundRated
-//      case None =>
-//        // there can be an empty alternative corresponding to an alternatives consisting of placeholders only
-//        require(matchAlt == Nil, s"Cannot find matching alt $matchAlt among rated alts $ratedOrigAlts")
-//        (Nil, emptyAltRating)
-//    }
-
   }
 
   override def convertToHolders(newModelInstance: MorphKernel[MT], newAlt: List[FragmentNode], rating: Double, newAltStruct: Option[List[Node]]): List[FragmentHolder[_]] = {
