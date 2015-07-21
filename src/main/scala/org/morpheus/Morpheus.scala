@@ -67,6 +67,12 @@ object Morpheus {
     () => Some(t)
   }
 
+  implicit def morphKernelToIterable[M](kernel: MorphKernel[M]): Iterable[kernel.ImmutableLUB] = {
+    new Iterable[kernel.ImmutableLUB] {
+      override def iterator: Iterator[kernel.ImmutableLUB] = new kernel.MorphIterator
+    }
+  }
+
   def dependOnAlt[M, S](parentStrategy: PromotingStrategy[M, S], parentAlt: Int, switchFn: () => Option[Int]): () => Option[Int] = {
     dependOnAlt(parentStrategy.switchFn, parentAlt, switchFn)
   }
@@ -82,6 +88,8 @@ object Morpheus {
   def parse[M](checkDeps: Boolean): MorphModel[M] = macro parse_impl[M]
 
   def parse[M](checkDeps: Boolean, removePlaceholders: Boolean): Any = macro parseWithRemovePlaceholders_impl[M]
+
+  def parseRef[M]: Any = macro parseRef_impl[M]
 
   def build[M](compositeModel: MorphModel[M], checkDeps: Boolean, fragmentProvider: FragmentProvider,
                defaultStrategy: MorphingStrategy[M], conformanceLevel: org.morpheus.Morpheus.ConformanceLevel): Any = macro build_impl[M]
@@ -1439,11 +1447,6 @@ object Morpheus {
       // Expand the conjuction to reveal the implicit fragments from source fragment dependencies
       val expandedSrcFragsType = expandAlternatives(c)(altTemplateSrcOnlyFragsTpe)._3
 
-      // Create conjuction of the placeholder type. This conjuction is not expanded, however, since these dependencies will be examined if they are satisfied
-      // by expandedSrcFragsType.
-      val altTemplatePlhdOnlyFragsTpe = conjunctionLUB(c)(altTemplate.filter(_.isInstanceOf[PlaceholderSource]).map(toFragType(_)))
-      val expandedAltTemplateTpe = conjunctionLUB(c)(List(altTemplatePlhdOnlyFragsTpe, expandedSrcFragsType))
-
       for (altFragSrc <- altTemplate) {
 
         altFragSrc match {
@@ -1455,14 +1458,25 @@ object Morpheus {
               plhTpe.typeSymbol.asClass.selfType match {
                 case RefinedType(parents, scope) =>
                   val depsTpe = internal.refinedType(parents.tail, scope)
-                  //c.info(c.enclosingPosition, s"Deps type: $depsTpe\nExpanded type: $expandedAltTemplateTpe", true)
+
+                  // Create conjunction of the placeholder type. This conjuction is not expanded, however, since these dependencies will be examined if they are satisfied
+                  // by expandedSrcFragsType.
+                  val altTemplatePlhdOnlyFragsTpe = conjunctionLUB(c)(altTemplate.filterNot(_ == altFragSrc).filter(_.isInstanceOf[PlaceholderSource]).map(toFragType(_)))
+                  val expandedAltTemplateTpe = conjunctionLUB(c)(List(altTemplatePlhdOnlyFragsTpe, expandedSrcFragsType))
+
+                  if (expandedAltTemplateTpe =:= anyTpe && !(depsTpe =:= anyTpe)) {
+                    // This situation can occur if there is no source fragment and a single placeholder depending on something
+                    throw new DependencyCheckException(s"Unsatisfied placeholder $plhTpe dependencies")
+                  }
+
+                  //c.info(c.enclosingPosition, s"Alt: ${altTemplate.map(toFragType(_))}\nPlaceholder $plhTpe\ndeps type: $depsTpe\nExpanded type: $expandedAltTemplateTpe", true)
                   checkMorphKernelAssignment(c, s"Checking placeholder $plhTpe dependencies against alt template type $expandedAltTemplateTpe")(expandedAltTemplateTpe, depsTpe, false, tgtConfLev, plhConfLevelMode, false, noHiddenFragments = false)._1
                 case _ => // no placeholder's dependencies
               }
             }
             catch {
               case dchck: DependencyCheckException =>
-                throw new DependencyCheckException(s"Unsatisfied placeholder $plhTpe dependencies\n: $dchck")
+                throw new DependencyCheckException(s"Unsatisfied placeholder $plhTpe dependencies", dchck)
             }
         }
       }
@@ -2525,6 +2539,12 @@ object Morpheus {
     val compTpe = implicitly[WeakTypeTag[M]].tpe
 
     parseMorphModelFromType(c)(compTpe, check.asInstanceOf[Boolean], removePlh.asInstanceOf[Boolean], None, Total)._1.asInstanceOf[c.Expr[Any]]
+  }
+
+  def parseRef_impl[M: c.WeakTypeTag](c: whitebox.Context): c.Expr[Any] = {
+    import c.universe._
+
+    parseWithRemovePlaceholders_impl(c)(c.Expr[Boolean](q"false"), c.Expr[Boolean](q"true"))(implicitly[WeakTypeTag[M]])
   }
 
   def build_impl[M: c.WeakTypeTag](c: whitebox.Context)(compositeModel: c.Expr[MorphModel[M]], checkDeps: c.Expr[Boolean],

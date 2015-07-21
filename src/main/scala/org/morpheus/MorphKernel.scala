@@ -59,8 +59,8 @@ abstract class MorphKernel[M](val root: MorphModelNode) extends MorphKernelBase[
   type LUB
   type Model = M
   type ConformLevel <: ConformanceLevelMarker
-  type MutableLUB = LUB with MutableMorphMirror[M] { type ConfLev = ConformLevel; type LUB = outer.LUB }
-  type ImmutableLUB = LUB with MorphMirror[M] { type ConfLev = ConformLevel; type LUB = outer.LUB }
+  type MutableLUB = LUB with MutableMorphMirror[M] {type ConfLev = ConformLevel; type LUB = outer.LUB}
+  type ImmutableLUB = LUB with MorphMirror[M] {type ConfLev = ConformLevel; type LUB = outer.LUB}
 
   val fragmentDescriptors: HList
   val fragments: HList
@@ -124,6 +124,26 @@ abstract class MorphKernel[M](val root: MorphModelNode) extends MorphKernelBase[
     }
   }
 
+  class MorphIterator extends Iterator[ImmutableLUB] {
+
+    private val alts: List[List[FragmentNode]] = model.altIterator().toList
+    private[this] var i = 0
+
+    override def hasNext: Boolean = i < alts.size
+
+    override def next(): ImmutableLUB = {
+      val promotedAlt: List[Int] = alts(i).map(_.id)
+      i += 1
+
+      morph(new MorphingStrategy[M] {
+        override def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = {
+          model.alternatives.promote(Set(promotedAlt))
+        }
+      })
+
+    }
+  }
+
 }
 
 /**
@@ -135,3 +155,4 @@ trait WithHiddenFragments
  * Marks a composite instance that it contains no hidden fragments
  */
 trait WithoutHiddenFragments
+
