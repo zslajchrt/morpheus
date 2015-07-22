@@ -12,7 +12,11 @@ class Morpher[M]() {
 
   def morph(instance: MorphKernel[M], strategy: MorphingStrategy[M])(owningMutableProxy: Option[instance.MutableLUB]): instance.ImmutableLUB = {
 
-    val alternatives: Alternatives[M] = strategy.chooseAlternatives(instance)(owningMutableProxy)
+    val alternatives: Alternatives[M] = owningMutableProxy match {
+      case Some(proxy) if proxy.delegate != null => strategy.chooseAlternatives(instance)(Some(proxy))
+      case _ => strategy.chooseAlternatives(instance)(None)
+    }
+
     val altsHolders: List[FragmentHolder[_]] = MorphingStrategy.fittestAlternative(instance, alternatives.toMaskedList) match {
       case None => sys.error("No alternative chosen")
       case Some(alternative) =>

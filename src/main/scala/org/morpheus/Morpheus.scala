@@ -130,6 +130,8 @@ object Morpheus {
 
   implicit def convertMorphToTotalRef[M1, M2](morph: MorphMirror[M1]): &[M2] = macro convertMorphToTotalRef_impl[M1, M2]
 
+  implicit def convertMorphToTotalRefNoHidden[M1, M2](morph: MorphMirror[M1]): &![M2] = macro convertMorphToTotalRefNoHidden_impl[M1, M2]
+
   implicit def convertMorphKernelToPartialRef[M1, M2](ci: MorphKernel[M1]): ~&[M2] = macro convertMorphKernelToPartialRef_impl[M1, M2]
 
   implicit def convertMorphKernelToPartialRefNoDepsCheck[M1, M2](ci: MorphKernel[M1]): ~&?[M2] = macro convertMorphKernelToPartialRefNoDepsCheck_impl[M1, M2]
@@ -176,6 +178,10 @@ object Morpheus {
   def promote[M](sw: () => Option[Int]): Any = macro promote_implOneArg[M]
 
   def promote[S](delegate: MorphingStrategy[_], sw: () => Option[Int]): Any = macro promote_impl[S]
+
+  def promote[S](morphModel: MorphModel[_])(sw: (Option[morphModel.MutableLUB]) => Option[Int]): Any = macro promoteWithExplicitModelSimpler_impl[S]
+
+  def promoteFull[S](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], sw: (Option[morphModel.MutableLUB]) => Option[Int]): Any = macro promoteWithExplicitModel_impl[S]
 
   def rate[M](sw: () => Set[(Int, Int)]): Any = macro rate_implOneArgPos[M]
 
@@ -590,6 +596,38 @@ object Morpheus {
     promote_impl(c)(delegate, sw)(modelTag)
   }
 
+  // (morphModel: MorphModel[M])(delegate: MorphingStrategy[morphModel.Model], sw: sw: (Option[morphModel.MutableLUB]) => Option[Int]
+  def promoteWithExplicitModelSimpler_impl[S: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(sw: c.Expr[(Option[morphModel.value.MutableLUB]) => Option[Int]]): c.Expr[Any] = {
+    import c.universe._
+
+    val delegate: c.Expr[MorphingStrategy[morphModel.value.Model]] =
+      c.Expr[MorphingStrategy[morphModel.value.Model]](c.typecheck(q"org.morpheus.Morpheus.rootStrategy($morphModel)"))
+    promoteWithExplicitModel_impl(c)(morphModel)(delegate, sw)(implicitly[WeakTypeTag[S]])
+  }
+
+  def promoteWithExplicitModel_impl[S: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(delegate: c.Expr[MorphingStrategy[morphModel.value.Model]], sw: c.Expr[(Option[morphModel.value.MutableLUB]) => Option[Int]]): c.Expr[Any] = {
+    import c.universe._
+
+    val modelTpe = delegate.actualType.typeArgs.head.dealias
+    val mutableLUBTpe = c.typecheck(tq"$morphModel.MutableLUB", mode = c.TYPEmode).tpe
+    val switchTpe = implicitly[WeakTypeTag[S]].tpe.dealias
+
+    val switchModelTree = parseMorphModelFromType(c)(switchTpe, false, false, None, Total)._1
+    val altMapTree = checkMorphKernelAssignment(c, s"Checking compatibility of switch model $switchTpe with $modelTpe")(modelTpe, switchTpe, false, Total, Total, false, noHiddenFragments = false)._1
+    val result =  q"""
+         {
+            def createStrategy() = {
+              val wrapper = new org.morpheus.PromotingStrategyWithModel[$modelTpe, $switchTpe, $mutableLUBTpe]($morphModel)
+              new wrapper.Strat($delegate, $switchModelTree, $altMapTree, $sw)
+            }
+            createStrategy
+         }
+       """
+
+    c.Expr(result)
+    //c.Expr(q"null")
+  }
+
   def promote_impl[S: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorphingStrategy[_]], sw: c.Expr[() => Option[Int]]): c.Expr[Any] = {
     import c.universe._
 
@@ -598,12 +636,6 @@ object Morpheus {
 
     val switchModelTree = parseMorphModelFromType(c)(switchTpe, false, false, None, Total)._1
     val altMapTree = checkMorphKernelAssignment(c, s"Checking compatibility of switch model $switchTpe with $modelTpe")(modelTpe, switchTpe, false, Total, Total, false, noHiddenFragments = false)._1
-
-    //val result = q"org.morpheus.PromotingStrategy($delegate, $switchModelTree, $altMapTree, $sw)"
-
-    // Wrapping the creation of the strategy to the local method helps spreading the JVM code accross the class.
-    // Otherwise it would tend to the accumulation of enormous number of instructions as long as this macro would
-    // be invoked several times in the same method.
     val result =  q"""
          {
             def createStrategy() = org.morpheus.PromotingStrategy($delegate, $switchModelTree, $altMapTree, $sw)
@@ -894,6 +926,21 @@ object Morpheus {
       }
     """
     c.Expr[&[M2]](res)
+  }
+
+  def convertMorphToTotalRefNoHidden_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(morph: c.Expr[MorphMirror[M1]]): c.Expr[&![M2]] = {
+    import c.universe._
+
+    val tgtTpe = implicitly[WeakTypeTag[M2]].tpe.dealias
+    val srcTpe = implicitly[WeakTypeTag[M1]]
+    val res = q"""
+      {
+        import org.morpheus._
+        val ref: &![$tgtTpe] = convertMorphKernelToTotalRefNoHidden[$srcTpe, $tgtTpe]($morph.kernel)
+        ref.copy(sourceStrategy = Some(new LastRatingStrategy($morph.asInstanceOf[MorphMirror[Any]]))).asInstanceOf[&![$tgtTpe]]
+      }
+    """
+    c.Expr[&![M2]](res)
   }
 
   def convertMorphKernelToPartialRef_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[M1]]): c.Expr[~&[M2]] = {

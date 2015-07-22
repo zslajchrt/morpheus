@@ -95,8 +95,8 @@ abstract class MorphKernel[M](val root: MorphModelNode) extends MorphKernelBase[
     val mp = new MutableMorphContext[M, LUB, ConformLevel](this, lubComponents, initialStrategy) {
 
       //override def morph(proxy: MutableLUB, actualStrategy: MorphingStrategy[M]): owningKernel.ImmutableLUB = {
-      override def morph(proxy: owningKernel.MutableLUB, actualStrategy: MorphingStrategy[M]): owningKernel.ImmutableLUB = {
-        Morpher.morph[M](owningKernel, actualStrategy)(Some(proxy))
+      override def morph(proxyOpt: Option[owningKernel.MutableLUB], actualStrategy: MorphingStrategy[M]): owningKernel.ImmutableLUB = {
+        Morpher.morph[M](owningKernel, actualStrategy)(proxyOpt)
       }
     }
 
