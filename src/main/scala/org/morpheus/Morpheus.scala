@@ -421,7 +421,7 @@ object Morpheus {
           })
           var altWithSelfTypesTpe = c.typecheck(altWithSelfTypesTree, mode = c.TYPEmode).tpe
           // get rid off duplicities among fragment types
-          altWithSelfTypesTpe = conjunctionLUB(c)(decomposeType(c)(altWithSelfTypesTpe).toSet.toList)
+          altWithSelfTypesTpe = conjunctionOfTypes(c)(decomposeType(c)(altWithSelfTypesTpe).toSet.toList)
 
           // store the expanded model type of all internal alternatives found in the current alternative's type (complemented with the self types of its fragments)
           expandAlts(altWithSelfTypesTpe) match {
@@ -441,11 +441,7 @@ object Morpheus {
 
       if (expandedAltTypes.nonEmpty) {
         // Make a disjunction from all expanded alt types
-        val expandedHeadAltTpeTree = tq"${expandedAltTypes.head}"
-        val expandedModelTypeTree = expandedAltTypes.tail.foldLeft(expandedHeadAltTpeTree)((res, expAltTpe) => {
-          tq"org.morpheus.Morpheus.or[$res, $expAltTpe]"
-        })
-        val expandedModelTpe = c.typecheck(expandedModelTypeTree, mode = c.TYPEmode).tpe
+        val expandedModelTpe = disjunctionOfTypes(c)(expandedAltTypes)
         Some(expandedModelTpe)
       } else {
         None
@@ -1490,8 +1486,8 @@ object Morpheus {
       // are treated as if they were normal fragments, i.e. implicit ones
       val srcFragTypes = altTemplate.filter(_.isInstanceOf[OriginalInstanceSource]).map(toFragType(_))
       // Create the conjunction of the source explicit fragment types
-      val altTemplateSrcOnlyFragsTpe = conjunctionLUB(c)(srcFragTypes)
-      // Expand the conjuction to reveal the implicit fragments from source fragment dependencies
+      val altTemplateSrcOnlyFragsTpe = conjunctionOfTypes(c)(srcFragTypes)
+      // Expand the conjunction to reveal the implicit fragments from source fragment dependencies
       val expandedSrcFragsType = expandAlternatives(c)(altTemplateSrcOnlyFragsTpe)._3
 
       for (altFragSrc <- altTemplate) {
@@ -1506,10 +1502,10 @@ object Morpheus {
                 case RefinedType(parents, scope) =>
                   val depsTpe = internal.refinedType(parents.tail, scope)
 
-                  // Create conjunction of the placeholder type. This conjuction is not expanded, however, since these dependencies will be examined if they are satisfied
+                  // Create conjunction of the placeholder type. This conjunction is not expanded, however, since these dependencies will be examined if they are satisfied
                   // by expandedSrcFragsType.
-                  val altTemplatePlhdOnlyFragsTpe = conjunctionLUB(c)(altTemplate.filterNot(_ == altFragSrc).filter(_.isInstanceOf[PlaceholderSource]).map(toFragType(_)))
-                  val expandedAltTemplateTpe = conjunctionLUB(c)(List(altTemplatePlhdOnlyFragsTpe, expandedSrcFragsType))
+                  val altTemplatePlhdOnlyFragsTpe = conjunctionOfTypes(c)(altTemplate.filterNot(_ == altFragSrc).filter(_.isInstanceOf[PlaceholderSource]).map(toFragType(_)))
+                  val expandedAltTemplateTpe = conjunctionOfTypes(c)(List(altTemplatePlhdOnlyFragsTpe, expandedSrcFragsType))
 
                   if (expandedAltTemplateTpe =:= anyTpe && !(depsTpe =:= anyTpe)) {
                     // This situation can occur if there is no source fragment and a single placeholder depending on something
@@ -1581,7 +1577,7 @@ object Morpheus {
             // for all source alt nodes try to find a placeholder(s) to be replaced with
             val remainingAltFragsAsSources = srcAlt._1.flatMap(srcAltNode => {
               // there can be more placeholders for one source node
-              val replForSrc: List[FragmentNode] = replacements.filter(_._2.id == srcAltNode.id).map(_._1)
+              val replForSrc: List[FragmentNode] = replacements.filter(r => !r._2.placeholder && r._2.id == srcAltNode.id).map(_._1)
               if (replForSrc.isEmpty) {
                 //c.info(c.enclosingPosition, s"No placeholder: srcAltNode: $srcAltNode", true)
                 List(OriginalInstanceSource(srcAltNode))
@@ -1819,7 +1815,7 @@ object Morpheus {
     new AltIterator[FragmentNode, (List[FragmentNode], List[c.Type], c.Type)](rootAltNode) {
       override protected def mapAlt(alt: List[FragmentNode]): (List[FragmentNode], List[c.Type], c.Type) = {
         val tpeAlt: List[c.Type] = alt.filter(!excludePlaceholders || !_.placeholder).map(fragmentType(_))
-        val conj = conjunctionLUB(c)(tpeAlt)
+        val conj = conjunctionOfTypes(c)(tpeAlt)
         (alt, decomposeType(c)(conj), conj)
       }
     }
@@ -2020,7 +2016,7 @@ object Morpheus {
     partTypes.filter(pt => pt != anyRefTpe && pt != anyTpe)
   }
 
-  def conjunctionLUB(c: whitebox.Context)(partTypes: List[c.Type]): c.Type = {
+  def conjunctionOfTypes(c: whitebox.Context)(partTypes: List[c.Type]): c.Type = {
     import c.universe._
 
     val anyTpe = c.universe.rootMirror.typeOf[Any]
@@ -2056,6 +2052,31 @@ object Morpheus {
     }
 
     lubTpe
+  }
+
+  def modelTypeFromAltTypes(c: whitebox.Context)(altTypesSet: Set[List[c.Type]]): c.Type = {
+    import c.universe._
+
+    val anyTpe = c.universe.rootMirror.typeOf[Any]
+    val unitTp = implicitly[WeakTypeTag[Unit]].tpe
+
+    val altLUBs: List[c.Type] =
+      (for (altTypes <- altTypesSet) yield Morpheus.conjunctionOfTypes(c)(altTypes))
+        .map(tp => if (tp =:= anyTpe) unitTp else tp) // replace Any with Unit
+        .toList
+
+    disjunctionOfTypes(c)(altLUBs)
+  }
+
+  def disjunctionOfTypes(c: whitebox.Context)(types: List[c.Type]): c.Type = {
+    import c.universe._
+
+    val headAltTpe = types.head
+    val tpeTree = types.tail.foldLeft(tq"$headAltTpe")((res, altTpe) => {
+      tq"org.morpheus.Morpheus.or[$res, $altTpe]"
+    })
+
+    c.typecheck(tpeTree, mode = c.TYPEmode).tpe
   }
 
   def getAnnotations(c: whitebox.Context)(tpe: c.Type): List[c.universe.Annotation] = {
@@ -2215,26 +2236,92 @@ object Morpheus {
       }
     }
 
+    /*
+        1. Build the morph model to get all fragments in it
+        2. For each fragment verify that its dependencies are satisfied within the morph model:
+        2.1. Get the fragment's dependencies from its self-type, which can also be a morph type
+        2.2. Determine all morph model alternatives containing the fragment
+        2.3. For each such alternative:
+        2.3.1. Remove the fragment from its list of fragments and construct a new alt type
+        2.4. Make a disjunction type from all new alt types from 2.3.1. The result is the fragment's morph submodel.
+        2.5. Verify that all alternatives in the fragment's morph submodel can be mapped to some dependency alternative
+        (i.e. the RIGHT TOTAL relation between the target dependency morph model and the source fragment's morph submodel.
+        This relation is achieved by specifying Partial both the source and target conformance level).
+        2.6. Verify that the dependency morph model conforms the fragment's morph submodel taking the fragment's
+        deps conformance level into account (i.e. Partial or Total). Store the resulting alt mapping.
+        2.7. Get the alt mapping between the fragment's morph submodel and the main morph model.
+        2.8. Compose the alt mappings from 2.6. and 2.7. to produce a mapping between the dependency morph model and the main morph model
+        and store to the map for associating fragments with their deps alt mappings.
+
+     */
+
+
+    // 1.
     val (compModelTpe, modelRoot, fragmentNodes, lub, lubComponentTypes, fragmentTypesMap) = buildModel(c)(compTpe, None, conformanceLevel)
 
     var fragToDepsMaps = Map.empty[Int, c.Expr[String]]
 
+    // 2.
     for (fragNode <- fragmentNodes;
          fragTpe = fragmentTypesMap(fragNode.id)._1) {
 
-      try {
-        val depsTpe = fragTpe.typeSymbol.asClass.selfType
-        val optDepsTpe = c.typecheck(tq"org.morpheus.Morpheus.or[Unit, $depsTpe]", mode = c.TYPEmode).tpe
+      fragTpe.typeSymbol.asClass.selfType match {
+        case RefinedType(parents, scope) =>
+          // 2.1.
+          val depsTpe = internal.refinedType(parents.tail, scope)
 
-        val refConfLevel: ConformanceLevel = getConfLevelFromAnnotation(c)(fragTpe)
-        val depsMapsAsStr = checkMorphKernelAssignment(c, s"Checking fragment $fragTpe dependencies")(compTpe, optDepsTpe, checkDepsInSrcModel = false, conformanceLevel,
-          refConfLevel, containsHiddenFragments = false /* irrelevant, no placeholders in the self-type */, noHiddenFragments = false)._2.serialize
+          val altIter = alternativesIterator(c)(compTpe, false, false, Partial)._3
+          val refConfLevel: ConformanceLevel = getConfLevelFromAnnotation(c)(fragTpe)
+          // 2.2.
+          var expandedAltTypes = List.empty[c.Type]
+          while (altIter.hasNext) {
+            val alt = altIter.next()
+            //2.3.
+            if (alt._2.contains(fragTpe)) {
+              // 2.3.1.
+              val submodelAltType = conjunctionOfTypes(c)(alt._2.filterNot(_ == fragTpe))
 
-        fragToDepsMaps += (fragNode.id -> c.Expr[String](q"$depsMapsAsStr"))
+              expandedAltTypes ::= submodelAltType
+            }
+          }
 
-      } catch {
-        case dchk: DependencyCheckException =>
-          c.abort(c.enclosingPosition, dchk.getMessage)
+          if (expandedAltTypes.nonEmpty) {
+            // 2.4.
+            val visibleCompModelTpeForFrag = disjunctionOfTypes(c)(expandedAltTypes)
+            //c.info(c.enclosingPosition, s"Checking fragment $fragTpe dependencies $depsTpe against submodel $visibleCompModelTpeForFrag", true)
+
+            try {
+              // 2.5.
+              // Setting source and target conformance level to Partial means that the RIGHT-TOTAL relation is required,
+              // in other words that all source alternatives must be mapped to some target one.
+              checkMorphKernelAssignment(c, s"Checking fragment $fragTpe dependencies")(visibleCompModelTpeForFrag, depsTpe, checkDepsInSrcModel = false, Partial,
+                Partial, containsHiddenFragments = false /* irrelevant, no placeholders in the self-type */, noHiddenFragments = false)
+
+              // 2.6.
+              val depAltMaps1 = checkMorphKernelAssignment(c, s"Building alt mapping between $fragTpe dependencies and its composite submodel $visibleCompModelTpeForFrag")(
+                visibleCompModelTpeForFrag, depsTpe, checkDepsInSrcModel = false, conformanceLevel,
+                refConfLevel, containsHiddenFragments = false /* irrelevant, no placeholders in the self-type */, noHiddenFragments = false)._2
+
+              // 2.7.
+              val depAltMaps2 = checkMorphKernelAssignment(c, s"Building alt mapping between $fragTpe's composite submodel $visibleCompModelTpeForFrag and main model $compTpe")(
+                  compTpe, visibleCompModelTpeForFrag, checkDepsInSrcModel = false, conformanceLevel, Total,
+                containsHiddenFragments = false /* irrelevant, no placeholders in the self-type */, noHiddenFragments = false)._2
+
+
+              // 2.8.
+              // compose the two mapping in order to get the mapping between the fragment's dependencies and the main composite model
+              val depsMapsAsStr = depAltMaps1.compose(depAltMaps2).serialize
+
+              fragToDepsMaps += (fragNode.id -> c.Expr[String](q"$depsMapsAsStr"))
+
+            }
+            catch {
+              case dchk: DependencyCheckException =>
+                c.abort(c.enclosingPosition, dchk.getMessage)
+            }
+          }
+
+        case _ => // no deps
       }
 
     }
@@ -2265,14 +2352,6 @@ object Morpheus {
           // a case the lowest upper bound of F and W is an existential type (i.e. a bounded type).
           fragTpe.erasure <:< wrappedFragment.get.erasure &&
             !c.universe.lub(List(fragTpe, wrapperTpe)).isInstanceOf[ExistentialType]
-//          if (isFragment(c)(fragTpe)) {
-//            fragTpe.erasure <:< wrappedFragment.get.erasure &&
-//              !c.universe.lub(List(fragTpe, wrapperTpe)).isInstanceOf[ExistentialType]
-//          } else if (isAbstractFragment(c)(fragTpe)) {
-//
-//          } else {
-//            false
-//          }
 
         })) {
           c.abort(c.enclosingPosition, s"No fragment implementing ${wrappedFragment.get} found for wrapper $wrapperTpe in alternative ${alt._2}")
@@ -2496,7 +2575,7 @@ object Morpheus {
 
       def determineLUB_(node: MorphModelNode): c.Type = node match {
         case ConjNode(children) =>
-          conjunctionLUB(c)(children.map(c => determineLUB_(c)))
+          conjunctionOfTypes(c)(children.map(c => determineLUB_(c)))
         case DisjNode(children) =>
           if (children.contains(Unit)) {
             anyRefTpe
@@ -2953,7 +3032,9 @@ object Morpheus {
 
               val fragmentDescriptors = compositeModel.fragmentDescriptors
 
-              val fragments = fragmentDescriptors.map(ConfigImplicits)
+              object MyConfigImplicits extends ConfigImplicits
+
+              val fragments = fragmentDescriptors.map(MyConfigImplicits)
 
               $proxyImplicitsTree
               import proxyImplicits._

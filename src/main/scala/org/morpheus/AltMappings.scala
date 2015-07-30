@@ -151,20 +151,63 @@ case class AltMappings(newFragToOrigFrag: Map[Int, Int], newAltToOrigAlt: Map[Li
         }
         ).toSet
 
-    val anyTpe = c.universe.rootMirror.typeOf[Any]
-    val unitTp = implicitly[WeakTypeTag[Unit]].tpe
+    Morpheus.modelTypeFromAltTypes(c)(allAltTemplates)
+//    val anyTpe = c.universe.rootMirror.typeOf[Any]
+//    val unitTp = implicitly[WeakTypeTag[Unit]].tpe
+//
+//    val altLUBs: List[c.Type] =
+//      (for (altTemplate <- allAltTemplates) yield Morpheus.conjunctionLUB(c)(altTemplate))
+//        .map(tp => if (tp =:= anyTpe) unitTp else tp) // replace Any with Unit
+//        .toList
+//
+//    val headAltTpe = altLUBs.head
+//    val tpeTree = altLUBs.tail.foldLeft(tq"$headAltTpe")((res, altTpe) => {
+//      tq"org.morpheus.Morpheus.or[$res, $altTpe]"
+//    })
+//
+//    c.typecheck(tpeTree, mode = c.TYPEmode).tpe
+  }
 
-    val altLUBs: List[c.Type] =
-      (for (altTemplate <- allAltTemplates) yield Morpheus.conjunctionLUB(c)(altTemplate))
-        .map(tp => if (tp =:= anyTpe) unitTp else tp) // replace Any with Unit
-        .toList
+  def checkNoPlaceholder(): Unit = {
+    for ((na, oaa) <- this.newAltToOrigAlt; oa <- oaa; fragSrc <- oa.template) {
+      fragSrc match {
+        case OriginalInstanceSource(_) => // ok
+        case PlaceholderSource(_) => sys.error(s"AltMapping $this contains a placeholder $fragSrc")
+      }
+    }
+  }
 
-    val headAltTpe = altLUBs.head
-    val tpeTree = altLUBs.tail.foldLeft(tq"$headAltTpe")((res, altTpe) => {
-      tq"org.morpheus.Morpheus.or[$res, $altTpe]"
+  def compose(other: AltMappings): AltMappings = {
+    this.checkNoPlaceholder()
+    other.checkNoPlaceholder()
+
+    val composedNewFragToOrigFrag =
+      for ((tf, sf) <- this.newFragToOrigFrag;
+           sf2 <- other.newFragToOrigFrag.get(sf))
+        yield (tf, sf2)
+
+    def composeOrigAlt(origAlt: OrigAlt): List[OrigAlt] = {
+      other.newAltToOrigAlt.get(origAlt.fragments) match {
+        case None => Nil
+        case Some(otherOrigAlts) => otherOrigAlts
+      }
+    }
+
+//    val composedNewAltToOrigAlt: Map[List[Int], List[OrigAlt]] =
+//      for ((newAlt, origAlts) <- this.newAltToOrigAlt;
+//           origAlt <- origAlts)
+//      yield (newAlt, composeOrigAlt(origAlt))
+
+    val composedNewAltToOrigAlt = this.newAltToOrigAlt.map(e => {
+      val (newAlt, origAlts) = e
+      val composedOrigAlts = origAlts.flatMap(origAlt => {
+        composeOrigAlt(origAlt)
+      })
+      (newAlt, composedOrigAlts.toSet.toList)
     })
 
-    c.typecheck(tpeTree, mode = c.TYPEmode).tpe
+    AltMappings(composedNewFragToOrigFrag, composedNewAltToOrigAlt)
+
   }
 
   override def toString: String = s"am($newFragToOrigFrag, $newAltToOrigAlt)"

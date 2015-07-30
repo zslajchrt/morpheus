@@ -8,16 +8,26 @@ import scala.language.experimental.macros
 /**
  * Created by zslajchrt on 29/04/15.
  */
-object ConfigImplicits extends Poly1 {
+class ConfigImplicits extends Poly1 {
+
+  private [this] var holders: Map[Any, FragmentHolder[_]] = Map.empty
 
   implicit def caseUnivExplicit[T, Cfg](implicit factoryFn: (Frag[T, Cfg]) => T): Case.Aux[Frag[T, Cfg], FragmentHolder[T]] = at[Frag[T, Cfg]](frag => {
-    new FragmentHolder[T] {
-      val fragment = frag
 
-      def proxy: T = factoryFn(fragment)
+    holders.get(frag.fragTag.tpe) match {
+      case Some(holder) => holder.asInstanceOf[FragmentHolder[T]]
+      case None =>
+        val holder = new FragmentHolder[T] {
+          val fragment = frag
 
-      override def toString: String = s"${frag.fragTag.tpe}"
+          def proxy: T = factoryFn(fragment)
+
+          override def toString: String = s"${frag.fragTag.tpe}"
+        }
+        holders += (frag.fragTag.tpe -> holder)
+        holder
     }
+
   })
 
 }

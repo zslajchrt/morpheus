@@ -23,13 +23,19 @@ abstract class MorphModelBase[M](val rootNode: MorphModelNode) extends MorphingT
   val fragmentDescriptorsList: List[Frag[_, _]]
   val lubComponents: Array[Class[_]]
 
+  private lazy val frag2Desc: Map[Int, Frag[_, _]] = {
+    fragmentDescriptorsList.map(fd => {
+      (fd.index, fd)
+    }).toMap
+  }
+
   def altIterator(): AltIterator[FragmentNode, List[FragmentNode]] =
     new AltIterator[FragmentNode, List[FragmentNode]](rootNode.toAltNode) {
       override protected def mapAlt(alt: List[FragmentNode]): List[FragmentNode] = alt
     }
 
   def fragmentDescriptor(fragment: FragmentNode): Option[Frag[_, _]] = {
-    fragmentDescriptorsList.find(_.index == fragment.id)
+    frag2Desc.get(fragment.id)
   }
 
   def toString(alternative: List[FragmentNode]): String = {

@@ -15,15 +15,23 @@ abstract class MorphKernelBase[M](val rootNode: MorphModelNode) {
 
   def fragmentList: List[FragmentHolder[_]]
 
+  private lazy val fragTpe2Holder: Map[Type, FragmentHolder[_]] = {
+    fragmentList.map(fh => {
+      (fh.fragment.fragTag.tpe, fh)
+    }).toMap
+  }
+
   val model: MorphModelBase[M]
 
   def fragmentHolder(fragment: FragmentNode): Option[FragmentHolder[_]] = {
-    fragmentList.find(fh => fragment.id == fh.fragment.index)
+    //fragmentList.find(fh => fragment.id == fh.fragment.index)
+    for (fd <- model.fragmentDescriptor(fragment); fh <- fragTpe2Holder.get(fd.fragTag.tpe)) yield fh
   }
 
   def fragmentHolder(fragment: Frag[_, _]): Option[FragmentHolder[_]] = {
     val isAbstractFragment = !fragment.fragmentAnnotation.isDefined && !fragment.wrapperAnnotation.isDefined
-    fragmentList.find(fh => if (isAbstractFragment) {
+
+    fragTpe2Holder.values.find(fh => if (isAbstractFragment) {
       fh.fragment.fragTag.tpe <:< fragment.fragTag.tpe
     } else {
       fragment.fragTag.tpe =:= fh.fragment.fragTag.tpe
@@ -32,7 +40,8 @@ abstract class MorphKernelBase[M](val rootNode: MorphModelNode) {
 
   def fragmentHolder[F: WeakTypeTag]: Option[FragmentHolder[F]] = {
     val fragTpe: WeakTypeTag[F] = implicitly[WeakTypeTag[F]]
-    fragmentList.find(fh => fragTpe.tpe =:= fh.fragment.fragTag.tpe) match {
+
+    fragTpe2Holder.values.find(fh => fragTpe.tpe =:= fh.fragment.fragTag.tpe) match {
       case None => parent match {
         case None => None
         case Some(par) => par.fragmentHolder(fragTpe)

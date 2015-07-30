@@ -331,6 +331,10 @@ case class BridgeStrategy[MT, MS](srcInstanceRef: MorphKernelRef[MT, MS]) extend
 
 }
 
+class AlternativeNotAvailableException extends Exception {
+
+}
+
 case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: MorphKernelRef[MT, MS]) extends AlternativeComposer[MT] {
 
   outer =>
@@ -340,9 +344,9 @@ case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: MorphKernelRef[MT, 
     case None => srcInstanceRef.instance.defaultStrategy
   }
 
-  private def restrictRatedAltsToSpecifiedAlts(matchingAlts: List[List[Int]], ratedOrigAlts: List[(List[FragmentNode], Double)], emptyAltRating: Double): List[(List[FragmentNode], Double)] = {
+  private def restrictRatedAltsToSpecifiedAlts(matchingAlts: List[List[Int]], ratedOrigAlts: List[(List[FragmentNode], Double)], defaultAltRating: Double): List[(List[FragmentNode], Double)] = {
     if (matchingAlts.size == 1 && matchingAlts.head == Nil) {
-      List((Nil, emptyAltRating))
+      List((Nil, defaultAltRating))
     } else {
 
       // We must preserve the order of the ratedOrigAlts, which originate from the source model morphing strategy.
@@ -352,13 +356,29 @@ case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: MorphKernelRef[MT, 
         matchingAlts.contains(origAlt)
       }
 
-      for (ratedOrigAlt <- ratedOrigAlts if isMatching(ratedOrigAlt._1.map(_.id))) yield ratedOrigAlt
+      val restricted = for (ratedOrigAlt <- ratedOrigAlts if isMatching(ratedOrigAlt._1.map(_.id))) yield ratedOrigAlt
+
+      if (restricted.isEmpty) {
+        val emptyAltAllowed = srcInstanceRef.altMappings.newAltToOrigAlt.keySet.contains(Nil)
+        if (emptyAltAllowed) {
+          List((Nil, defaultAltRating))
+        } else {
+          Nil
+        }
+      } else {
+        restricted
+      }
 
     }
 
   }
 
   override def convertToHolders(newModelInstance: MorphKernel[MT], newAlt: List[FragmentNode], rating: Double, newAltStruct: Option[List[Node]]): List[FragmentHolder[_]] = {
+
+    if (newAlt == Nil) {
+      return Nil
+    }
+
     val altMap: AltMappings = srcInstanceRef.altMappings
 
     val newAltIds: List[Int] = newAlt.map(_.id)
@@ -380,9 +400,17 @@ case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: MorphKernelRef[MT, 
     //val origAltForNewAltWithRating = origAltsForNewAlt.map(origAlt => (origAlt.fragments.map(FragmentNode(_)), 0d))
     val origAltForNewAltFrags = origAltsForNewAlt.map(origAlt => origAlt.fragments)
     // consult the original strategy to choose the best orig alt
-    val suggestedOrigAlternatives = actualStrategy.chooseAlternatives(srcInstanceRef.instance)(None).toList
 
-    val chosenAlts = restrictRatedAltsToSpecifiedAlts(origAltForNewAltFrags, suggestedOrigAlternatives, rating)
+    val suggestedOrigAlternatives = actualStrategy.chooseAlternatives(srcInstanceRef.instance)(None)
+    // First, try to get the candidate original alts from the masked list
+    val chosenAltsFirstAttempt = restrictRatedAltsToSpecifiedAlts(origAltForNewAltFrags, suggestedOrigAlternatives.toMaskedList, rating)
+    val chosenAlts = if (chosenAltsFirstAttempt == Nil) {
+      // If the masked list does not contain any target alt or the target alts do not contain the empty one
+      // then we have to throw an exception
+      throw new AlternativeNotAvailableException()
+    } else {
+      chosenAltsFirstAttempt
+    }
 
     // find the best alt from the subset of the orig alts
     MorphingStrategy.fittestAlternative(srcInstanceRef.instance, chosenAlts) match {
@@ -405,11 +433,18 @@ case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: MorphKernelRef[MT, 
             // Pass the template with the required alt structure to the original default strategy
             srcInstanceRef.instance.altComposer.convertToHolders(srcInstanceRef.instance, bestOrigAlt._1, bestOrigAlt._2, Some(mergedAltStruct))
           case None =>
-            sys.error(s"Cannot find template for chosen alternative $bestOrigAltIds")
+            if (bestOrigAltIds == Nil) {
+              // The chosen alt is the empty alt, but it is not among the source alts. It's OK.
+              Nil
+            } else {
+              // This one should not occur
+              sys.error(s"Cannot find template for chosen alternative $bestOrigAltIds")
+            }
         }
 
       case None => sys.error("No alternative chosen")
     }
+
   }
 
 }
