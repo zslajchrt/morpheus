@@ -353,8 +353,8 @@ object Morpheus {
     }
 
     val refTpe = getConfLevelFromAnnotation(c)(fragTpe) match {
-      case Total => tq"org.morpheus.&[org.morpheus.Morpheus.or[$depsTpe, Unit]]"
-      case Partial => tq"org.morpheus.~&[org.morpheus.Morpheus.or[$depsTpe, Unit]]"
+      case Total => tq"org.morpheus.&[$depsTpe]"
+      case Partial => tq"org.morpheus.~&[$depsTpe]"
     }
 
     val res = q"""
@@ -715,30 +715,65 @@ object Morpheus {
   def tupled_impl[T: c.WeakTypeTag](c: whitebox.Context)(arg: c.Expr[T]): c.Expr[Any] = {
     import c.universe._
 
-    // Currently, only MorphKernelRef can be tuplified
-    val result = if (arg.actualType.erasure <:< implicitly[WeakTypeTag[MorphKernelRef[_, _]]].tpe) {
+    // Currently, only MorphKernelRef and MorphKernel can be tuplified
+    val (modelRoot, kernel, typesMap) = if (arg.actualType.erasure <:< implicitly[WeakTypeTag[MorphKernelRef[_, _]]].tpe) {
       val compTpe = arg.actualType.typeArgs.head
       val (_, modelRoot, _, _, _, typesMap) = buildModel(c)(compTpe, None, Total)
 
       val compInstTree = q"$arg.instance"
 
-      val fragFactTrees = modelRoot.fragments.filterNot(_.placeholder).map(fn => {
-        val (fragTpe, cfgClsOpt) = typesMap(fn.id)
-        val fragFactTree = cfgClsOpt match {
-          case Some(cf) =>
-            q"(f: org.morpheus.Frag[$fragTpe, $cf]) => $compInstTree.fragmentHolder[$fragTpe].get.proxy"
-          case None =>
-            q"(f: org.morpheus.Frag[$fragTpe, Unit]) => $compInstTree.fragmentHolder[$fragTpe].get.proxy"
-        }
-        c.typecheck(fragFactTree)
-      })
+      (modelRoot, compInstTree, typesMap)
 
-      q"(..$fragFactTrees)"
+//      val fragFactTrees = modelRoot.fragments.filterNot(_.placeholder).map(fn => {
+//        val (fragTpe, cfgClsOpt) = typesMap(fn.id)
+//        val fragFactTree = cfgClsOpt match {
+//          case Some(cf) =>
+//            q"(f: org.morpheus.Frag[$fragTpe, $cf]) => $compInstTree.fragmentHolder[$fragTpe].get.proxy"
+//          case None =>
+//            q"(f: org.morpheus.Frag[$fragTpe, Unit]) => $compInstTree.fragmentHolder[$fragTpe].get.proxy"
+//        }
+//        c.typecheck(fragFactTree)
+//      })
+//
+//      q"(..$fragFactTrees)"
+
+    } else if (arg.actualType.erasure <:< implicitly[WeakTypeTag[MorphKernel[_]]].tpe) {
+      val compTpe = c.typecheck(tq"$arg.Model", mode = c.TYPEmode).tpe
+      c.info(c.enclosingPosition, s"Kernel type: ${compTpe}", true)
+      val (_, modelRoot, _, _, _, typesMap) = buildModel(c)(compTpe, None, Total)
+
+      (modelRoot, arg.tree, typesMap)
+
+//      val fragFactTrees = modelRoot.fragments.filterNot(_.placeholder).map(fn => {
+//        val (fragTpe, cfgClsOpt) = typesMap(fn.id)
+//        val fragFactTree = cfgClsOpt match {
+//          case Some(cf) =>
+//            q"(f: org.morpheus.Frag[$fragTpe, $cf]) => $arg.fragmentHolder[$fragTpe].get.proxy"
+//          case None =>
+//            q"(f: org.morpheus.Frag[$fragTpe, Unit]) => $arg.fragmentHolder[$fragTpe].get.proxy"
+//        }
+//        c.typecheck(fragFactTree)
+//      })
+//
+//      q"(..$fragFactTrees)"
+
 
     } else {
       c.abort(c.enclosingPosition, s"Illegal argument")
     }
 
+    val fragFactTrees = modelRoot.fragments.filterNot(_.placeholder).map(fn => {
+      val (fragTpe, cfgClsOpt) = typesMap(fn.id)
+      val fragFactTree = cfgClsOpt match {
+        case Some(cf) =>
+          q"(f: org.morpheus.Frag[$fragTpe, $cf]) => $kernel.fragmentHolder[$fragTpe].get.proxy"
+        case None =>
+          q"(f: org.morpheus.Frag[$fragTpe, Unit]) => $kernel.fragmentHolder[$fragTpe].get.proxy"
+      }
+      c.typecheck(fragFactTree)
+    })
+
+    val result = q"(..$fragFactTrees)"
 
     c.Expr(result)
   }
@@ -1331,18 +1366,19 @@ object Morpheus {
 
     }
 
-    def findPrecedingNodeForWrapper(placeholderTpe: c.Type, srcAlt: List[FragmentNode]): Option[FragmentNode] = {
+    def findPrecedingNodeForWrapper(placeholderTpe: c.Type, srcAlt: List[FragmentNode], otherPlaceholders: List[FragmentNode]): Option[FragmentNode] = {
 
-      def compareWrappedTpeWithPlaceholderWrappedTpe(srcAltNode: FragmentNode) = {
-        val tpe: c.Type = srcFragmentTypesMap(srcAltNode.id)._1
+      //val tpe: c.Type = srcFragmentTypesMap(srcAltNode.id)._1
+
+      def compareWrappedTpeWithPlaceholderWrappedTpe(nodeTpe: c.Type) = {
 
         val (wrappedTpeByAlt, wrappedTpeByPlaceholder) = if (isDimensionWrapper(c)(placeholderTpe))
-          (findDimension(c)(tpe), findDimension(c)(placeholderTpe))
+          (findDimension(c)(nodeTpe), findDimension(c)(placeholderTpe))
         else {
-          if (isDimensionWrapper(c)(tpe))
-            (findDimension(c)(tpe), findDimension(c)(placeholderTpe))
+          if (isDimensionWrapper(c)(nodeTpe))
+            (findDimension(c)(nodeTpe), findDimension(c)(placeholderTpe))
           else
-            (findFragment(c)(tpe), findFragment(c)(placeholderTpe))
+            (findFragment(c)(nodeTpe), findFragment(c)(placeholderTpe))
         }
 
         (for (wa <- wrappedTpeByAlt; wp <- wrappedTpeByPlaceholder) yield wa =:= wp) match {
@@ -1353,11 +1389,23 @@ object Morpheus {
 
       // find the first from left
       // todo: is it really correct? Shouldn't it be done in the other way round?
-      srcAlt.find(compareWrappedTpeWithPlaceholderWrappedTpe)
+      srcAlt.find(fn => compareWrappedTpeWithPlaceholderWrappedTpe(srcFragmentTypesMap(fn.id)._1)) match {
+        case Some(repl) => Some(repl)
+        case None =>
+          // try to find a wrappable node among the placeholders
+          otherPlaceholders.find(fn => compareWrappedTpeWithPlaceholderWrappedTpe(tgtFragmentTypesMap(fn.id)._1)) match {
+            case Some(repl) =>
+              require(repl.placeholder)
+              Some(repl)
+            case None => None
+          }
+      }
     }
 
-    def checkIfPlhdViolatesDeps(placeholder: FragmentNode, srcAlt: List[FragmentNode]): Either[(FragmentNode, Option[FragmentNode]), String] = {
+    def checkIfPlhdViolatesDeps(placeholder: FragmentNode, srcAlt: List[FragmentNode], placeholders: List[FragmentNode]): Either[(FragmentNode, Option[FragmentNode]), String] = {
       val placeholderTpe = tgtFragmentTypesMap(placeholder.id)._1
+
+      val otherPlaceholders: List[FragmentNode] = placeholders.filterNot(_ == placeholder)
 
       // try to find the corresponding fragment to the placeholder in the source alt
       // btw: it ensures the orthogonality of the fragments
@@ -1370,10 +1418,17 @@ object Morpheus {
           if (isWrapper(c)(placeholderTpe)) {
             // Wrappers cannot have dependees by definition. We must only find the corresponding fragment to be wrapped.
 
-            findPrecedingNodeForWrapper(placeholderTpe, srcAlt) match {
+            findPrecedingNodeForWrapper(placeholderTpe, srcAlt, otherPlaceholders) match {
               case None => Right(s"No fragment to be wrapped by placeholder $placeholderTpe") // there is no fragment to be wrapped by the placeholder TODO: provide some error message
               case Some(wrappedNode) =>
-                Left(placeholder, Some(wrappedNode)) // in the case of placeholder wrapper the second node is interpreted as the one after which the first node is placed
+                if (wrappedNode.placeholder) {
+                  // If the placeholder wraps another placeholder we do not return the wrapped placeholder since
+                  // we want the wrapper placeholder is treated as a non-interfering placeholder, i.e. one that does not
+                  // affect the order in the alt template.
+                  Left(placeholder, None)
+                } else {
+                  Left(placeholder, Some(wrappedNode)) // in the case of placeholder wrapper the second node is interpreted as the one after which the first node is placed
+                }
             }
 
           } else {
@@ -1552,7 +1607,7 @@ object Morpheus {
           val placeholders = tgtAlt._1.filter(_.placeholder)
           // a list of replacements by placeholders. The first fragment is the placeholder,
           // the second is the source alt node being replaced or appended (in case of a wrapper) by the placeholder
-          val placeholdersApplication: List[Either[(FragmentNode, Option[FragmentNode]), String]] = placeholders.map(checkIfPlhdViolatesDeps(_, srcAlt._1))
+          val placeholdersApplication: List[Either[(FragmentNode, Option[FragmentNode]), String]] = placeholders.map(checkIfPlhdViolatesDeps(_, srcAlt._1, placeholders))
           if (placeholdersApplication.exists(_.isRight)) {
             // some placeholders cannot be applied
             // provide some explanation which placeholders and why they do not match
@@ -2268,7 +2323,8 @@ object Morpheus {
       fragTpe.typeSymbol.asClass.selfType match {
         case RefinedType(parents, scope) =>
           // 2.1.
-          val depsTpe = internal.refinedType(parents.tail, scope)
+          //val depsTpe = internal.refinedType(parents.tail, scope)
+          val depsTpe = fragTpe.typeSymbol.asClass.selfType
 
           val altIter = alternativesIterator(c)(compTpe, false, false, Partial)._3
           val refConfLevel: ConformanceLevel = getConfLevelFromAnnotation(c)(fragTpe)
@@ -2287,7 +2343,7 @@ object Morpheus {
 
           if (expandedAltTypes.nonEmpty) {
             // 2.4.
-            val visibleCompModelTpeForFrag = disjunctionOfTypes(c)(expandedAltTypes)
+            val visibleCompModelTpeForFrag = conjunctionOfTypes(c)(List(fragTpe, disjunctionOfTypes(c)(expandedAltTypes)))
             //c.info(c.enclosingPosition, s"Checking fragment $fragTpe dependencies $depsTpe against submodel $visibleCompModelTpeForFrag", true)
 
             try {
@@ -2520,12 +2576,12 @@ object Morpheus {
       FragmentNode(fragId, isPlaceholder)
     }
 
-    def traverseCompTp(tp: Type): MorphModelNode = tp.dealias match {
+    def traverseCompTp(tp: Type, plHldMode: Boolean): MorphModelNode = tp.dealias match {
       case RefinedType(parents, _) =>
-        val fragNodes = for (p <- parents) yield traverseCompTp(p)
+        val fragNodes = for (p <- parents) yield traverseCompTp(p, plHldMode)
         ConjNode(fragNodes)
       case disjNodeType(lhs, rhs) =>
-        DisjNode(List(traverseCompTp(lhs), traverseCompTp(rhs)))
+        DisjNode(List(traverseCompTp(lhs, plHldMode), traverseCompTp(rhs, plHldMode)))
       case unitNodeType(u) => u
       case plHld@placeHolderNodeType(plHldTpe) =>
         val actPlHldTpe = placeholderTpeTransf match {
@@ -2533,19 +2589,20 @@ object Morpheus {
           case Some(phTpeTrans) => if (phTpeTrans.isDefinedAt(plHldTpe)) phTpeTrans(plHldTpe) else plHldTpe
         }
 
-        createFragmentNode(actPlHldTpe, true)
+        //createFragmentNode(actPlHldTpe, true)
+        traverseCompTp(actPlHldTpe, !plHldMode)
       case tr@TypeRef(_, sym, _) =>
 
         val symCls: Symbols#ClassSymbol = sym.asClass.asInstanceOf[Symbols#ClassSymbol]
         if (symCls.isRefinementClass) {
           val parents = symCls.tpe.parents // todo: is there any better way to decompose a type reference?
-          val fragNodes = for (p <- parents) yield traverseCompTp(p.asInstanceOf[c.Type])
+          val fragNodes = for (p <- parents) yield traverseCompTp(p.asInstanceOf[c.Type], plHldMode)
           ConjNode(fragNodes)
         } else {
-          createFragmentNode(tr, false)
+          createFragmentNode(tr, plHldMode)
         }
       case atp: AnnotatedType =>
-        createFragmentNode(atp, false)
+        createFragmentNode(atp, plHldMode)
       case t => sys.error(s"Unexpected type: $t: ${t.getClass}")
     }
 
@@ -2611,11 +2668,11 @@ object Morpheus {
       case UnitNode => Nil
     }
 
-    val flattenedModel = traverseCompTp(compModelTp.asInstanceOf[c.Type]).flatten
+    val flattenedModel = traverseCompTp(compModelTp.asInstanceOf[c.Type], plHldMode = false).flatten
     val (modelRoot, modelLUB, modelLUBComponents): (MorphModelNode, c.Type, List[c.Type]) =
       verifyModel(flattenedModel)
 
-    val fragmentNodes = collectFragmentNodes(modelRoot).reverse
+    val fragmentNodes = collectFragmentNodes(modelRoot)
 
     val res = (compModelTp, modelRoot, fragmentNodes, modelLUB, modelLUBComponents, fragmentTypes)
 
@@ -3019,7 +3076,7 @@ object Morpheus {
             val compositeModel = $compModelTree
             new org.morpheus.MorphKernel[compositeModel.Model]($rootNode) with $hiddenFragmentsMarker with $conformanceLevelMarker {
               import org.morpheus._
-              import shapeless.{record, syntax, HList, Poly1, HNil}
+              import shapeless._
               import record._
               import syntax.singleton._
               val configImplicitsProvider = $configImplicits
@@ -3046,6 +3103,8 @@ object Morpheus {
               val defaultStrategy = $defaultStrategy
               val altComposer = $altComposer
               val model = compositeModel
+
+              lazy val tupled = fragments.tupled
             }
         }
     """

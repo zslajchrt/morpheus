@@ -15,6 +15,8 @@ resolvers ++= Seq(
   Resolver.sonatypeRepo("snapshots")
 )
 
+libraryDependencies += "org.scala-lang.modules" % "scala-parser-combinators_2.11" % "1.0.3"
+
 libraryDependencies += "org.scala-lang" % "scala-compiler" % "2.11.5"
 
 libraryDependencies += "cglib" % "cglib" % "2.2.2"

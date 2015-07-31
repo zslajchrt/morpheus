@@ -75,6 +75,7 @@ abstract class MorphKernel[M](val root: MorphModelNode) extends MorphKernelBase[
   val fragments: HList
   val proxies: AnyRef
   val model: MorphModel[M]
+  def tupled: Product
 
   val lubComponents: Array[Class[_]]
 

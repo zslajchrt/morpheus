@@ -331,7 +331,7 @@ case class BridgeStrategy[MT, MS](srcInstanceRef: MorphKernelRef[MT, MS]) extend
 
 }
 
-class AlternativeNotAvailableException extends Exception {
+class AlternativeNotAvailableException(val alt: List[FragmentNode]) extends Exception {
 
 }
 
@@ -407,7 +407,7 @@ case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: MorphKernelRef[MT, 
     val chosenAlts = if (chosenAltsFirstAttempt == Nil) {
       // If the masked list does not contain any target alt or the target alts do not contain the empty one
       // then we have to throw an exception
-      throw new AlternativeNotAvailableException()
+      throw new AlternativeNotAvailableException(newAlt)
     } else {
       chosenAltsFirstAttempt
     }

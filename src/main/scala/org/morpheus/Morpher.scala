@@ -1,5 +1,6 @@
 package org.morpheus
 
+import scala.annotation.tailrec
 import scala.reflect.macros.whitebox
 import scala.reflect.runtime.universe._
 import scala.language.experimental.macros
@@ -17,19 +18,32 @@ class Morpher[M]() {
       case _ => strategy.chooseAlternatives(instance)(None)
     }
 
-    val altsHolders: List[FragmentHolder[_]] = MorphingStrategy.fittestAlternative(instance, alternatives.toMaskedList) match {
-      case None => sys.error("No alternative chosen")
-      case Some(alternative) =>
-        //strategy.convertToHolders(instance, alternative._1, alternative._2, None)
-        // The instance's default strategy is responsible for the conversion to fragment holders.
-        // This is important mainly because of the AltStrategy, which returns holders from another model.
-        //instance.defaultStrategy.convertToHolders(instance, alternative._1, alternative._2, None)
-        instance.altComposer.convertToHolders(instance, alternative._1, alternative._2, None)
-      //alternative._1.map(fn => instance.fragmentHolder(fn).get)
+    @tailrec
+    def makeFragHolders(candidates: List[(List[FragmentNode], Double)]): List[FragmentHolder[_]] = {
+      try {
+        MorphingStrategy.fittestAlternative(instance, candidates) match {
+          case None => sys.error("No alternative chosen")
+          case Some(alternative) =>
+            instance.altComposer.convertToHolders(instance, alternative._1, alternative._2, None)
+        }
+      }
+      catch {
+        case ae: AlternativeNotAvailableException =>
+          val newCandidates = candidates.filterNot(_._1 == ae.alt)
+          if (newCandidates.isEmpty) {
+            throw ae
+          } else {
+            // try it again without the failed candidate alt
+            makeFragHolders(newCandidates)
+          }
+      }
     }
 
+    val altCandidates: List[(List[FragmentNode], Double)] = alternatives.toMaskedList
+    val altFragHolders = makeFragHolders(altCandidates)
+
     owningMutableProxy match {
-      case Some(proxy) if proxy.delegate != null && proxy.myAlternative == altsHolders && proxy.strategy == strategy =>
+      case Some(proxy) if proxy.delegate != null && proxy.myAlternative == altFragHolders && proxy.strategy == strategy =>
         // There is no need to instantiate a new proxy's delegate, provided that the delegate composition is same as the current one.
         proxy.delegate
 
@@ -37,7 +51,7 @@ class Morpher[M]() {
 
         // Instantiate new object from the current composition
 
-        val filterChains: List[List[FragmentHolder[_]]] = altsHolders.foldLeft[List[List[FragmentHolder[_]]]](Nil)((res, holder) => res match {
+        val filterChains: List[List[FragmentHolder[_]]] = altFragHolders.foldLeft[List[List[FragmentHolder[_]]]](Nil)((res, holder) => res match {
           case hd :: tl if holder.fragment.wrapperAnnotation.isDefined =>
             val filterChain: List[FragmentHolder[_]] = holder :: hd
             filterChain :: tl
@@ -64,7 +78,7 @@ class Morpher[M]() {
         //todo: Change it to a debug logging
         //println(s"Morph fragments: ${altsProxies.flatMap(_._1).map(_.getName)}")
 
-        val compInst = MorphFactory.newComposite[M, instance.LUB, instance.ConformLevel](altsProxies.toArray, instance, altsHolders, alternatives, strategy)(owningMutableProxy)
+        val compInst = MorphFactory.newComposite[M, instance.LUB, instance.ConformLevel](altsProxies.toArray, instance, altFragHolders, alternatives, strategy)(owningMutableProxy)
 
         compInst.asInstanceOf[instance.ImmutableLUB]
 
