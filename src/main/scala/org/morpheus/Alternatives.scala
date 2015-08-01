@@ -33,6 +33,14 @@ class Alternatives[M] private (private [morpheus] val rootNode: MorphModelNode,
     new Alternatives[M](rootNode, newRatedAlts, fragmentMask)
   }
 
+  def maskAll(): Alternatives[M] = {
+    new Alternatives[M](rootNode, ratedAlts, BitSet.empty | rootNode.fragments.map(_.id).toSet)
+  }
+
+  def unmaskAll(): Alternatives[M] = {
+    new Alternatives[M](rootNode, ratedAlts, BitSet.empty)
+  }
+
   def mask(mask: Set[Int]): Alternatives[M] = {
     new Alternatives[M](rootNode, ratedAlts, fragmentMask.`|`(mask))
   }
@@ -81,7 +89,7 @@ class Alternatives[M] private (private [morpheus] val rootNode: MorphModelNode,
     for (alt <- alts;
          r <- ratedAlts.get(alt);
          altBits = BitSet.empty ++ alt.map(_.id)
-         if altBits.&(fragmentMask) == fragmentMask) yield (alt, r.rating)
+         if altBits.&(fragmentMask) == altBits) yield (alt, r.rating)
   }
 
   lazy val toList: List[(List[FragmentNode], Double)] = {
@@ -98,7 +106,7 @@ object Alternatives {
   private [morpheus] def apply[M](root: MorphModelNode): Alternatives[M] = {
     val altIter = new IdentAltIterator(root.toAltNode)
     val defaultRatedAlts: Map[List[FragmentNode], AltRating] = altIter.toList.map(alt => (alt, AltRating(0d))).toMap
-    new Alternatives[M](root, defaultRatedAlts, BitSet.empty)
+    new Alternatives[M](root, defaultRatedAlts, BitSet.empty).maskAll()
   }
 
   def moveChildToHead(children: List[MorphModelNode], index: Int): List[MorphModelNode] = {

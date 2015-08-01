@@ -157,6 +157,8 @@ object Morpheus {
   def &&(self: Any): Any = macro selfRef_impl
   def self(self: Any): Any = macro self_impl
 
+  def fragmentInReferredKernel[F](self: Any): Option[Frag[F, _]] = macro fragmentInReferredKernel_impl[F]
+
   def tupled[T](arg: T): Any = macro tupled_impl[T]
 
   def deref[M](ciRef: MorphKernelRef[M, _], placeholders: Any*): Any = macro deref_impl[M]
@@ -191,9 +193,17 @@ object Morpheus {
 
   def rate_![S](delegate: MorphingStrategy[_], sw: () => Set[(Int, Int)]): Any = macro rateNeg_impl[S]
 
+  def maskAll[M](delegate: MorphingStrategy[M]): Any = macro maskAllPos_impl[M]
+
+  def unmaskAll[M](delegate: MorphingStrategy[M]): Any = macro maskAllNeg_impl[M]
+
   def mask[M](sw: () => Option[Int]): Any = macro mask_implOneArg[M]
 
-  def mask[S](delegate: MorphingStrategy[_], sw: () => Option[Int]): Any = macro mask_impl[S]
+  def mask[S](delegate: MorphingStrategy[_], sw: () => Option[Int]): Any = macro unmask_implTwoArgs[S]
+
+  def unmask[M](sw: () => Option[Int]): Any = macro mask_implOneArg[M]
+
+  def unmask[S](delegate: MorphingStrategy[_], sw: () => Option[Int]): Any = macro unmask_implTwoArgs[S]
 
   def fragNoConf[F: c.WeakTypeTag](c: whitebox.Context): c.Expr[FragmentFactory[F, Unit]] = {
     import c.universe._
@@ -374,6 +384,32 @@ object Morpheus {
     c.Expr(res)
 
   }
+
+  def fragmentInReferredKernel_impl[F: c.WeakTypeTag](c: whitebox.Context)(self: c.Expr[Any]): c.Expr[Option[Frag[F, _]]] = {
+    import c.universe._
+
+    val fragTpe = implicitly[WeakTypeTag[F]]
+
+    //checkMorphKernelAssignment(c)(self.actualType, fragTpe, false, ) // todo:
+
+    val res = q"""
+        {
+              import org.morpheus._
+              import org.morpheus.Morpheus._
+              mirror(this) match {
+                case None => None
+                case Some(m) =>
+                  val k = m.kernel.parent
+                  val x: Option[Frag[$fragTpe, _]] = for (k <- m.kernel.parent; fh <- k.fragmentHolder[$fragTpe]) yield fh.fragment
+                  x
+              }
+        }
+    """
+
+    c.Expr[Option[Frag[F, _]]](res)
+  }
+
+
 
   def expandAlternatives(c: whitebox.Context)(modelTpe: c.Type): (Set[c.Type], List[(List[FragmentNode], List[c.Type], c.Type)], c.Type) = {
     import c.universe._
@@ -648,10 +684,29 @@ object Morpheus {
     val modelTag: WeakTypeTag[M] = implicitly[WeakTypeTag[M]]
     val modelTpe = modelTag.tpe.dealias
     val delegate = c.Expr[MorphingStrategy[_]](c.typecheck(q"org.morpheus.RootStrategy[$modelTpe]()"))
-    mask_impl(c)(delegate, sw)(modelTag)
+    mask_impl(c)(delegate, sw, false)(modelTag)
   }
 
-  def mask_impl[S: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorphingStrategy[_]], sw: c.Expr[() => Option[Int]]): c.Expr[Any] = {
+  def mask_implTwoArgs[S: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorphingStrategy[_]], sw: c.Expr[() => Option[Int]]): c.Expr[Any] = {
+    import c.universe._
+    mask_impl(c)(delegate, sw, false)(implicitly[WeakTypeTag[S]])
+  }
+
+  def unmask_implOneArg[M: c.WeakTypeTag](c: whitebox.Context)(sw: c.Expr[() => Option[Int]]): c.Expr[Any] = {
+    import c.universe._
+
+    val modelTag: WeakTypeTag[M] = implicitly[WeakTypeTag[M]]
+    val modelTpe = modelTag.tpe.dealias
+    val delegate = c.Expr[MorphingStrategy[_]](c.typecheck(q"org.morpheus.RootStrategy[$modelTpe]()"))
+    mask_impl(c)(delegate, sw, true)(modelTag)
+  }
+
+  def unmask_implTwoArgs[S: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorphingStrategy[_]], sw: c.Expr[() => Option[Int]]): c.Expr[Any] = {
+    import c.universe._
+    mask_impl(c)(delegate, sw, true)(implicitly[WeakTypeTag[S]])
+  }
+
+  def mask_impl[S: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorphingStrategy[_]], sw: c.Expr[() => Option[Int]], negative: Boolean): c.Expr[Any] = {
     import c.universe._
 
     val modelTpe = delegate.actualType.typeArgs.head.dealias
@@ -662,7 +717,32 @@ object Morpheus {
 
     val result =  q"""
          {
-            def createStrategy() = org.morpheus.MaskingStrategy($delegate, $switchModelTree, $altMapTree, $sw)
+            def createStrategy() = org.morpheus.MaskingStrategy($delegate, $switchModelTree, $altMapTree, $sw, $negative)
+            createStrategy
+         }
+       """
+
+    c.Expr(result)
+  }
+
+  def maskAllPos_impl[M: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorphingStrategy[M]]): c.Expr[Any] = {
+    import c.universe._
+
+    maskAll_impl(c)(delegate, false)
+  }
+
+  def maskAllNeg_impl[M: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorphingStrategy[M]]): c.Expr[Any] = {
+    import c.universe._
+
+    maskAll_impl(c)(delegate, true)
+  }
+
+  def maskAll_impl[M: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorphingStrategy[M]], negative: Boolean): c.Expr[Any] = {
+    import c.universe._
+
+    val result =  q"""
+         {
+            def createStrategy() = org.morpheus.MaskAllStrategy[${implicitly[WeakTypeTag[M]]}]($delegate, $negative)
             createStrategy
          }
        """
@@ -739,7 +819,7 @@ object Morpheus {
 
     } else if (arg.actualType.erasure <:< implicitly[WeakTypeTag[MorphKernel[_]]].tpe) {
       val compTpe = c.typecheck(tq"$arg.Model", mode = c.TYPEmode).tpe
-      c.info(c.enclosingPosition, s"Kernel type: ${compTpe}", true)
+      //c.info(c.enclosingPosition, s"Kernel type: ${compTpe}", true)
       val (_, modelRoot, _, _, _, typesMap) = buildModel(c)(compTpe, None, Total)
 
       (modelRoot, arg.tree, typesMap)

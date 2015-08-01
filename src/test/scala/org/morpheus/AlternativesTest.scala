@@ -82,7 +82,7 @@ class AlternativesTest {
   @Test
   def testMask(): Unit = {
 
-    // masking
+    // unmasking
 
     var alts = Alternatives.apply[Any](root)
     var maskedAlts = alts.toMaskedList
@@ -94,7 +94,7 @@ class AlternativesTest {
       (List(FragmentNode(0,false), FragmentNode(4,false)),0.0),
       (List(FragmentNode(1,false), FragmentNode(4,false)),0.0)), maskedAlts)
 
-    alts = alts.mask(Set(1))
+    alts = alts.unmask(Set(0))
     maskedAlts = alts.toMaskedList
 
     assertEquals(List((List(FragmentNode(1,false), FragmentNode(2,false)),0.0),
@@ -102,20 +102,20 @@ class AlternativesTest {
       (List(FragmentNode(1,false), FragmentNode(4,false)),0.0)), maskedAlts)
 
 
-    alts = alts.mask(Set(2))
+    alts = alts.unmask(Set(3, 4))
     maskedAlts = alts.toMaskedList
 
     assertEquals(List((List(FragmentNode(1,false), FragmentNode(2,false)),0.0)), maskedAlts)
 
-    // unmasking
+    // masking
 
-    alts = alts.unmask(Set(1))
+    alts = alts.mask(Set(0))
     maskedAlts = alts.toMaskedList
 
     assertEquals(List((List(FragmentNode(0,false), FragmentNode(2,false)),0.0),
       (List(FragmentNode(1,false), FragmentNode(2,false)),0.0)), maskedAlts)
 
-    alts = alts.unmask(Set(2))
+    alts = alts.mask(Set(3, 4))
     maskedAlts = alts.toMaskedList
 
     assertEquals(List((List(FragmentNode(0,false), FragmentNode(2,false)),0.0),
@@ -127,4 +127,15 @@ class AlternativesTest {
 
   }
 
+  @Test
+  def testMaskAndUnMaskAll(): Unit = {
+    val alts = Alternatives.apply[Any](root)
+    assertEquals(6, alts.toMaskedList.size)
+    val alts2 = alts.maskAll()
+    assertEquals(6, alts2.toMaskedList.size)
+    assertEquals(BitSet(0, 1, 2, 3, 4), alts2.fragmentMask)
+    val alts3 = alts2.unmaskAll()
+    assertEquals(0, alts3.toMaskedList.size)
+    assertTrue(alts3.fragmentMask.isEmpty)
+  }
 }

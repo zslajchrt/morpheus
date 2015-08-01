@@ -222,7 +222,35 @@ class PromotingStrategyWithModel[M, S, MutableLUB](val morphModel: MorphModel[M]
 }
 
 
-case class MaskingStrategy[M, S](delegate: MorphingStrategy[M], switchModel: MorphModel[S], altMap: AltMappings, switchFn: () => Option[Int]) extends MorphingStrategy[M] {
+case class MaskExplicitStrategy[M](delegate: MorphingStrategy[M], negative: Boolean, fragments: () => Option[Set[Int]]) extends MorphingStrategy[M] {
+  override def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = {
+    val origAlts = delegate.chooseAlternatives(instance)(owningMutableProxy)
+    
+    fragments() match {
+      case None => origAlts
+      case Some(ff) =>
+        if (negative)
+          origAlts.unmask(ff)
+        else
+          origAlts.mask(ff)
+    }
+    
+  }
+}
+
+case class MaskAllStrategy[M](delegate: MorphingStrategy[M], negative: Boolean) extends MorphingStrategy[M] {
+
+  override def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = {
+    val origAlts = delegate.chooseAlternatives(instance)(owningMutableProxy)
+    if (negative)
+      origAlts.unmaskAll()
+    else
+      origAlts.maskAll()
+  }
+
+}
+
+case class MaskingStrategy[M, S](delegate: MorphingStrategy[M], switchModel: MorphModel[S], altMap: AltMappings, switchFn: () => Option[Int], negative: Boolean) extends MorphingStrategy[M] {
 
   val switchAlts: List[List[Int]] = switchModel.altIterator().toList.map(_.map(_.id))
   val altMapReduced = altMap.preserveDynamics()
@@ -245,10 +273,17 @@ case class MaskingStrategy[M, S](delegate: MorphingStrategy[M], switchModel: Mor
           val maskedFragments: List[Int] = swAlt.map(altMapReduced.newFragToOrigFrag)
           val origAltSet: Set[List[Int]] = altMapReduced.newAltToOrigAlt(swAlt).map(_.fragments).toSet
 
-          updatedAlts = if (altId == activeAltIndex)
-            updatedAlts.mask(maskedFragments.toSet)
-          else
-            updatedAlts.unmask(maskedFragments.toSet)
+          updatedAlts = if (altId == activeAltIndex) {
+            if (negative)
+              updatedAlts.unmask(maskedFragments.toSet)
+            else
+              updatedAlts.mask(maskedFragments.toSet)
+          } else {
+            if (negative)
+              updatedAlts.mask(maskedFragments.toSet)
+            else
+              updatedAlts.unmask(maskedFragments.toSet)
+          }
         }
 
         updatedAlts
