@@ -2252,8 +2252,13 @@ object Morpheus {
   def disjunctionOfTypes(c: whitebox.Context)(types: List[c.Type]): c.Type = {
     import c.universe._
 
-    val headAltTpe = types.head
-    val tpeTree = types.tail.foldLeft(tq"$headAltTpe")((res, altTpe) => {
+    val anyTpe = c.universe.rootMirror.typeOf[Any]
+    val unitTp = implicitly[WeakTypeTag[Unit]].tpe
+
+    val normTypes = types.map(f => if (f =:= anyTpe) unitTp else f)
+
+    val headAltTpe = normTypes.head
+    val tpeTree = normTypes.tail.foldLeft(tq"$headAltTpe")((res, altTpe) => {
       tq"org.morpheus.Morpheus.or[$res, $altTpe]"
     })
 
@@ -2471,7 +2476,7 @@ object Morpheus {
             val disjunctionOfFragAltLUBs = disjunctionOfTypes(c)(fragAltLUBs) // it does not contain fragTpe
             // 2.4.
             val visibleCompModelTpeForFrag = conjunctionOfTypes(c)(List(fragTpe, disjunctionOfFragAltLUBs))
-            //c.info(c.enclosingPosition, s"Checking fragment $fragTpe dependencies $depsTpe against submodel $visibleCompModelTpeForFrag", true)
+            c.info(c.enclosingPosition, s"Checking fragment $fragTpe dependencies $depsTpe against submodel $visibleCompModelTpeForFrag", true)
             //c.info(c.enclosingPosition, s"Checking fragment $fragTpe dependencies $depsWithoutFragTpe against submodel $disjunctionOfFragAltLUBs", true)
 
             try {
@@ -2534,7 +2539,7 @@ object Morpheus {
           // and A[X] is a generic parent of the two. The test for the ExistentialType is a kind of a hack attempting to
           // detect the situation when F and W have the same generic parent (erased) A but with different type argument X. In such
           // a case the lowest upper bound of F and W is an existential type (i.e. a bounded type).
-          fragTpe.erasure <:< wrappedFragment.get.erasure &&
+          !(fragTpe =:= wrapperTpe) && fragTpe.erasure <:< wrappedFragment.get.erasure &&
             !c.universe.lub(List(fragTpe, wrapperTpe)).isInstanceOf[ExistentialType]
 
         })) {
