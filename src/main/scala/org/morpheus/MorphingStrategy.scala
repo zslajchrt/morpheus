@@ -2,6 +2,7 @@ package org.morpheus
 
 import org.morpheus.AltMappingModel.{FragmentInsertion, Node}
 
+import scala.annotation.tailrec
 import scala.reflect.runtime.universe._
 import scala.util.DynamicVariable
 import scala.language.experimental.macros
@@ -53,10 +54,10 @@ case class LastRatingStrategy[M](mirrorOpt: Option[MorphMirror[M]]) extends Morp
     case None => owningMutableProxy match {
       case None => instance.model.alternatives
       case Some(proxy) =>
-          if (proxy.delegate == null)
-            instance.model.alternatives
-          else
-            proxy.alternatives
+        if (proxy.delegate == null)
+          instance.model.alternatives
+        else
+          proxy.alternatives
     }
   }
 
@@ -149,19 +150,19 @@ case class AltMapRatingStrategy[M, S](delegate: MorphingStrategy[M], switchModel
 
   private def rateAlts(origAlts: Alternatives[M], altIdx: Int, altRating: Int): Alternatives[M] = {
 
-      val activeAltIndex = altIdx % altsCount
-      val activeAlt: List[Int] = switchAlts(activeAltIndex)
-      val activeOrigAlts: Set[List[Int]] = altMapReduced.newAltToOrigAlt(activeAlt).map(_.fragments).toSet
+    val activeAltIndex = altIdx % altsCount
+    val activeAlt: List[Int] = switchAlts(activeAltIndex)
+    val activeOrigAlts: Set[List[Int]] = altMapReduced.newAltToOrigAlt(activeAlt).map(_.fragments).toSet
 
-      origAlts.rate((origAltFrags, origRating) => {
-        val origAlt = origAltFrags.map(_.id)
-        val newRating = if (activeOrigAlts.contains(origAlt)) {
-          if (negative) origRating else altRating
-        } else {
-          if (negative) altRating else origRating
-        }
-        newRating
-      })
+    origAlts.rate((origAltFrags, origRating) => {
+      val origAlt = origAltFrags.map(_.id)
+      val newRating = if (activeOrigAlts.contains(origAlt)) {
+        if (negative) origRating else altRating
+      } else {
+        if (negative) altRating else origRating
+      }
+      newRating
+    })
 
   }
 }
@@ -225,7 +226,7 @@ class PromotingStrategyWithModel[M, S, MutableLUB](val morphModel: MorphModel[M]
 case class MaskExplicitStrategy[M](delegate: MorphingStrategy[M], negative: Boolean, fragments: () => Option[Set[Int]]) extends MorphingStrategy[M] {
   override def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = {
     val origAlts = delegate.chooseAlternatives(instance)(owningMutableProxy)
-    
+
     fragments() match {
       case None => origAlts
       case Some(ff) =>
@@ -234,7 +235,7 @@ case class MaskExplicitStrategy[M](delegate: MorphingStrategy[M], negative: Bool
         else
           origAlts.mask(ff)
     }
-    
+
   }
 }
 
@@ -447,41 +448,58 @@ case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: MorphKernelRef[MT, 
       chosenAltsFirstAttempt
     }
 
-    // find the best alt from the subset of the orig alts
-    MorphingStrategy.fittestAlternative(srcInstanceRef.instance, chosenAlts) match {
-      case Some(bestOrigAlt) =>
-        // find the template for the chosen alternative
-        val bestOrigAltIds = bestOrigAlt._1.map(_.id)
-        origAltsForNewAlt.find(_.fragments == bestOrigAltIds) match {
-          case Some(origAltForNewAlt) =>
+    @tailrec
+    def makeFragHolders(candidates: List[(List[FragmentNode], Double)]): List[FragmentHolder[_]] = {
+      try {
+        // find the best alt from the subset of the orig alts
+        MorphingStrategy.fittestAlternative(srcInstanceRef.instance, candidates) match {
+          case Some(bestOrigAlt) =>
+            // find the template for the chosen alternative
+            val bestOrigAltIds = bestOrigAlt._1.map(_.id)
+            origAltsForNewAlt.find(_.fragments == bestOrigAltIds) match {
+              case Some(origAltForNewAlt) =>
 
-            // merge the new and orig template structures
-            val origAltStruct = AltMappingModel(origAltForNewAlt.template, altMap.newFragToOrigFrag,
-              (fn) => newModelInstance.fragmentHolder(fn).get,
-              (fn) => srcInstanceRef.instance.fragmentHolder(fn).get)
+                // merge the new and orig template structures
+                val origAltStruct = AltMappingModel(origAltForNewAlt.template, altMap.newFragToOrigFrag,
+                  (fn) => newModelInstance.fragmentHolder(fn).get,
+                  (fn) => srcInstanceRef.instance.fragmentHolder(fn).get)
 
-            val mergedAltStruct = newAltStruct match {
-              case None => origAltStruct
-              case Some(newStruct) => AltMappingModel.transform(newStruct, origAltStruct)
+                val mergedAltStruct = newAltStruct match {
+                  case None => origAltStruct
+                  case Some(newStruct) => AltMappingModel.transform(newStruct, origAltStruct)
+                }
+
+                // Pass the template with the required alt structure to the original default strategy
+                srcInstanceRef.instance.altComposer.convertToHolders(srcInstanceRef.instance, bestOrigAlt._1, bestOrigAlt._2, Some(mergedAltStruct))
+              case None =>
+                if (bestOrigAltIds == Nil) {
+                  // The chosen alt is the empty alt, but it is not among the source alts. It's OK.
+                  Nil
+                } else {
+                  // This one should not occur
+                  sys.error(s"Cannot find template for chosen alternative $bestOrigAltIds")
+                }
             }
 
-            // Pass the template with the required alt structure to the original default strategy
-            srcInstanceRef.instance.altComposer.convertToHolders(srcInstanceRef.instance, bestOrigAlt._1, bestOrigAlt._2, Some(mergedAltStruct))
-          case None =>
-            if (bestOrigAltIds == Nil) {
-              // The chosen alt is the empty alt, but it is not among the source alts. It's OK.
-              Nil
-            } else {
-              // This one should not occur
-              sys.error(s"Cannot find template for chosen alternative $bestOrigAltIds")
-            }
+          case None => sys.error("No alternative chosen")
         }
 
-      case None => sys.error("No alternative chosen")
+      } catch {
+        case ae: AlternativeNotAvailableException =>
+          val newCandidates = candidates.filterNot(_._1 == ae.alt)
+          if (newCandidates.isEmpty) {
+            throw ae
+          } else {
+            // try it again without the failed candidate alt
+            makeFragHolders(newCandidates)
+          }
+      }
     }
 
-  }
 
+    makeFragHolders(chosenAlts)
+
+  }
 }
 
 

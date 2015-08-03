@@ -205,6 +205,20 @@ object Morpheus {
 
   def unmask[S](delegate: MorphingStrategy[_], sw: () => Option[Int]): Any = macro unmask_implTwoArgs[S]
 
+  def assertFailure(code: Any): Unit = macro assertFailure_impl
+
+  def assertFailure_impl(c: whitebox.Context)(code: c.Expr[Any]): c.Expr[Unit] = {
+    import c.universe._
+    try {
+      c.typecheck(code.tree)
+      sys.error("Success")
+    }
+    catch {
+      case e: Throwable =>
+        c.Expr[Unit](q"()")
+    }
+  }
+
   def fragNoConf[F: c.WeakTypeTag](c: whitebox.Context): c.Expr[FragmentFactory[F, Unit]] = {
     import c.universe._
 
@@ -1328,10 +1342,18 @@ object Morpheus {
 
     altMap = altMap.copy(newFragToOrigFrag = newFragToOrigFrag)
 
-    def findFragmentWithSameDependees(placeholderTpe: c.Type, dependees: Set[FragmentNode], srcAlt: List[FragmentNode]): Option[FragmentNode] = {
+    case class Dependee(srcFrag: FragmentNode, virtual: Boolean)
+
+    def findFragmentWithSameDependees(placeholderTpe: c.Type, dependees: Set[Dependee], srcAlt: List[FragmentNode]): Option[FragmentNode] = {
 
       // Look for a corresponding fragment having the same dependees as the placeholder.
       // We can use the placeholder only if such a fragment exists.
+
+      if (dependees.exists(_.virtual)) {
+        // The existence of any virtual dependee to the placehodler rules out the possibility of finding a source fragment
+        // with the same dependencies as that of the placeholder.
+        return None
+      }
 
       // we try all fragments as if they were placeholders
 
@@ -1339,7 +1361,7 @@ object Morpheus {
         if (isCorrespondingSourceAltNode(altFrag, placeholderTpe)) {
           val altFragTpe = srcFragmentTypesMap(altFrag.id)._1
           val altFragDependees = collectPotentialDependees(altFragTpe, srcAlt)
-            .filter(_ != altFrag) // remove the fragment from the result
+            .filter(_.srcFrag != altFrag) // remove the fragment from the result
           dependees == altFragDependees
         } else {
           false
@@ -1348,7 +1370,7 @@ object Morpheus {
       })
     }
 
-    def collectPotentialWrapperDependees(placeholderTpe: c.Type, alt: List[FragmentNode]): Set[FragmentNode] = {
+    def collectPotentialWrapperDependees(placeholderTpe: c.Type, alt: List[FragmentNode]): Set[Dependee] = {
       if (isWrapper(c)(placeholderTpe)) {
         // Wrappers have no dependees by definition
         Set.empty
@@ -1359,7 +1381,8 @@ object Morpheus {
           if (isFragmentWrapper(c)(altNodeTpe)) {
             // does the wrapper extend the placeholder?
             if (altNodeTpe <:< placeholderTpe)
-              Some(altInstSrc)
+              // if the placeholder is abstract, then the dependee must be treated as virtual only
+              Some(Dependee(altInstSrc, virtual = isAbstractFragment(c)(placeholderTpe)))
             else
               None
           } else if (isDimensionWrapper(c)(altNodeTpe)) {
@@ -1368,7 +1391,9 @@ object Morpheus {
               case Some(dim) =>
                 // does the placeholder implement the same dimension?
                 if (placeholderTpe <:< dim)
-                  Some(altInstSrc)
+                  Some(Dependee(altInstSrc, virtual = false))
+                else if (dim <:< placeholderTpe)
+                  Some(Dependee(altInstSrc, virtual = true))
                 else
                   None
             }
@@ -1381,34 +1406,39 @@ object Morpheus {
 
     }
 
-    def collectPotentialDependeesByFragDeps(placeholderTpe: c.Type, srcAlt: List[FragmentNode]): Set[FragmentNode] = {
+    def collectPotentialDependeesByFragDeps(placeholderTpe: c.Type, srcAlt: List[FragmentNode]): Set[Dependee] = {
+      val isPlhdAbstract = isAbstractFragment(c)(placeholderTpe)
       // the list of fragments from the source alternative whose dependencies can be satisfied by the placeholder
-      val dependees: List[FragmentNode] = srcAlt.map(altInstSrc => {
+      val dependees: List[Dependee] = srcAlt.map(altInstSrc => {
 
         val altNodeTpe = srcFragmentTypesMap(altInstSrc.id)._1
         getDependencyType(c)(altNodeTpe, excludeHead = true) match {
           case None => None
           case Some(depsTpe) =>
-
             // try to find a dependency of the alt node that can be satisfied by the placeholder
             val altNodeDeps = alternativesIterator(c)(depsTpe, false, false, Partial)._3.toList
-            altNodeDeps.find(altNodeDeps => {
-              altNodeDeps._2.exists(altDep => {
-                placeholderTpe <:< altDep
-              })
-            }) match {
-              case None => None
-              case Some(satisDep) => Some(altInstSrc)
+            if (altNodeDeps.exists(altNodeDeps => {
+              altNodeDeps._2.exists(altDep => placeholderTpe <:< altDep)
+            })) {
+              Some(Dependee(altInstSrc, virtual = false))
+            } else if (isPlhdAbstract && altNodeDeps.exists(altNodeDeps => {
+              // If the placeholder is an abstract placeholder (i.e. a dimension or an abstract trait)
+              // we must test if the deps type of the current fragment might be assigned to the placeholder's
+              // abstract trait. Such a dependee is treated as a possible dependee, contrarily to the previous case.
+              altNodeDeps._2.exists(altDep => altDep <:< placeholderTpe)
+            })) {
+              Some(Dependee(altInstSrc, virtual = true))
+            } else {
+              None
             }
         }
-
       }
       ).filter(_.isDefined).map(_.get) // filter out the None elements
 
       dependees.toSet
     }
 
-    def collectPotentialDependees(placeholderTpe: c.Type, srcAlt: List[FragmentNode]): Set[FragmentNode] = {
+    def collectPotentialDependees(placeholderTpe: c.Type, srcAlt: List[FragmentNode]): Set[Dependee] = {
       collectPotentialDependeesByFragDeps(placeholderTpe, srcAlt) ++ collectPotentialWrapperDependees(placeholderTpe, srcAlt)
     }
 
@@ -1482,7 +1512,7 @@ object Morpheus {
       }
     }
 
-    def checkIfPlhdViolatesDeps(placeholder: FragmentNode, srcAlt: List[FragmentNode], placeholders: List[FragmentNode]): Either[(FragmentNode, Option[FragmentNode]), String] = {
+    def checkIfPlhdViolatesDeps(placeholder: FragmentNode, srcAlt: List[FragmentNode], placeholders: List[FragmentNode], maybeHiddenFragmentsInSrcAlt: Boolean): Either[(FragmentNode, Option[FragmentNode]), String] = {
       val placeholderTpe = tgtFragmentTypesMap(placeholder.id)._1
 
       val otherPlaceholders: List[FragmentNode] = placeholders.filterNot(_ == placeholder)
@@ -1512,13 +1542,18 @@ object Morpheus {
             }
 
           } else {
-            if (containsHiddenFragments) {
-              findDimension(c)(placeholderTpe) match {
+            if (maybeHiddenFragmentsInSrcAlt) {
+              if (isAbstractFragment(c)(placeholderTpe)) {
+                //c.info(c.enclosingPosition, s"0: $placeholderTpe, srcAlt: $srcAlt\n$ctxMsg", true)
+                Right(s"Source model may contain hidden fragments possibly containing one that should be replaced by abstract $placeholderTpe. Only dimension-less placeholders are allowed in this case.")
+              } else findDimension(c)(placeholderTpe) match {
                 case Some(plhDim) =>
+                  //c.info(c.enclosingPosition, s"1: $placeholderTpe, plhDim: $plhDim, srcAlt: $srcAlt\n$ctxMsg", true)
                   // In the case the composite instance contains hidden fragments we must abort the process since
                   // we cannot prove there is no interfering fragment.
-                  Right(s"Source model contains hidden fragments possibly containing one that should be replaced by $placeholderTpe. Only dimension-less placeholders are allowed in this case.")
+                  Right(s"Source model may contain hidden fragments possibly containing one that should be replaced by $placeholderTpe. Only dimension-less placeholders are allowed in this case.")
                 case None =>
+                  //c.info(c.enclosingPosition, s"2: $placeholderTpe, srcAlt: $srcAlt\n$ctxMsg", true)
                   // For a dimension-less placeholder there can occur two scenarios:
                   // 1) There is no fragment (neither visible nor hidden) of the same type in the alternative
                   // 2) There is a fragment (either visible or hidden) of the same type, which will be replaced by the placeholder at the time of the instantiation of the alternative (i.e. constructing a morph)
@@ -1528,28 +1563,39 @@ object Morpheus {
             } else {
 
               // try to detect the interfering fragment by analyzing dependencies
-              val potentialDependees: Set[FragmentNode] = collectPotentialDependees(placeholderTpe, srcAlt)
+              val potentialDependees: Set[Dependee] = collectPotentialDependees(placeholderTpe, srcAlt)
               if (potentialDependees.isEmpty) {
                 // there is no interference with the dependency graph
-
                 srcAlt.find(isCorrespondingSourceAltNode(_, placeholderTpe)) match {
                   case None =>
+                    //c.info(c.enclosingPosition, s"3: $placeholderTpe, srcAlt: $srcAlt\n$ctxMsg", true)
                     Left(placeholder, None)
                   case Some(corresp) =>
-                    Left(placeholder, Some(corresp))
+                    val correspTpe = srcFragmentTypesMap(corresp.id)._1
+                    val dependeesOfCorrespFrag = collectPotentialDependees(correspTpe, srcAlt)
+                    if (dependeesOfCorrespFrag.isEmpty) {
+                      //c.info(c.enclosingPosition, s"4: $placeholderTpe, srcAlt: $srcAlt corresponding: ${correspTpe}\n$ctxMsg", true)
+                      Left(placeholder, Some(corresp))
+                    } else {
+                      //c.info(c.enclosingPosition, s"5: $placeholderTpe, srcAlt: $srcAlt corresponding: ${correspTpe}, dependeesOfCorrespFrag: ${dependeesOfCorrespFrag.map(f => srcFragmentTypesMap(f.srcFrag.id)._1)}\n$ctxMsg", true)
+                      Right(s"Placeholder $placeholderTpe would replace ${correspTpe} on which fragments ${dependeesOfCorrespFrag.map(f => srcFragmentTypesMap(f.srcFrag.id)._1)} depend")
+                    }
                 }
 
               } else {
                 // there is some interference, find out if the placeholder can be used
                 findFragmentWithSameDependees(placeholderTpe, potentialDependees, srcAlt) match {
                   case None if checkDepsInSrcModel =>
+                    //c.info(c.enclosingPosition, s"6: $placeholderTpe, srcAlt: $srcAlt\n$ctxMsg", true)
                     // The checkDepsInSrcModel flag indicates some source fragments may be missing (i.e. the source composite is incomplete).
                     // These missing fragment may be in conflict with the placeholder.
-                    Right(s"Source model is incomplete. may be in conflict with placeholder $placeholderTpe")
+                    Right(s"Fragments ${potentialDependees.map(f => srcFragmentTypesMap(f.srcFrag.id)._1)} may be in conflict with placeholder $placeholderTpe")
                   case None if !checkDepsInSrcModel =>
+                    //c.info(c.enclosingPosition, s"7: $placeholderTpe, srcAlt: $srcAlt\n$ctxMsg", true)
                     // So if it is not set then we can assume that the placeholder can be used without interfering with the dependencies in the source.
                     Left(placeholder, None)
                   case Some(interferingFragment) =>
+                    //c.info(c.enclosingPosition, s"8: $placeholderTpe, srcAlt: $srcAlt, interferingFragment: ${srcFragmentTypesMap(interferingFragment.id)._1}\n$ctxMsg", true)
                     val interFragTpe = srcFragmentTypesMap(interferingFragment.id)
                     Left(placeholder, Some(interferingFragment))
                 }
@@ -1664,7 +1710,7 @@ object Morpheus {
     /*
      * @return the alternative template
      */
-    def isTargetAltCompatibleWithSourceAlt(tgtAlt: (List[FragmentNode], List[c.Type], c.Type), srcAlt: (List[FragmentNode], List[c.Type], c.Type)): Either[List[FragInstSource], String] = {
+    def isTargetAltCompatibleWithSourceAlt(tgtAlt: (List[FragmentNode], List[c.Type], c.Type), srcAlt: (List[FragmentNode], List[c.Type], c.Type), maybeHiddenFragmentsInSrcAlt: Boolean): Either[List[FragInstSource], String] = {
 
       val tgtAltLUB = tgtAlt._3
 
@@ -1687,7 +1733,7 @@ object Morpheus {
           val placeholders = tgtAlt._1.filter(_.placeholder)
           // a list of replacements by placeholders. The first fragment is the placeholder,
           // the second is the source alt node being replaced or appended (in case of a wrapper) by the placeholder
-          val placeholdersApplication: List[Either[(FragmentNode, Option[FragmentNode]), String]] = placeholders.map(checkIfPlhdViolatesDeps(_, srcAlt._1, placeholders))
+          val placeholdersApplication: List[Either[(FragmentNode, Option[FragmentNode]), String]] = placeholders.map(checkIfPlhdViolatesDeps(_, srcAlt._1, placeholders, maybeHiddenFragmentsInSrcAlt))
           if (placeholdersApplication.exists(_.isRight)) {
             // some placeholders cannot be applied
             // provide some explanation which placeholders and why they do not match
@@ -1823,7 +1869,7 @@ object Morpheus {
 
         sourceAltCounter += 1
 
-        isTargetAltCompatibleWithSourceAlt(tgtAlt, srcAlt) match {
+        isTargetAltCompatibleWithSourceAlt(tgtAlt, srcAlt, containsHiddenFragments) match {
           case Right(reason) =>
             val incompatibleTgtAndSrcAltsWithReason: (List[c.Type], List[c.Type], String) = (tgtAltFragTypes, srcAltFragTypes, reason)
             unsatisfiedTargetAlts += incompatibleTgtAndSrcAltsWithReason
@@ -1839,7 +1885,7 @@ object Morpheus {
       if (!matches) {
         // No source alt matches the target alt.
         // Attempt to save the situation by offering the empty source alternative.
-        isTargetAltCompatibleWithSourceAlt(tgtAlt, emptySrcAlt) match {
+        isTargetAltCompatibleWithSourceAlt(tgtAlt, emptySrcAlt, maybeHiddenFragmentsInSrcAlt = true) match {
           case Right(reason) =>
           // the attempt failed
           case Left(altTemplate) =>
@@ -2403,13 +2449,13 @@ object Morpheus {
       fragTpe.typeSymbol.asClass.selfType match {
         case RefinedType(parents, scope) =>
           // 2.1.
-          //val depsTpe = internal.refinedType(parents.tail, scope)
           val depsTpe = fragTpe.typeSymbol.asClass.selfType
+          val depsWithoutFragTpe = internal.refinedType(parents.tail, scope)
 
           val altIter = alternativesIterator(c)(compTpe, false, false, Partial)._3
           val refConfLevel: ConformanceLevel = getConfLevelFromAnnotation(c)(fragTpe)
           // 2.2.
-          var expandedAltTypes = List.empty[c.Type]
+          var fragAltLUBs = List.empty[c.Type]
           while (altIter.hasNext) {
             val alt = altIter.next()
             //2.3.
@@ -2417,20 +2463,22 @@ object Morpheus {
               // 2.3.1.
               val submodelAltType = conjunctionOfTypes(c)(alt._2.filterNot(_ == fragTpe))
 
-              expandedAltTypes ::= submodelAltType
+              fragAltLUBs ::= submodelAltType
             }
           }
 
-          if (expandedAltTypes.nonEmpty) {
+          if (fragAltLUBs.nonEmpty) {
+            val disjunctionOfFragAltLUBs = disjunctionOfTypes(c)(fragAltLUBs) // it does not contain fragTpe
             // 2.4.
-            val visibleCompModelTpeForFrag = conjunctionOfTypes(c)(List(fragTpe, disjunctionOfTypes(c)(expandedAltTypes)))
+            val visibleCompModelTpeForFrag = conjunctionOfTypes(c)(List(fragTpe, disjunctionOfFragAltLUBs))
             //c.info(c.enclosingPosition, s"Checking fragment $fragTpe dependencies $depsTpe against submodel $visibleCompModelTpeForFrag", true)
+            //c.info(c.enclosingPosition, s"Checking fragment $fragTpe dependencies $depsWithoutFragTpe against submodel $disjunctionOfFragAltLUBs", true)
 
             try {
               // 2.5.
               // Setting source and target conformance level to Partial means that the RIGHT-TOTAL relation is required,
               // in other words that all source alternatives must be mapped to some target one.
-              checkMorphKernelAssignment(c, s"Checking fragment $fragTpe dependencies")(visibleCompModelTpeForFrag, depsTpe, checkDepsInSrcModel = false, Partial,
+              checkMorphKernelAssignment(c, s"Checking fragment $fragTpe dependencies")(disjunctionOfFragAltLUBs, depsWithoutFragTpe, checkDepsInSrcModel = false, Partial,
                 Partial, containsHiddenFragments = false /* irrelevant, no placeholders in the self-type */, noHiddenFragments = false)
 
               // 2.6.
@@ -2552,9 +2600,13 @@ object Morpheus {
 
     import c.universe._
 
+    val unitTpe = implicitly[WeakTypeTag[Unit]].tpe
+    val anyTpe = implicitly[WeakTypeTag[Any]].tpe
+
     def normalizeModelType(tpe: Type): Type = {
       tpe match {
         case RefinedType(parents, decls) => internal.refinedType(parents.map(t => normalizeModelType(t)), decls)
+        case t: Type if t == anyTpe => unitTpe
         case t: Type => t
       }
     }
