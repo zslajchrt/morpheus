@@ -781,9 +781,16 @@ object Morpheus {
             import org.morpheus._
             import org.morpheus.Morpheus._
             val specCompRef: ~&?[$targetTpe] = $ci
-            *(specCompRef, ..$placeholders).make
+            val res = *(specCompRef, ..$placeholders).make
+            res
         }
       """
+
+    val morphTpe: Type = c.typecheck(result).tpe
+    if (!(morphTpe <:< targetTpe)) {
+      c.abort(c.enclosingPosition, s"Type argument $targetTpe evaluates to $morphTpe. The two types should be same.")
+    }
+
     c.Expr(result)
   }
 
@@ -800,9 +807,16 @@ object Morpheus {
             import org.morpheus._
             import org.morpheus.Morpheus._
             val specCompRef: &?[$targetTpe] = $ci
-            *(specCompRef, ..$placeholders).make_~
+            val res = *(specCompRef, ..$placeholders).make_~
+            res
         }
       """
+
+    val morphTpe: Type = c.typecheck(result).tpe
+    if (!(morphTpe <:< targetTpe)) {
+      c.abort(c.enclosingPosition, s"Type argument $targetTpe evaluates to $morphTpe. The two types should be same.")
+    }
+
     c.Expr(result)
   }
 
@@ -2476,7 +2490,7 @@ object Morpheus {
             val disjunctionOfFragAltLUBs = disjunctionOfTypes(c)(fragAltLUBs) // it does not contain fragTpe
             // 2.4.
             val visibleCompModelTpeForFrag = conjunctionOfTypes(c)(List(fragTpe, disjunctionOfFragAltLUBs))
-            c.info(c.enclosingPosition, s"Checking fragment $fragTpe dependencies $depsTpe against submodel $visibleCompModelTpeForFrag", true)
+            //c.info(c.enclosingPosition, s"Checking fragment $fragTpe dependencies $depsTpe against submodel $visibleCompModelTpeForFrag", true)
             //c.info(c.enclosingPosition, s"Checking fragment $fragTpe dependencies $depsWithoutFragTpe against submodel $disjunctionOfFragAltLUBs", true)
 
             try {
