@@ -423,7 +423,18 @@ object Morpheus {
     c.Expr[Option[Frag[F, _]]](res)
   }
 
+  def createAntagonistTypes(c: whitebox.Context)(tpe: c.Type): Set[c.Type] = {
+    import c.universe._
 
+    val (_, modelRoot, _, _, _, fragmentTypesMap) = buildModel(c)(tpe, None, Total)
+    val antagMatrix: Set[(FragmentNode, FragmentNode)] = modelRoot.createAntagonistsMatrix(
+      (fn1, fn2) => fragmentTypesMap(fn1.id)._1 =:= fragmentTypesMap(fn2.id)._1)
+
+    antagMatrix.map(antagPair => {
+      conjunctionOfTypes(c)(List(fragmentTypesMap(antagPair._1.id)._1, fragmentTypesMap(antagPair._2.id)._1))
+    })
+
+  }
 
   def expandAlternatives(c: whitebox.Context)(modelTpe: c.Type): (Set[c.Type], List[(List[FragmentNode], List[c.Type], c.Type)], c.Type) = {
     import c.universe._
@@ -438,10 +449,10 @@ object Morpheus {
 
     var expandedAlts: List[(List[FragmentNode], List[c.Type], c.Type)] = Nil
 
-    def expandAlts(altsModelTpe: c.Type): Option[c.Type] = try {
+    def expandAlts(altsModelTpe: c.Type, antagonistsTypes: List[c.Type]): Option[c.Type] = try {
+      c.info(c.enclosingPosition, s"antagonistsTypes: $antagonistsTypes", true)
 
       val altIter = alternativesIterator(c)(altsModelTpe, checkDeps = false, excludePlaceholders = false, Total)._3
-
 
       var expandedAltTypes = List.empty[c.Type]
 
@@ -452,39 +463,46 @@ object Morpheus {
       while (altIter.hasNext) {
         val alt = altIter.next()
 
-        //val fragsWithSelfTpe = alt._2.map(_.typeSymbol.asClass.selfType)
-        var expandCnt = 0
-        val fragsWithSelfTpe = alt._2.map(fragTpe => if (!expandedFragTypes.contains(fragTpe)) {
-          expandCnt += 1
-          expandedFragTypes += fragTpe
-          fragTpe.typeSymbol.asClass.selfType
-        } else {
-          fragTpe
-        })
+        // Ignore alternatives containing the antagonists
+        if (antagonistsTypes.forall(antagTpe => !(alt._3 <:< antagTpe))) { // there must be no antagonist in the alternative
 
-        if (expandCnt > 0) {
-          // some expansion occurred, thus dive one level more
-
-          val hdTpeTree = tq"${fragsWithSelfTpe.head}"
-          val altWithSelfTypesTree = fragsWithSelfTpe.tail.foldLeft(hdTpeTree)((res, fragSelfTpe) => {
-            tq"$res with $fragSelfTpe"
+          var expandCnt = 0
+          val fragsWithSelfTpeAndAntagonists = alt._2.map(fragTpe => if (!expandedFragTypes.contains(fragTpe)) {
+            expandCnt += 1
+            expandedFragTypes += fragTpe
+            val selfTpe = fragTpe.typeSymbol.asClass.selfType
+            (selfTpe, createAntagonistTypes(c)(selfTpe))
+          } else {
+            (fragTpe, Set.empty[c.Type])
           })
-          var altWithSelfTypesTpe = c.typecheck(altWithSelfTypesTree, mode = c.TYPEmode).tpe
-          // get rid off duplicities among fragment types
-          altWithSelfTypesTpe = conjunctionOfTypes(c)(decomposeType(c)(altWithSelfTypesTpe).toSet.toList)
 
-          // store the expanded model type of all internal alternatives found in the current alternative's type (complemented with the self types of its fragments)
-          expandAlts(altWithSelfTypesTpe) match {
-            case None =>
-              expandedAltTypes ::= altWithSelfTypesTpe
-            case Some(expandedAltType) =>
-              expandedAltTypes ::= expandedAltType
+          if (expandCnt > 0) {
+            // some expansion occurred, thus dive one level more
+
+            val fragsWithSelfTpe = fragsWithSelfTpeAndAntagonists.map(_._1)
+            val antagonistsTypesOfThisAlt = fragsWithSelfTpeAndAntagonists.flatMap(_._2)
+
+            val hdTpeTree = tq"${fragsWithSelfTpe.head}"
+            val altWithSelfTypesTree = fragsWithSelfTpe.tail.foldLeft(hdTpeTree)((res, fragSelfTpe) => {
+              tq"$res with $fragSelfTpe"
+            })
+            var altWithSelfTypesTpe = c.typecheck(altWithSelfTypesTree, mode = c.TYPEmode).tpe
+            // get rid off duplicities among fragment types
+            altWithSelfTypesTpe = conjunctionOfTypes(c)(decomposeType(c)(altWithSelfTypesTpe).toSet.toList)
+
+            // store the expanded model type of all internal alternatives found in the current alternative's type (complemented with the self types of its fragments)
+            expandAlts(altWithSelfTypesTpe, antagonistsTypesOfThisAlt) match {
+              case None =>
+                expandedAltTypes ::= altWithSelfTypesTpe
+              case Some(expandedAltType) =>
+                expandedAltTypes ::= expandedAltType
+            }
+
+          } else {
+            // no expansion occurred in this alternative, thus add the alt to the result list
+            expandedAlts ::= alt
+            expandedAltTypes ::= conjunctionOfTypes(c)(alt._2.toSet.toList) // the alt LUB
           }
-
-        } else {
-          // no expansion occurred in this alternative, thus add the alt to the result list
-          expandedAlts ::= alt
-
         }
 
       }
@@ -502,7 +520,7 @@ object Morpheus {
         throw new Exception(s"Cannot expand alternatives of morph type $modelTpe", e)
     }
 
-    expandAlts(modelTpe) match {
+    expandAlts(modelTpe, Nil) match {
       case None => c.abort(c.enclosingPosition, s"Cannot expand morph model $modelTpe")
       case Some(expandedModelType) =>
         (expandedFragTypes, expandedAlts.reverse, expandedModelType)
@@ -1707,7 +1725,7 @@ object Morpheus {
                     throw new DependencyCheckException(s"Unsatisfied placeholder $plhTpe dependencies")
                   }
 
-                  //c.info(c.enclosingPosition, s"Alt: ${altTemplate.map(toFragType(_))}\nPlaceholder $plhTpe\ndeps type: $depsTpe\nExpanded type: $expandedAltTemplateTpe", true)
+                  c.info(c.enclosingPosition, s"Alt: ${altTemplate.map(toFragType(_))}\nPlaceholder $plhTpe\ndeps type: $depsTpe\nExpanded type: $expandedAltTemplateTpe\naltTemplateSrcOnlyFragsTpe:$altTemplateSrcOnlyFragsTpe\nexpandedSrcFragsType: $expandedSrcFragsType", true)
                   checkMorphKernelAssignment(c, s"Checking placeholder $plhTpe dependencies against alt template type $expandedAltTemplateTpe")(expandedAltTemplateTpe, depsTpe, false, tgtConfLev, plhConfLevelMode, false, noHiddenFragments = false)._1
                 case _ => // no placeholder's dependencies
               }
