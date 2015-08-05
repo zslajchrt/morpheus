@@ -66,6 +66,7 @@ abstract class MorphKernel[M](val root: MorphModelNode) extends MorphKernelBase[
   //def this(ci: MorphKernelRef[M]) = this(ci.instance.rootNode)
 
   type LUB
+  type OrigModel
   type Model = M
   type ConformLevel <: ConformanceLevelMarker
   type MutableLUB = LUB with MutableMorphMirror[M] {type ConfLev = ConformLevel; type LUB = outer.LUB}

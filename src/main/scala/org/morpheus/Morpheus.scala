@@ -864,8 +864,9 @@ object Morpheus {
 //      q"(..$fragFactTrees)"
 
     } else if (arg.actualType.erasure <:< implicitly[WeakTypeTag[MorphKernel[_]]].tpe) {
-      val compTpe = c.typecheck(tq"$arg.Model", mode = c.TYPEmode).tpe
+      val compTpe = c.typecheck(tq"$arg.OrigModel", mode = c.TYPEmode).tpe
       //c.info(c.enclosingPosition, s"Kernel type: ${compTpe}", true)
+
       val (_, modelRoot, _, _, _, typesMap) = buildModel(c)(compTpe, None, Total)
 
       (modelRoot, arg.tree, typesMap)
@@ -887,6 +888,8 @@ object Morpheus {
     } else {
       c.abort(c.enclosingPosition, s"Illegal argument")
     }
+
+    //c.info(c.enclosingPosition, s"modelRoot.fragments: ${modelRoot.fragments}", false)
 
     val fragFactTrees = modelRoot.fragments.filterNot(_.placeholder).map(fn => {
       val (fragTpe, cfgClsOpt) = typesMap(fn.id)
@@ -3253,6 +3256,7 @@ object Morpheus {
               import configImplicitsProvider._
 
               type LUB = compositeModel.LUB
+              type OrigModel = $compTpe
               type ConformLevel = $conformanceLevelMarker
               val parent = $parentInstance
               val lubComponents: Array[Class[_]] = compositeModel.lubComponents
