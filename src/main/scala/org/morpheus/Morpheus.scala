@@ -450,7 +450,7 @@ object Morpheus {
     var expandedAlts: List[(List[FragmentNode], List[c.Type], c.Type)] = Nil
 
     def expandAlts(altsModelTpe: c.Type, antagonistsTypes: List[c.Type]): Option[c.Type] = try {
-      c.info(c.enclosingPosition, s"antagonistsTypes: $antagonistsTypes", true)
+      //c.info(c.enclosingPosition, s"antagonistsTypes: $antagonistsTypes", true)
 
       val altIter = alternativesIterator(c)(altsModelTpe, checkDeps = false, excludePlaceholders = false, Total)._3
 
@@ -1701,7 +1701,8 @@ object Morpheus {
       // Create the conjunction of the source explicit fragment types
       val altTemplateSrcOnlyFragsTpe = conjunctionOfTypes(c)(srcFragTypes)
       // Expand the conjunction to reveal the implicit fragments from source fragment dependencies
-      val expandedSrcFragsType = expandAlternatives(c)(altTemplateSrcOnlyFragsTpe)._3
+      val expandedSrcLUBs = expandAlternatives(c)(altTemplateSrcOnlyFragsTpe)._2.map(_._3)
+      val expandedSrcLUB = lub(expandedSrcLUBs)
 
       for (altFragSrc <- altTemplate) {
 
@@ -1718,15 +1719,15 @@ object Morpheus {
                   // Create conjunction of the placeholder type. This conjunction is not expanded, however, since these dependencies will be examined if they are satisfied
                   // by expandedSrcFragsType.
                   val altTemplatePlhdOnlyFragsTpe = conjunctionOfTypes(c)(altTemplate.filterNot(_ == altFragSrc).filter(_.isInstanceOf[PlaceholderSource]).map(toFragType(_)))
-                  val expandedAltTemplateTpe = conjunctionOfTypes(c)(List(altTemplatePlhdOnlyFragsTpe, expandedSrcFragsType))
+                  val expandedAltTemplateTpe = conjunctionOfTypes(c)(List(altTemplatePlhdOnlyFragsTpe, expandedSrcLUB))
 
                   if (expandedAltTemplateTpe =:= anyTpe && !(depsTpe =:= anyTpe)) {
                     // This situation can occur if there is no source fragment and a single placeholder depending on something
                     throw new DependencyCheckException(s"Unsatisfied placeholder $plhTpe dependencies")
                   }
 
-                  c.info(c.enclosingPosition, s"Alt: ${altTemplate.map(toFragType(_))}\nPlaceholder $plhTpe\ndeps type: $depsTpe\nExpanded type: $expandedAltTemplateTpe\naltTemplateSrcOnlyFragsTpe:$altTemplateSrcOnlyFragsTpe\nexpandedSrcFragsType: $expandedSrcFragsType", true)
-                  checkMorphKernelAssignment(c, s"Checking placeholder $plhTpe dependencies against alt template type $expandedAltTemplateTpe")(expandedAltTemplateTpe, depsTpe, false, tgtConfLev, plhConfLevelMode, false, noHiddenFragments = false)._1
+                  //c.info(c.enclosingPosition, s"Alt: ${altTemplate.map(toFragType(_))}\nPlaceholder $plhTpe\ndeps type: $depsTpe\nExpanded type: $expandedAltTemplateTpe\naltTemplateSrcOnlyFragsTpe:$altTemplateSrcOnlyFragsTpe\nexpandedSrcFragsType: $expandedSrcLUB", true)
+                  checkMorphKernelAssignment(c, s"Checking placeholder $plhTpe dependencies against alt template type $expandedAltTemplateTpe")(expandedAltTemplateTpe, depsTpe, false, Partial, Partial, false, noHiddenFragments = false)._1
                 case _ => // no placeholder's dependencies
               }
             }
