@@ -1024,7 +1024,7 @@ object Morpheus {
 
     val placeholderFactoriesTree = q"Map(..$placeholderFactMapEntries)"
 
-    //c.info(c.enclosingPosition, s"Placeholder fragments: ${show(placeholderFactMap)}", true)
+    //c.info(c.enclosingPosition, s"Placeholder fragments: ${show(placeholderFactoriesTree)}", true)
 
     val missingPlaceholders = placeholderFrags.filter(phFragWithTpe => {
       // the declared type
@@ -1533,7 +1533,7 @@ object Morpheus {
       def compareWrappedTpeWithPlaceholderWrappedTpe(nodeTpe: c.Type) = {
 
         val (wrappedTpeByAlt, wrappedTpeByPlaceholder) = if (isDimensionWrapper(c)(placeholderTpe))
-          (findDimension(c)(nodeTpe), findDimension(c)(placeholderTpe))
+          (if (isDimension(c)(nodeTpe)) Some(nodeTpe) else findDimension(c)(nodeTpe), findDimension(c)(placeholderTpe))
         else {
           if (isDimensionWrapper(c)(nodeTpe))
             (findDimension(c)(nodeTpe), findDimension(c)(placeholderTpe))
@@ -2782,12 +2782,17 @@ object Morpheus {
     }
 
     def createFragmentNode(frgTpe: Type, isPlaceholder: Boolean): FragmentNode = {
-      val fragId: Int = fragCounter.getAndIncrement
-      fragmentTypes += (fragId -> fragDesc(frgTpe, fragId))
+      val actualFragType: Type = if (isPlaceholder) {
+        placeholderTpeTransf match {
+          case None => frgTpe
+          case Some(phTpeTrans) => if (phTpeTrans.isDefinedAt(frgTpe)) phTpeTrans(frgTpe) else frgTpe
+        }
+      } else {
+        frgTpe
+      }
 
-      //      if (frgTpe.isInstanceOf[AnnotatedType]) {
-      //        c.info(c.enclosingPosition, s"Found annotated type: $frgTpe", true)
-      //      }
+      val fragId: Int = fragCounter.getAndIncrement
+      fragmentTypes += (fragId -> fragDesc(actualFragType, fragId))
 
       FragmentNode(fragId, isPlaceholder)
     }
@@ -2800,13 +2805,7 @@ object Morpheus {
         DisjNode(List(traverseCompTp(lhs, plHldMode), traverseCompTp(rhs, plHldMode)))
       case unitNodeType(u) => u
       case plHld@placeHolderNodeType(plHldTpe) =>
-        val actPlHldTpe = placeholderTpeTransf match {
-          case None => plHldTpe
-          case Some(phTpeTrans) => if (phTpeTrans.isDefinedAt(plHldTpe)) phTpeTrans(plHldTpe) else plHldTpe
-        }
-
-        //createFragmentNode(actPlHldTpe, true)
-        traverseCompTp(actPlHldTpe, !plHldMode)
+        traverseCompTp(plHldTpe, !plHldMode)
       case tr@TypeRef(_, sym, _) =>
 
         val symCls: Symbols#ClassSymbol = sym.asClass.asInstanceOf[Symbols#ClassSymbol]
