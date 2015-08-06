@@ -367,7 +367,16 @@ case class BridgeStrategy[MT, MS](srcInstanceRef: MorphKernelRef[MT, MS]) extend
 
 }
 
-class AlternativeNotAvailableException(val alt: List[FragmentNode]) extends Exception {
+
+abstract class NoViableAlternativeException() extends Exception {
+
+}
+
+class AlternativeNotAvailableException(val alt: List[FragmentNode]) extends NoViableAlternativeException {
+
+}
+
+class NoAlternativeChosenException() extends NoViableAlternativeException {
 
 }
 
