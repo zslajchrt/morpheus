@@ -22,7 +22,7 @@ class Morpher[M]() {
     def makeFragHolders(candidates: List[(List[FragmentNode], Double)]): List[FragmentHolder[_]] = {
       try {
         MorphingStrategy.fittestAlternative(instance, candidates) match {
-          case None => throw new NoAlternativeChosenException()
+          case None => throw new NoAlternativeChosenException("No alternative can be chosen")
           case Some(alternative) =>
             instance.altComposer.convertToHolders(instance, alternative._1, alternative._2, None)
         }

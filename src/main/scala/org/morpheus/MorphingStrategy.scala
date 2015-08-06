@@ -317,13 +317,17 @@ case class BridgeStrategy[MT, MS](srcInstanceRef: MorphKernelRef[MT, MS]) extend
 
   def chooseAlternatives(instance: MorphKernel[MT])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[MT] = {
     val sourceAlts: Alternatives[MS] = actualStrategy.chooseAlternatives(srcInstanceRef.instance)(None)
-    val suggestedOrigAlternatives: List[(List[Int], Double)] = sourceAlts.toList
+    val suggestedOrigAlternatives: List[(List[Int], Double)] = sourceAlts.toMaskedList
       .map(origAlt => (origAlt._1.map(_.id), origAlt._2)) // maps FragmentNode -> Int
+
+    if (suggestedOrigAlternatives.isEmpty) {
+      throw new NoAlternativeChosenException("Source model yields no viable alternative")
+    }
 
     def findRatingForOrigAlt(origAlt: List[Int]): Double = {
       suggestedOrigAlternatives.find(_._1 == origAlt) match {
         case Some(found) => found._2
-        case None => sys.error(s"Cannot find the corresponding alternative to that from alt mapping $origAlt")
+        case None => 0d
       }
     }
 
@@ -368,15 +372,15 @@ case class BridgeStrategy[MT, MS](srcInstanceRef: MorphKernelRef[MT, MS]) extend
 }
 
 
-abstract class NoViableAlternativeException() extends Exception {
+abstract class NoViableAlternativeException(msg: String) extends Exception(msg) {
 
 }
 
-class AlternativeNotAvailableException(val alt: List[FragmentNode]) extends NoViableAlternativeException {
+class AlternativeNotAvailableException(val alt: List[FragmentNode], msg: String) extends NoViableAlternativeException(msg) {
 
 }
 
-class NoAlternativeChosenException() extends NoViableAlternativeException {
+class NoAlternativeChosenException(msg: String) extends NoViableAlternativeException(msg) {
 
 }
 
@@ -452,7 +456,7 @@ case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: MorphKernelRef[MT, 
     val chosenAlts = if (chosenAltsFirstAttempt == Nil) {
       // If the masked list does not contain any target alt or the target alts do not contain the empty one
       // then we have to throw an exception
-      throw new AlternativeNotAvailableException(newAlt)
+      throw new AlternativeNotAvailableException(newAlt, s"No source alternative found for target alternative $newAlt")
     } else {
       chosenAltsFirstAttempt
     }
