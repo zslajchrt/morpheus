@@ -22,6 +22,18 @@ trait MorphMirror[M] {
   //def remorph(altStrategy: MorphingStrategy[M]): L with MorphMirror[M, L]
   def remorph(altStrategy: MorphingStrategy[M]): kernel.ImmutableLUB
 
+  def maybeRemorph(): Option[kernel.ImmutableLUB] =  try {
+    Some(remorph())
+  } catch {
+    case ae: NoViableAlternativeException => None
+  }
+
+  def maybeRemorph(altStrategy: MorphingStrategy[M]): Option[kernel.ImmutableLUB] =  try {
+    Some(remorph(altStrategy))
+  } catch {
+    case ae: NoViableAlternativeException => None
+  }
+
   def myAlternative: List[FragmentHolder[_]]
 
   /**

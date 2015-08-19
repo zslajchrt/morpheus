@@ -1,6 +1,7 @@
 package org.morpheus
 
 import org.morpheus.AltMappingModel.{FragmentInsertion, Node}
+import org.morpheus.FragmentValidator.ValidationResult
 
 import scala.annotation.tailrec
 import scala.reflect.runtime.universe._
@@ -233,9 +234,64 @@ case class MaskExplicitStrategy[M](delegate: MorphingStrategy[M], negative: Bool
         if (negative)
           origAlts.unmask(ff)
         else
-          origAlts.mask(ff)
+          origAlts.unmaskAll().mask(ff)
     }
 
+  }
+}
+
+object DisableInvalidFragmentsStrategy {
+
+  trait InvalidFragmentsUpdater {
+    def updateInvalidFragments(invalidFragments: Set[Int]): Unit
+
+    def updateInvalidFragments(validationResults: Iterable[ValidationResult[_]]): Unit
+  }
+
+  def apply[M](delegate: MorphingStrategy[M]) = {
+    var invalFrags: Option[Set[Int]] = None
+    new MaskExplicitStrategy[M](delegate, negative = true, () => invalFrags) with InvalidFragmentsUpdater {
+
+      override def updateInvalidFragments(invalidFragments: Set[Int]): Unit = {
+        invalFrags = Some(invalidFragments)
+      }
+
+      override def updateInvalidFragments(validationResults: Iterable[ValidationResult[_]]): Unit = {
+        val failedFragments = ValidationResult.extractInvalidFragments(validationResults)
+        updateInvalidFragments(failedFragments)
+      }
+    }
+  }
+}
+
+object EnableValidFragmentsOnlyStrategy {
+
+  trait ValidFragmentsUpdater {
+    def updateValidFragments(validationResults: Iterable[ValidationResult[_]]): Unit
+  }
+
+  def apply[M](delegate: MorphingStrategy[M]) = {
+    // (allValidatedFragment, validFragmentsOnly)
+    var fragmentMasks: Option[(Set[Int], Set[Int])] = None
+    new MorphingStrategy[M] with ValidFragmentsUpdater {
+
+      override def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = {
+        val origAlts = delegate.chooseAlternatives(instance)(owningMutableProxy)
+
+        fragmentMasks match {
+          case None => origAlts
+          case Some(fragMasks) =>
+            origAlts.unmask(fragMasks._1).mask(fragMasks._2)
+        }
+      }
+
+      override def updateValidFragments(validationResults: Iterable[ValidationResult[_]]): Unit = {
+        val allValidatedFragments = ValidationResult.extractAllFragments(validationResults)
+        val validFragments = ValidationResult.extractValidFragments(validationResults)
+        fragmentMasks = Some((allValidatedFragments, validFragments))
+      }
+
+    }
   }
 }
 
@@ -501,7 +557,7 @@ case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: MorphKernelRef[MT, 
         case ae: AlternativeNotAvailableException =>
           val newCandidates = candidates.filterNot(_._1 == ae.alt)
           if (newCandidates.isEmpty) {
-            throw ae
+            throw new AlternativeNotAvailableException(newAlt, s"No source alternative found for target alternative $newAlt")
           } else {
             // try it again without the failed candidate alt
             makeFragHolders(newCandidates)

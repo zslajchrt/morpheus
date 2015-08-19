@@ -2,6 +2,7 @@ package org.morpheus
 
 import shapeless.HList
 
+import scala.annotation.tailrec
 import scala.reflect.runtime.universe._
 
 /**
@@ -95,6 +96,30 @@ abstract class MorphKernel[M](val root: MorphModelNode) extends MorphKernelBase[
 
   def make_~ : MutableLUB = mutableProxy_(None)
 
+  def maybeMake: Option[ImmutableLUB] = try {
+    Some(make)
+  } catch {
+    case ae: NoViableAlternativeException => None
+  }
+
+  def maybeMake_~ : Option[ImmutableLUB] = try {
+    Some(make_~)
+  } catch {
+    case ae: NoViableAlternativeException => None
+  }
+
+  def maybeMorph(implicit strategy: MorphingStrategy[M]): Option[ImmutableLUB] = try {
+    Some(morph(strategy))
+  } catch {
+    case ae: NoViableAlternativeException => None
+  }
+
+  def maybeMorph_~(implicit strategy: MorphingStrategy[M]) : Option[ImmutableLUB] = try {
+    Some(morph_~(strategy))
+  } catch {
+    case ae: NoViableAlternativeException => None
+  }
+
   def mutableProxy(implicit strategy: MorphingStrategy[M]): MutableLUB = mutableProxy_(Some(strategy))
 
   private def mutableProxy_(customStrategy: Option[MorphingStrategy[M]]): MutableLUB = {
@@ -135,22 +160,25 @@ abstract class MorphKernel[M](val root: MorphModelNode) extends MorphKernelBase[
     }
   }
 
-  class MorphIterator extends Iterator[ImmutableLUB] {
+  class MorphIterator extends Iterator[scala.util.Try[ImmutableLUB]] {
 
     private val alts: List[List[FragmentNode]] = model.altIterator().toList
     private[this] var i = 0
 
     override def hasNext: Boolean = i < alts.size
 
-    override def next(): ImmutableLUB = {
+    override def next(): scala.util.Try[ImmutableLUB] = {
       val promotedAlt: List[Int] = alts(i).map(_.id)
       i += 1
 
-      morph(new MorphingStrategy[M] {
-        override def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = {
-          model.alternatives.promote(Set(promotedAlt))
+      scala.util.Try {
+        val strat = new MorphingStrategy[M] {
+          override def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = {
+            model.alternatives.promote(Set(promotedAlt))
+          }
         }
-      })
+        new Morpher[M]().morph(MorphKernel.this, strat, altFailover = false)(None)
+      }
 
     }
   }

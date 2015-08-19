@@ -67,9 +67,9 @@ object Morpheus {
     () => Some(t)
   }
 
-  implicit def morphKernelToIterable[M](kernel: MorphKernel[M]): Iterable[kernel.ImmutableLUB] = {
-    new Iterable[kernel.ImmutableLUB] {
-      override def iterator: Iterator[kernel.ImmutableLUB] = new kernel.MorphIterator
+  implicit def morphKernelToIterable[M](kernel: MorphKernel[M]): Iterable[scala.util.Try[kernel.ImmutableLUB]] = {
+    new Iterable[scala.util.Try[kernel.ImmutableLUB]] {
+      override def iterator: Iterator[scala.util.Try[kernel.ImmutableLUB]] = new kernel.MorphIterator
     }
   }
 
@@ -154,6 +154,10 @@ object Morpheus {
 
   def *[M](ciRef: MorphKernelRef[M, _], strategy: MorphingStrategy[_], placeholders: Any*): Any = macro derefWithStrategy_impl[M]
 
+  def derefHelper[M](ciRef: MorphKernelRef[M, _], placeholders: Any*): Any = macro derefHelper_impl[M]
+
+  def derefHelperWithStrategy[M](ciRef: MorphKernelRef[M, _], strategy: MorphingStrategy[_], placeholders: Any*): Any = macro derefHelperWithStrategy_impl[M]
+
   def selfRef(self: Any): Any = macro selfRefOpt_impl
 
   def &&(self: Any): Any = macro selfRef_impl
@@ -163,8 +167,6 @@ object Morpheus {
   def fragmentInReferredKernel[F](self: Any): Option[Frag[F, _]] = macro fragmentInReferredKernel_impl[F]
 
   def tupled[T](arg: T): Any = macro tupled_impl[T]
-
-  def deref[M](ciRef: MorphKernelRef[M, _], placeholders: Any*): Any = macro deref_impl[M]
 
   def proxies[M](ci: MorphKernel[M] with WithHiddenFragments): Any = macro proxies_impl[M]
 
@@ -914,10 +916,32 @@ object Morpheus {
   def deref_impl[M: c.WeakTypeTag](c: whitebox.Context)(ciRef: c.Expr[MorphKernelRef[M, _]], placeholders: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
-    derefWithStrategy_impl[M](c)(ciRef, null, placeholders: _*)
+    val res = q"""
+        import org.morpheus.Morpheus._
+        val x = $ciRef
+        derefHelper(x, ..$placeholders)
+    """
+    c.Expr[Any](res)
+  }
+
+  def derefHelper_impl[M: c.WeakTypeTag](c: whitebox.Context)(ciRef: c.Expr[MorphKernelRef[M, _]], placeholders: c.Expr[Any]*): c.Expr[Any] = {
+    import c.universe._
+
+    derefHelperWithStrategy_impl[M](c)(ciRef, null, placeholders: _*)
   }
 
   def derefWithStrategy_impl[M: c.WeakTypeTag](c: whitebox.Context)(ciRef: c.Expr[MorphKernelRef[M, _]], strategy: c.Expr[MorphingStrategy[_]], placeholders: c.Expr[Any]*): c.Expr[Any] = {
+    import c.universe._
+
+    val res = q"""
+        import org.morpheus.Morpheus._
+        val x = $ciRef
+        derefHelperWithStrategy(x, $strategy, ..$placeholders)
+    """
+    c.Expr[Any](res)
+  }
+
+  def derefHelperWithStrategy_impl[M: c.WeakTypeTag](c: whitebox.Context)(ciRef: c.Expr[MorphKernelRef[M, _]], strategy: c.Expr[MorphingStrategy[_]], placeholders: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
     // The placeholders can be passed as a tuple. The following code detects such a condition and transforms the tuple to a sequence
@@ -1595,13 +1619,13 @@ object Morpheus {
             if (maybeHiddenFragmentsInSrcAlt) {
               if (isAbstractFragment(c)(placeholderTpe)) {
                 //c.info(c.enclosingPosition, s"0: $placeholderTpe, srcAlt: $srcAlt\n$ctxMsg", true)
-                Right(s"Source model may contain hidden fragments possibly containing one that should be replaced by abstract $placeholderTpe. Only dimension-less placeholders are allowed in this case.")
+                Right(s"Source model may contain hidden fragments possibly containing one that would be replaced by abstract $placeholderTpe. Only dimension-less placeholders are allowed in this case.")
               } else findDimension(c)(placeholderTpe) match {
                 case Some(plhDim) =>
                   //c.info(c.enclosingPosition, s"1: $placeholderTpe, plhDim: $plhDim, srcAlt: $srcAlt\n$ctxMsg", true)
                   // In the case the composite instance contains hidden fragments we must abort the process since
                   // we cannot prove there is no interfering fragment.
-                  Right(s"Source model may contain hidden fragments possibly containing one that should be replaced by $placeholderTpe. Only dimension-less placeholders are allowed in this case.")
+                  Right(s"Source model may contain hidden fragments possibly containing one that would be replaced by $placeholderTpe. Only dimension-less placeholders are allowed in this case.")
                 case None =>
                   //c.info(c.enclosingPosition, s"2: $placeholderTpe, srcAlt: $srcAlt\n$ctxMsg", true)
                   // For a dimension-less placeholder there can occur two scenarios:
@@ -1865,18 +1889,26 @@ object Morpheus {
             checkDepsOfPlaceholders(altTemplate)
 
             if (noHiddenFragments) {
-              // all source fragments extracted from the alt template
-              val srcFragTypesInAltTemplate: List[c.Type] = altTemplate.filter(_.isInstanceOf[OriginalInstanceSource]).map(_.fragment).map(sf => srcFragmentTypesMap(sf.id)._1)
-              // all source fragments from the template must have the counterpart in the target alternative
-              val missingSrcFragTypes = srcFragTypesInAltTemplate.filter(srcFragTpe => {
-                !tgtAlt._2.exists(_ =:= srcFragTpe)
-              })
 
-              if (missingSrcFragTypes.nonEmpty) {
-                Right(s"Some hidden source fragments in the target alternative template: ${missingSrcFragTypes.mkString(",")}")
+              if (containsHiddenFragments) {
+                // The source model may already contain some hidden fragments, therefore the requirement cannot be satisfied
+                Right("The source model may already contain some hidden fragments")
               } else {
-                ret
+                // all source fragments extracted from the alt template
+                val srcFragTypesInAltTemplate: List[c.Type] = altTemplate.filter(_.isInstanceOf[OriginalInstanceSource]).map(_.fragment).map(sf => srcFragmentTypesMap(sf.id)._1)
+                // all source fragments from the template must have the counterpart in the target alternative
+                val missingSrcFragTypes = srcFragTypesInAltTemplate.filter(srcFragTpe => {
+                  //!tgtAlt._2.exists(srcFragTpe <:< _)
+                  !tgtAlt._2.exists(srcFragTpe =:= _)
+                })
+
+                if (missingSrcFragTypes.nonEmpty) {
+                  Right(s"Source fragments ${missingSrcFragTypes.mkString("(",",",")")} have no counterparts in the target alternative template: ${tgtAlt._2.mkString("(",",",")")}")
+                } else {
+                  ret
+                }
               }
+
 
             } else {
               ret

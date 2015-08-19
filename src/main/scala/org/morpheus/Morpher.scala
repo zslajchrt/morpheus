@@ -11,7 +11,7 @@ import scala.language.experimental.macros
 
 class Morpher[M]() {
 
-  def morph(instance: MorphKernel[M], strategy: MorphingStrategy[M])(owningMutableProxy: Option[instance.MutableLUB]): instance.ImmutableLUB = {
+  def morph(instance: MorphKernel[M], strategy: MorphingStrategy[M], altFailover: Boolean = true)(owningMutableProxy: Option[instance.MutableLUB]): instance.ImmutableLUB = {
 
     val alternatives: Alternatives[M] = owningMutableProxy match {
       case Some(proxy) if proxy.delegate != null => strategy.chooseAlternatives(instance)(Some(proxy))
@@ -28,14 +28,18 @@ class Morpher[M]() {
         }
       }
       catch {
-        case ae: AlternativeNotAvailableException =>
-          val newCandidates = candidates.filterNot(_._1 == ae.alt)
+        case ae: AlternativeNotAvailableException => if (altFailover) {
+          val failedAlt = ae.alt
+          val newCandidates = candidates.filterNot(_._1 == failedAlt)
           if (newCandidates.isEmpty) {
             throw ae
           } else {
             // try it again without the failed candidate alt
             makeFragHolders(newCandidates)
           }
+        } else {
+          throw ae
+        }
       }
     }
 
@@ -113,7 +117,7 @@ object Morpher {
   }
 
   def morph[M](instance: MorphKernel[M], strategy: MorphingStrategy[M])(owningMutableProxy: Option[instance.MutableLUB]): instance.ImmutableLUB = {
-    new Morpher[M]().morph(instance, strategy)(owningMutableProxy)
+    new Morpher[M]().morph(instance, strategy, altFailover = true)(owningMutableProxy)
   }
 
   def ?[F: WeakTypeTag](activator: Frag[_, _] => Boolean): PartialFunction[Frag[_, _], Boolean] = FragmentSelector.?[F](activator)
