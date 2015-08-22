@@ -1288,6 +1288,17 @@ object Morpheus {
                                                                               noHiddenFragments: Boolean): (c.Expr[AltMappings], AltMappings) = {
     import c.universe._
 
+    val nothingTpe = c.universe.rootMirror.typeOf[Nothing]
+    if (srcTpe =:= nothingTpe) {
+      throw new DependencyCheckException(s"""
+          *** $ctxMsg ***
+
+          Reference of $tgtTpe:$tgtConfLev does not conform $srcTpe:$srcConfLev.
+                                                                                                                                                    |
+          Source model type is Nothing
+      """)
+    }
+
     //var newFragToOrigFrag: Map[Int, Int] = Map.empty
     var origFragToNewFrag: Map[Int, Int] = Map.empty
     //var newAltToOrigAlt: Map[List[Int], List[OrigAlt]] = Map.empty
@@ -1768,8 +1779,17 @@ object Morpheus {
                     throw new DependencyCheckException(s"Unsatisfied placeholder $plhTpe dependencies")
                   }
 
-                  //c.info(c.enclosingPosition, s"Alt: ${altTemplate.map(toFragType(_))}\nPlaceholder $plhTpe\ndeps type: $depsTpe\nExpanded type: $expandedAltTemplateTpe\naltTemplateSrcOnlyFragsTpe:$altTemplateSrcOnlyFragsTpe\nexpandedSrcFragsType: $expandedSrcLUB", true)
                   checkMorphKernelAssignment(c, s"Checking placeholder $plhTpe dependencies against alt template type $expandedAltTemplateTpe")(expandedAltTemplateTpe, depsTpe, false, Partial, Partial, false, noHiddenFragments = false)._1
+
+//                  val problem = try {
+//                    checkMorphKernelAssignment(c, s"Checking placeholder $plhTpe dependencies against alt template type $expandedAltTemplateTpe")(expandedAltTemplateTpe, depsTpe, false, Partial, Partial, false, noHiddenFragments = false)._1
+//                    None
+//                  } catch {
+//                    case t: Throwable =>
+//                      Some(t)
+//                      throw t
+//                  }
+//                  c.info(c.enclosingPosition, s"Alt: ${altTemplate.map(toFragType(_))}\nPlaceholder $plhTpe\ndeps type: $depsTpe\nExpanded type: $expandedAltTemplateTpe\naltTemplateSrcOnlyFragsTpe:$altTemplateSrcOnlyFragsTpe\nexpandedSrcFragsType: $expandedSrcLUB\nProblem: $problem", true)
                 case _ => // no placeholder's dependencies
               }
             }
@@ -1886,6 +1906,7 @@ object Morpheus {
         case Left(altTemplate) =>
           try {
 
+            //c.info(c.enclosingPosition, s"Checking placeholders for altTemplate $altTemplate", true)
             checkDepsOfPlaceholders(altTemplate)
 
             if (noHiddenFragments) {
@@ -1994,12 +2015,14 @@ object Morpheus {
         // Attempt to save the situation by offering the empty source alternative.
         isTargetAltCompatibleWithSourceAlt(tgtAlt, emptySrcAlt, maybeHiddenFragmentsInSrcAlt = true) match {
           case Right(reason) =>
-          // the attempt failed
+            // the attempt failed
+            //c.info(c.enclosingPosition, s"Empty src alt failed for tgtAlt: $tgtAlt, reason: $reason", true)
           case Left(altTemplate) =>
             // the attempt was successful
             updatePseudoCodeAST(tgtAlt, emptySrcAlt, altTemplate)
             independentTargetAltCounter += 1
             matches = true
+            //c.info(c.enclosingPosition, s"Empty src alt OK for tgtAlt: $tgtAlt", true)
         }
       }
 
