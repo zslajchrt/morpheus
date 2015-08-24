@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import scala.collection.{immutable, GenTraversableOnce}
 import scala.language.experimental.macros
 import scala.reflect.internal.Symbols
-import scala.reflect.macros.whitebox
+import scala.reflect.macros.{Universe, whitebox}
 
 
 /**
@@ -431,7 +431,7 @@ object Morpheus {
   def createAntagonistTypes(c: whitebox.Context)(tpe: c.Type): Set[c.Type] = {
     import c.universe._
 
-    val (_, modelRoot, _, _, _, fragmentTypesMap) = buildModel(c)(tpe, None, Total)
+    val (_, modelRoot, _, _, _, fragmentTypesMap) = buildModel(c)(tpe, None)
     val antagMatrix: Set[(FragmentNode, FragmentNode)] = modelRoot.createAntagonistsMatrix(
       (fn1, fn2) => fragmentTypesMap(fn1.id)._1 =:= fragmentTypesMap(fn2.id)._1)
 
@@ -586,7 +586,7 @@ object Morpheus {
 
     val result = if (src.actualType.erasure <:< typeOf[MorphKernelRef[_, _]]) {
       val modelTpe = src.actualType.typeArgs.head.dealias
-      val (_, modelRoot, _, _, _, fragmentTypesMap) = buildModel(c)(modelTpe, None, Total)
+      val (_, modelRoot, _, _, _, fragmentTypesMap) = buildModel(c)(modelTpe, None)
       val modelNoPlh = transformToNoPlaceholders(c)(modelRoot, fragmentTypesMap, None)
       val modelNoPlhTpe = c.typecheck(modelNoPlh, mode = c.TYPEmode).tpe
 
@@ -850,7 +850,7 @@ object Morpheus {
     // Currently, only MorphKernelRef and MorphKernel can be tuplified
     val (modelRoot, kernel, typesMap) = if (arg.actualType.erasure <:< implicitly[WeakTypeTag[MorphKernelRef[_, _]]].tpe) {
       val compTpe = arg.actualType.typeArgs.head
-      val (_, modelRoot, _, _, _, typesMap) = buildModel(c)(compTpe, None, Total)
+      val (_, modelRoot, _, _, _, typesMap) = buildModel(c)(compTpe, None)
 
       val compInstTree = q"$arg.instance"
 
@@ -873,7 +873,7 @@ object Morpheus {
       val compTpe = c.typecheck(tq"$arg.OrigModel", mode = c.TYPEmode).tpe
       //c.info(c.enclosingPosition, s"Kernel type: ${compTpe}", true)
 
-      val (_, modelRoot, _, _, _, typesMap) = buildModel(c)(compTpe, None, Total)
+      val (_, modelRoot, _, _, _, typesMap) = buildModel(c)(compTpe, None)
 
       (modelRoot, arg.tree, typesMap)
 
@@ -979,7 +979,7 @@ object Morpheus {
 
     val tgtTpe = implicitly[WeakTypeTag[M]].tpe
     // transform the composite type so as not to contain placeholders
-    val (_, modelRoot, _, _, _, typesMap) = buildModel(c)(tgtTpe, None, confLev._1)
+    val (_, modelRoot, _, _, _, typesMap) = buildModel(c)(tgtTpe, None)
 
     // verify that the placeholders arguments contain all necessary placeholder factories
     val placeholderFrags = modelRoot.fragments.filter(_.placeholder).map(phf => (phf, typesMap(phf.id)._1))
@@ -1270,6 +1270,8 @@ object Morpheus {
     }
   }
 
+
+
   /**
    *
    * @param c
@@ -1286,6 +1288,15 @@ object Morpheus {
                                                                               checkDepsInSrcModel: Boolean, srcConfLev: ConformanceLevel,
                                                                               tgtConfLev: ConformanceLevel, containsHiddenFragments: Boolean,
                                                                               noHiddenFragments: Boolean): (c.Expr[AltMappings], AltMappings) = {
+    import c.universe._
+    checkMorphKernelAssignmentWithPlhdCtx(c, ctxMsg)(srcTpe, tgtTpe, checkDepsInSrcModel, srcConfLev, tgtConfLev, containsHiddenFragments, noHiddenFragments, Nil)
+  }
+
+  private def checkMorphKernelAssignmentWithPlhdCtx(c: whitebox.Context, ctxMsg: String)(srcTpe: c.Type, tgtTpe: c.Type,
+                                                                                checkDepsInSrcModel: Boolean, srcConfLev: ConformanceLevel,
+                                                                                tgtConfLev: ConformanceLevel, containsHiddenFragments: Boolean,
+                                                                                noHiddenFragments: Boolean,
+                                                                                plhdValidationCtx: List[(c.Type, List[c.Type])]): (c.Expr[AltMappings], AltMappings) = {
     import c.universe._
 
     val nothingTpe = c.universe.rootMirror.typeOf[Nothing]
@@ -1748,9 +1759,11 @@ object Morpheus {
     }
 
     def checkDepsOfPlaceholders(altTemplate: List[FragInstSource]): Unit = {
+
       // Retrieve the source fragments, which will be expanded to reveal their dependencies. These source dependencies
       // are treated as if they were normal fragments, i.e. implicit ones
-      val srcFragTypes = altTemplate.filter(_.isInstanceOf[OriginalInstanceSource]).map(toFragType(_))
+      val srcFragTypes = altTemplate.filter(_.isOriginal).map(toFragType(_))
+      val plhdFragTypes = altTemplate.filter(_.isPlaceholder).map(toFragType(_))
       // Create the conjunction of the source explicit fragment types
       val altTemplateSrcOnlyFragsTpe = conjunctionOfTypes(c)(srcFragTypes)
       // Expand the conjunction to reveal the implicit fragments from source fragment dependencies
@@ -1763,39 +1776,51 @@ object Morpheus {
           case OriginalInstanceSource(_) =>
           case PlaceholderSource(fn) =>
             val plhTpe = toFragType(altFragSrc)
-            try {
-              val plhConfLevelMode: ConformanceLevel = getConfLevelFromAnnotation(c)(plhTpe)
-              plhTpe.typeSymbol.asClass.selfType match {
-                case RefinedType(parents, scope) =>
-                  val depsTpe = internal.refinedType(parents.tail, scope)
 
-                  // Create conjunction of the placeholder type. This conjunction is not expanded, however, since these dependencies will be examined if they are satisfied
-                  // by expandedSrcFragsType.
-                  val altTemplatePlhdOnlyFragsTpe = conjunctionOfTypes(c)(altTemplate.filterNot(_ == altFragSrc).filter(_.isInstanceOf[PlaceholderSource]).map(toFragType(_)))
-                  val expandedAltTemplateTpe = conjunctionOfTypes(c)(List(altTemplatePlhdOnlyFragsTpe, expandedSrcLUB))
+            if (!plhdValidationCtx.exists(_._1 =:= plhTpe)) {
+              // the placeholder has not been checked yet
+              try {
+                val plhConfLevelMode: ConformanceLevel = getConfLevelFromAnnotation(c)(plhTpe)
+                plhTpe.typeSymbol.asClass.selfType match {
+                  case RefinedType(parents, scope) =>
+                    val newPlhdValCtx = (plhTpe, plhdFragTypes) :: plhdValidationCtx
 
-                  if (expandedAltTemplateTpe =:= anyTpe && !(depsTpe =:= anyTpe)) {
-                    // This situation can occur if there is no source fragment and a single placeholder depending on something
-                    throw new DependencyCheckException(s"Unsatisfied placeholder $plhTpe dependencies")
-                  }
+                    val allContextPlaceholders: Set[c.Type] = newPlhdValCtx.map(_._2).flatMap(l => l).toSet
+                    val depsRawTpe = internal.refinedType(parents.tail, scope)
+                    val depsTpe = transformToPlaceholders(c)(depsRawTpe, allContextPlaceholders)
 
-                  //checkMorphKernelAssignment(c, s"Checking placeholder $plhTpe dependencies against alt template type $expandedAltTemplateTpe")(expandedAltTemplateTpe, depsTpe, false, Partial, Partial, false, noHiddenFragments = false)._1
+                    // Create conjunction of the placeholder type. This conjunction is not expanded, however, since these dependencies will be examined if they are satisfied
+                    // by expandedSrcFragsType.
+//                    val altTemplatePlhdOnlyFragsTpe = conjunctionOfTypes(c)(altTemplate.filterNot(_ == altFragSrc).filter(_.isInstanceOf[PlaceholderSource]).map(toFragType(_)))
+//                    val expandedAltTemplateTpe = conjunctionOfTypes(c)(List(altTemplatePlhdOnlyFragsTpe, expandedSrcLUB))
+                    val expandedAltTemplateTpe = expandedSrcLUB
 
-                  val problem = try {
-                    checkMorphKernelAssignment(c, s"Checking placeholder $plhTpe dependencies against alt template type $expandedAltTemplateTpe")(expandedAltTemplateTpe, depsTpe, false, Partial, Partial, false, noHiddenFragments = false)._1
-                    None
-                  } catch {
-                    case t: Throwable =>
-                      Some(t)
-                      throw t
-                  }
-                  c.info(c.enclosingPosition, s"Alt: ${altTemplate.map(toFragType(_))}\nPlaceholder $plhTpe\ndeps type: $depsTpe\nExpanded type: $expandedAltTemplateTpe\naltTemplateSrcOnlyFragsTpe:$altTemplateSrcOnlyFragsTpe\nexpandedSrcFragsType: $expandedSrcLUB\nProblem: $problem", true)
-                case _ => // no placeholder's dependencies
+                    if (expandedAltTemplateTpe =:= anyTpe && !(depsTpe =:= anyTpe)) {
+                      // This situation can occur if there is no source fragment and a single placeholder depending on something
+                      throw new DependencyCheckException(s"Unsatisfied placeholder $plhTpe dependencies")
+                    }
+
+                    //c.info(c.enclosingPosition, s"Alt: ${altTemplate.map(toFragType(_))}\nPlaceholder $plhTpe\ndeps raw type: $depsRawTpe\ndeps type: $depsTpe\nExpanded type: $expandedAltTemplateTpe\naltTemplateSrcOnlyFragsTpe:$altTemplateSrcOnlyFragsTpe\nexpandedSrcFragsType: $expandedSrcLUB\nallContextPlaceholders: $allContextPlaceholders", true)
+                    checkMorphKernelAssignmentWithPlhdCtx(c, s"Checking placeholder $plhTpe dependencies against alt template type $expandedSrcLUB")(
+                                        expandedSrcLUB, depsTpe, false, Partial, Partial, false, noHiddenFragments = false, newPlhdValCtx)._1
+
+//                    val problem = try {
+//                      checkMorphKernelAssignmentWithPlhdCtx(c, s"Checking placeholder $plhTpe dependencies against alt template type $expandedAltTemplateTpe")(
+//                        expandedAltTemplateTpe, depsTpe, false, Partial, Partial, false, noHiddenFragments = false, newPlhdValCtx)._1
+//                      None
+//                    } catch {
+//                      case t: Throwable =>
+//                        Some(t)
+//                        throw t
+//                    }
+//                    c.info(c.enclosingPosition, s"Alt: ${altTemplate.map(toFragType(_))}\nPlaceholder $plhTpe\ndeps type: $depsTpe\nExpanded type: $expandedAltTemplateTpe\naltTemplateSrcOnlyFragsTpe:$altTemplateSrcOnlyFragsTpe\nexpandedSrcFragsType: $expandedSrcLUB\nProblem: $problem", true)
+                  case _ => // no placeholder's dependencies
+                }
               }
-            }
-            catch {
-              case dchck: DependencyCheckException =>
-                throw new DependencyCheckException(s"Unsatisfied placeholder $plhTpe dependencies", dchck)
+              catch {
+                case dchck: DependencyCheckException =>
+                  throw new DependencyCheckException(s"Unsatisfied placeholder $plhTpe dependencies", dchck)
+              }
             }
         }
       }
@@ -2100,7 +2125,7 @@ object Morpheus {
   private def alternativesIterator(c: whitebox.Context)(compositeModelTpe: c.Type, checkDeps: Boolean, excludePlaceholders: Boolean, conformanceLevel: ConformanceLevel):
   (MorphModelNode, Map[Int, (c.Type, Option[c.universe.Type])], ResettableIterator[(List[FragmentNode], List[c.Type], c.Type)]) = {
 
-    val (_, modelRoot, _, _, _, fragmentTypesMap) = buildModel(c)(compositeModelTpe, None, conformanceLevel)
+    val (_, modelRoot, _, _, _, fragmentTypesMap) = buildModel(c)(compositeModelTpe, None)
     val altIter = alternativesIterator_(c)(modelRoot, fragmentTypesMap, excludePlaceholders)
 
     if (checkDeps) {
@@ -2577,7 +2602,7 @@ object Morpheus {
 
 
     // 1.
-    val (compModelTpe, modelRoot, fragmentNodes, lub, lubComponentTypes, fragmentTypesMap) = buildModel(c)(compTpe, None, conformanceLevel)
+    val (compModelTpe, modelRoot, fragmentNodes, lub, lubComponentTypes, fragmentTypesMap) = buildModel(c)(compTpe, None)
 
     var fragToDepsMaps = Map.empty[Int, c.Expr[String]]
 
@@ -2734,7 +2759,7 @@ object Morpheus {
   //
   //  }
 
-  def buildModel(c: whitebox.Context)(compRawTp: c.Type, placeholderTpeTransf: Option[PartialFunction[c.Type, c.Type]], conformanceLevel: ConformanceLevel):
+  def buildModel(c: whitebox.Context)(compRawTp: c.Type, placeholderTpeTransf: Option[PartialFunction[c.Type, c.Type]]):
   (c.Type, MorphModelNode, List[FragmentNode], c.Type, List[c.Type], Map[Int, (c.Type, Option[c.universe.Type])]) = try {
 
     import c.universe._
@@ -3071,6 +3096,26 @@ object Morpheus {
   //
   //  }
 
+  def transformToPlaceholders(c: whitebox.Context)(compTpe: c.Type, placeholderTypes: Set[c.Type]): c.Type = {
+    import c.universe._
+
+    val (_, modelRoot, _, _, _, fragmentTypesMap) = buildModel(c)(compTpe, None)
+
+    val fragTransformer: (FragmentNode) => c.Type = (fragmentNode) => {
+      val FragmentNode(id, plh) = fragmentNode
+      val fragDeclTpe = fragmentTypesMap(id)._1
+
+      if (placeholderTypes.exists(_ <:< fragDeclTpe)) {
+        val plhdTpe = tq"org.morpheus.Morpheus.$$[$fragDeclTpe]"
+        c.typecheck(plhdTpe, mode = c.TYPEmode).tpe
+      } else {
+        fragDeclTpe
+      }
+    }
+
+    c.typecheck(transformMorphModel(c)(modelRoot, fragTransformer), c.TYPEmode).tpe
+  }
+
   def transformToNoPlaceholders(c: whitebox.Context)(rootNode: MorphModelNode,
                                                      fragmentTypesMap: Map[Int, (c.Type, Option[c.Type])],
                                                      placeholderTpeTransf: Option[PartialFunction[c.Type, c.Type]]): c.Tree = {
@@ -3133,9 +3178,9 @@ object Morpheus {
     // TODO: This is an ugly workaround.
     // TODO: The model must be parsed twice because of some bug in Scala compiler. Sometimes a type contains no annotations
     // TODO: even if there are some. It seems that such a type is not fully initialized.
-    buildModel(c)(compTpe, None, conformanceLevel)
+    buildModel(c)(compTpe, None)
 
-    val (compModelTpe, modelRoot, fragmentNodes, lub, lubComponentTypes, fragmentTypesMap) = buildModel(c)(compTpe, placeholderTpeTransf, conformanceLevel)
+    val (compModelTpe, modelRoot, fragmentNodes, lub, lubComponentTypes, fragmentTypesMap) = buildModel(c)(compTpe, placeholderTpeTransf)
 
     val (appliedCompModelTpe, actualModelTpe) = if (removePlaceholders) {
       val transformedModel = transformToNoPlaceholders(c)(modelRoot, fragmentTypesMap.map(e => (e._1, (e._2._1, e._2._2))), placeholderTpeTransf)
@@ -3275,7 +3320,7 @@ object Morpheus {
     }
 
 
-    val (_, _, fragmentNodes, _, _, fragmentTypesMap) = buildModel(c)(compTpe, placeholderTpeTransf, conformanceLevel)
+    val (_, _, fragmentNodes, _, _, fragmentTypesMap) = buildModel(c)(compTpe, placeholderTpeTransf)
 
     def fragmentProxyImplicit(fn: FragmentNode): Tree = {
       val fragTpe = fragmentTypesMap(fn.id)._1

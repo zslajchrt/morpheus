@@ -5,14 +5,20 @@ package org.morpheus
  */
 sealed trait FragInstSource {
   val fragment: FragmentNode
+  val isPlaceholder: Boolean
+  lazy val isOriginal: Boolean = !isPlaceholder
 }
 
 case class PlaceholderSource(fragment: FragmentNode) extends FragInstSource {
   override def toString: String = s"p(${fragment.id})"
+
+  override val isPlaceholder: Boolean = true
 }
 
 case class OriginalInstanceSource(fragment: FragmentNode) extends FragInstSource {
   override def toString: String = s"o(${fragment.id})"
+
+  override val isPlaceholder: Boolean = false
 }
 
 case class OrigAlt(fragments: List[Int], template: List[FragInstSource]) {
