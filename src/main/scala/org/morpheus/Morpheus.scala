@@ -1779,17 +1779,17 @@ object Morpheus {
                     throw new DependencyCheckException(s"Unsatisfied placeholder $plhTpe dependencies")
                   }
 
-                  checkMorphKernelAssignment(c, s"Checking placeholder $plhTpe dependencies against alt template type $expandedAltTemplateTpe")(expandedAltTemplateTpe, depsTpe, false, Partial, Partial, false, noHiddenFragments = false)._1
+                  //checkMorphKernelAssignment(c, s"Checking placeholder $plhTpe dependencies against alt template type $expandedAltTemplateTpe")(expandedAltTemplateTpe, depsTpe, false, Partial, Partial, false, noHiddenFragments = false)._1
 
-//                  val problem = try {
-//                    checkMorphKernelAssignment(c, s"Checking placeholder $plhTpe dependencies against alt template type $expandedAltTemplateTpe")(expandedAltTemplateTpe, depsTpe, false, Partial, Partial, false, noHiddenFragments = false)._1
-//                    None
-//                  } catch {
-//                    case t: Throwable =>
-//                      Some(t)
-//                      throw t
-//                  }
-//                  c.info(c.enclosingPosition, s"Alt: ${altTemplate.map(toFragType(_))}\nPlaceholder $plhTpe\ndeps type: $depsTpe\nExpanded type: $expandedAltTemplateTpe\naltTemplateSrcOnlyFragsTpe:$altTemplateSrcOnlyFragsTpe\nexpandedSrcFragsType: $expandedSrcLUB\nProblem: $problem", true)
+                  val problem = try {
+                    checkMorphKernelAssignment(c, s"Checking placeholder $plhTpe dependencies against alt template type $expandedAltTemplateTpe")(expandedAltTemplateTpe, depsTpe, false, Partial, Partial, false, noHiddenFragments = false)._1
+                    None
+                  } catch {
+                    case t: Throwable =>
+                      Some(t)
+                      throw t
+                  }
+                  c.info(c.enclosingPosition, s"Alt: ${altTemplate.map(toFragType(_))}\nPlaceholder $plhTpe\ndeps type: $depsTpe\nExpanded type: $expandedAltTemplateTpe\naltTemplateSrcOnlyFragsTpe:$altTemplateSrcOnlyFragsTpe\nexpandedSrcFragsType: $expandedSrcLUB\nProblem: $problem", true)
                 case _ => // no placeholder's dependencies
               }
             }
@@ -3074,6 +3074,24 @@ object Morpheus {
   def transformToNoPlaceholders(c: whitebox.Context)(rootNode: MorphModelNode,
                                                      fragmentTypesMap: Map[Int, (c.Type, Option[c.Type])],
                                                      placeholderTpeTransf: Option[PartialFunction[c.Type, c.Type]]): c.Tree = {
+
+    val fragTransformer: (FragmentNode) => c.Type = (fragmentNode) => {
+      val FragmentNode(id, plh) = fragmentNode
+      val fragDeclTpe = fragmentTypesMap(id)._1
+      // try to transform the placeholder's declared type to the actual type by means of placeholderTpeTransf
+      val fragTpe = if (!plh) {
+        fragDeclTpe
+      } else placeholderTpeTransf match {
+        case None => fragDeclTpe
+        case Some(phTpeTrans) => if (phTpeTrans.isDefinedAt(fragDeclTpe)) phTpeTrans(fragDeclTpe) else fragDeclTpe
+      }
+      fragTpe
+    }
+
+    transformMorphModel(c)(rootNode, fragTransformer)
+  }
+
+  def transformMorphModel(c: whitebox.Context)(rootNode: MorphModelNode, fragTransformer: (FragmentNode => c.Type)): c.Tree = {
     import c.universe._
 
     val unitTpe = implicitly[WeakTypeTag[Unit]].tpe
@@ -3094,15 +3112,8 @@ object Morpheus {
             tq"org.morpheus.Morpheus.or[$res, $childTpe]"
           })
           tpeTree
-        case FragmentNode(id, plh) =>
-          val fragDeclTpe = fragmentTypesMap(id)._1
-          // try to transform the placeholder's declared type to the actual type by means of placeholderTpeTransf
-          val fragTpe = if (!plh) {
-            fragDeclTpe
-          } else placeholderTpeTransf match {
-            case None => fragDeclTpe
-            case Some(phTpeTrans) => if (phTpeTrans.isDefinedAt(fragDeclTpe)) phTpeTrans(fragDeclTpe) else fragDeclTpe
-          }
+        case fn@FragmentNode(_, _) =>
+          val fragTpe = fragTransformer(fn)
           tq"$fragTpe"
         case UnitNode =>
           tq"$unitTpe"
