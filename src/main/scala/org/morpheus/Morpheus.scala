@@ -2968,7 +2968,6 @@ object Morpheus {
       verifyModel(flattenedModel)
 
     val fragmentNodes = collectFragmentNodes(modelRoot)
-
     val res = (compModelTp, modelRoot, fragmentNodes, modelLUB, modelLUBComponents, fragmentTypes)
 
     //c.info(c.enclosingPosition, s"Fragment types for model $compRawTp:\n $fragmentTypes", true)
@@ -3196,6 +3195,29 @@ object Morpheus {
       Map.empty
     }
 
+    var fragMembership = Map.empty[Int, c.Type]
+    var fragDimMembership = Map.empty[Int, c.Type]
+
+    def createWrapperGroups(): Unit = {
+
+      for (fn <- fragmentNodes; fragTpe = fragmentTypesMap(fn.id)._1) {
+        findDimension(c)(fragTpe) match {
+          case None =>
+          case Some(dimTpe) =>
+            // associate the the fragment with the dimension group
+            fragDimMembership += (fn.id -> dimTpe)
+        }
+
+        findFragment(c)(fragTpe) match {
+          case None =>
+          case Some(fTpe) =>
+            // associate the the fragment with the dimension group
+            fragMembership += (fn.id -> fTpe)
+        }
+
+      }
+    }
+
     def convertModelToTree(node: MorphModelNode): Tree = node match {
       case ConjNode(children) =>
         val childrenTrees: List[Tree] = for (c <- children) yield convertModelToTree(c)
@@ -3225,14 +3247,24 @@ object Morpheus {
 
     def fragmentTree(fn: FragmentNode): Tree = {
       val (fragTpe, cfgClsOpt) = fragmentTypesMap(fn.id)
+      val fragGroupTpeOpt = fragMembership.get(fn.id) match {
+        case None => q"None"
+        case Some(fg) => q"Some(implicitly[reflect.runtime.universe.WeakTypeTag[$fg]])"
+      }
+      val dimGroupTpeOpt = fragDimMembership.get(fn.id) match {
+        case None => q"None"
+        case Some(dg) => q"Some(implicitly[reflect.runtime.universe.WeakTypeTag[$dg]])"
+      }
 
       cfgClsOpt match {
         case Some(cf) =>
-          q"Frag[$fragTpe, $cf](${fn.id}, implicitly[reflect.runtime.universe.WeakTypeTag[$fragTpe]], implicitly[reflect.runtime.universe.WeakTypeTag[$cf]], am(${fn.id}))"
+          q"Frag[$fragTpe, $cf](${fn.id}, implicitly[reflect.runtime.universe.WeakTypeTag[$fragTpe]], implicitly[reflect.runtime.universe.WeakTypeTag[$cf]], am(${fn.id}), $fragGroupTpeOpt, $dimGroupTpeOpt)"
         case None =>
-          q"Frag[$fragTpe, Unit](${fn.id}, implicitly[reflect.runtime.universe.WeakTypeTag[$fragTpe]], implicitly[reflect.runtime.universe.WeakTypeTag[Unit]], am(${fn.id}))"
+          q"Frag[$fragTpe, Unit](${fn.id}, implicitly[reflect.runtime.universe.WeakTypeTag[$fragTpe]], implicitly[reflect.runtime.universe.WeakTypeTag[Unit]], am(${fn.id}), $fragGroupTpeOpt, $dimGroupTpeOpt)"
       }
     }
+
+    createWrapperGroups()
 
     val hlistTree: Tree = fragmentNodes.foldLeft[Tree](q"HNil")((tree, fn) => {
       val fragId = Literal(Constant(fn.id))

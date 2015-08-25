@@ -54,30 +54,39 @@ class Morpher[M]() {
       case _ =>
 
         // Instantiate new object from the current composition
+        def partitionHolders(holders: List[FragmentHolder[_]]): List[List[FragmentHolder[_]]] = if (holders == Nil) {
+          Nil
+        } else {
+          val hd = holders.head.fragment
+          val partitioned: (List[FragmentHolder[_]], List[FragmentHolder[_]]) = holders.partition(_.fragment.sameWrapperGroup(hd))
+          partitioned._1 :: partitionHolders(partitioned._2)
+        }
 
-        val filterChains: List[List[FragmentHolder[_]]] = altFragHolders.foldLeft[List[List[FragmentHolder[_]]]](Nil)((res, holder) => res match {
-          case hd :: tl if holder.fragment.wrapperAnnotation.isDefined =>
-            val filterChain: List[FragmentHolder[_]] = holder :: hd
-            filterChain :: tl
-          case _ =>
-            List(holder) :: res
-        })
+        val filterChains: List[List[FragmentHolder[_]]] = partitionHolders(altFragHolders)
+
+//        val filterChains2: List[List[FragmentHolder[_]]] = altFragHolders.foldLeft[List[List[FragmentHolder[_]]]](Nil)((res, holder) => res match {
+//          case hd :: tl if holder.fragment.wrapperAnnotation.isDefined =>
+//            val filterChain: List[FragmentHolder[_]] = holder :: hd
+//            filterChain :: tl
+//          case _ =>
+//            List(holder) :: res
+//        })
 
         val altsProxies: List[(List[Class[_]], _)] = filterChains.map(chain => {
 
           var top: Any = null
 
-          val chainInst = chain.foldRight[(List[Class[_]], _)](null)((holder, res) => if (res == null) {
+          val chainInst = chain.foldLeft[(List[Class[_]], _)](null)((res, holder) => if (res == null) {
             (List(holder.fragment.fragmentClass), holder.proxy)
           } else {
             val chainInterface = holder.fragment.fragmentClass :: res._1
-            (chainInterface, FilterChainProxy(res._2.asInstanceOf[AnyRef], chainInterface.toArray.reverse, holder.proxy.asInstanceOf[AnyRef], holder.fragment, top))
+            (chainInterface, FilterChainProxy(res._2.asInstanceOf[AnyRef], chainInterface.toArray, holder.proxy.asInstanceOf[AnyRef], holder.fragment, top))
           })
 
           top = chainInst._2
 
           chainInst
-        }).reverse
+        })
 
         //todo: Change it to a debug logging
         //println(s"Morph fragments: ${altsProxies.flatMap(_._1).map(_.getName)}")
