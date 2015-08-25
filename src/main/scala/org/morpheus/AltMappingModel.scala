@@ -35,7 +35,9 @@ object AltMappingModel {
       case _ => false
     })
 
-    val remainingInModel1 = model1.drop(fragInsInModel1.size)
+    var remainingInModel1 = model1.drop(fragInsInModel1.size)
+    val (wrapperIns, rem) = remainingInModel1.partition(_.isInstanceOf[WrapperInsertion])
+    remainingInModel1 = rem
 
     def nextTo(n: Node): Option[Node] = {
       val i = remainingInModel1.indexOf(n)
@@ -92,7 +94,7 @@ object AltMappingModel {
       case _ => sys.error("Unexpected")
     })
 
-    var newModel = fragInsInModel1 ::: newModel2
+    var newModel = fragInsInModel1 ::: newModel2 ::: wrapperIns
 
     // It is possible that there is an insertion of a fragment already present as a hidden fragment. In such a case
     // the hidden fragment is removed. See method checkIfPlhdViolatesDeps in Morpheus.
