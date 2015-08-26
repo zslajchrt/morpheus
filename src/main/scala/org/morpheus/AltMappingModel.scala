@@ -36,18 +36,10 @@ object AltMappingModel {
     })
 
     var remainingInModel1 = model1.drop(fragInsInModel1.size)
-    val (wrapperIns, rem) = remainingInModel1.partition(_.isInstanceOf[WrapperInsertion])
+    val (wrapperIns1, rem) = remainingInModel1.partition(_.isInstanceOf[WrapperInsertion])
     remainingInModel1 = rem
 
-    def nextTo(n: Node): Option[Node] = {
-      val i = remainingInModel1.indexOf(n)
-      if (i < remainingInModel1.size - 1)
-        Some(remainingInModel1(i + 1))
-      else
-        None
-    }
-
-    val newModel2 = model2.flatMap({
+    val newModel2 = model2.map({
       case r2: Referred =>
         // find a node in model1 referring to the current node in model2
         remainingInModel1.find({
@@ -56,10 +48,11 @@ object AltMappingModel {
         }) match {
           case None =>
             // there is no node in model1 referring the current node in model2, thus no change
-            List(r2)
+            r2
           case Some(n1) =>
             // there is some referring node in model1
-            val out = n1 match {
+            //val out = n1 match {
+            n1 match {
               case ref1: Reference =>
                 // It is just a reference. Use the original node from model1, (ref1 -> r2 = ref2)
                 r2 match {
@@ -73,28 +66,14 @@ object AltMappingModel {
                 Replacement(repl1.from, r2.to, repl1.holder)
               case _ => sys.error("Unexpected")
             }
-
-            // look if the immediate siblings of the referring node are wrappers. If so, insert them to the result
-            def handleWrappers(n: Node, ww: List[Node]): List[Node] = {
-              nextTo(n) match {
-                case None => ww
-                case Some(sibling) => sibling match {
-                  case w: WrapperInsertion => handleWrappers(w, w :: ww)
-                  case _ => ww
-                }
-              }
-            }
-
-            val wrappers = handleWrappers(n1, Nil).reverse
-            out :: wrappers // the wrappers follow the resolved referring node
         }
-      case h: Hidden => List(h)
-      case fi: FragmentInsertion => List(fi)
-      case wi: WrapperInsertion => List(wi)
+      case h: Hidden => h
+      case fi: FragmentInsertion => fi
+      case wi: WrapperInsertion => wi
       case _ => sys.error("Unexpected")
     })
 
-    var newModel = fragInsInModel1 ::: newModel2 ::: wrapperIns
+    var newModel = fragInsInModel1 ::: newModel2 ::: wrapperIns1
 
     // It is possible that there is an insertion of a fragment already present as a hidden fragment. In such a case
     // the hidden fragment is removed. See method checkIfPlhdViolatesDeps in Morpheus.
