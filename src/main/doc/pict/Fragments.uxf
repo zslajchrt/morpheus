@@ -4,8 +4,8 @@
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3384</x>
-      <y>2648</y>
+      <x>3376</x>
+      <y>2576</y>
       <w>104</w>
       <h>72</h>
     </coordinates>
@@ -20,8 +20,8 @@ scanner: Scanner</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1320</x>
-      <y>480</y>
+      <x>1312</x>
+      <y>408</y>
       <w>88</w>
       <h>64</h>
     </coordinates>
@@ -35,8 +35,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3768</x>
-      <y>1472</y>
+      <x>3760</x>
+      <y>1400</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -48,8 +48,8 @@ height: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1368</x>
-      <y>424</y>
+      <x>1360</x>
+      <y>352</y>
       <w>24</w>
       <h>72</h>
     </coordinates>
@@ -59,8 +59,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3152</x>
-      <y>2680</y>
+      <x>3144</x>
+      <y>2608</y>
       <w>168</w>
       <h>64</h>
     </coordinates>
@@ -74,8 +74,8 @@ isExported: Boolean =
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3312</x>
-      <y>2664</y>
+      <x>3304</x>
+      <y>2592</y>
       <w>88</w>
       <h>64</h>
     </coordinates>
@@ -86,8 +86,8 @@ lt=&lt;.</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>2800</x>
-      <y>2240</y>
+      <x>2792</x>
+      <y>2168</y>
       <w>80</w>
       <h>48</h>
     </coordinates>
@@ -100,8 +100,8 @@ weight: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>2800</x>
-      <y>2160</y>
+      <x>2792</x>
+      <y>2088</y>
       <w>80</w>
       <h>48</h>
     </coordinates>
@@ -114,8 +114,8 @@ itemId: Long</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2832</x>
-      <y>2200</y>
+      <x>2824</x>
+      <y>2128</y>
       <w>24</w>
       <h>56</h>
     </coordinates>
@@ -125,8 +125,8 @@ itemId: Long</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>2928</x>
-      <y>2160</y>
+      <x>2920</x>
+      <y>2088</y>
       <w>152</w>
       <h>40</h>
     </coordinates>
@@ -138,8 +138,8 @@ DefItemInit(itemId: Long)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2872</x>
-      <y>2176</y>
+      <x>2864</x>
+      <y>2104</y>
       <w>72</w>
       <h>24</h>
     </coordinates>
@@ -149,8 +149,8 @@ DefItemInit(itemId: Long)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3384</x>
-      <y>2744</y>
+      <x>3376</x>
+      <y>2672</y>
       <w>104</w>
       <h>72</h>
     </coordinates>
@@ -164,8 +164,8 @@ country: String</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3312</x>
-      <y>2720</y>
+      <x>3304</x>
+      <y>2648</y>
       <w>88</w>
       <h>72</h>
     </coordinates>
@@ -176,8 +176,8 @@ lt=&lt;.</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>1544</x>
-      <y>360</y>
+      <x>1536</x>
+      <y>288</y>
       <w>80</w>
       <h>80</h>
     </coordinates>
@@ -190,8 +190,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3768</x>
-      <y>1576</y>
+      <x>3760</x>
+      <y>1504</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -203,8 +203,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3688</x>
-      <y>1576</y>
+      <x>3680</x>
+      <y>1504</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -215,8 +215,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3840</x>
-      <y>1576</y>
+      <x>3832</x>
+      <y>1504</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -228,8 +228,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3808</x>
-      <y>1536</y>
+      <x>3800</x>
+      <y>1464</y>
       <w>88</w>
       <h>64</h>
     </coordinates>
@@ -239,8 +239,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3800</x>
-      <y>1536</y>
+      <x>3792</x>
+      <y>1464</y>
       <w>24</w>
       <h>64</h>
     </coordinates>
@@ -250,8 +250,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3720</x>
-      <y>1536</y>
+      <x>3712</x>
+      <y>1464</y>
       <w>96</w>
       <h>64</h>
     </coordinates>
@@ -261,8 +261,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>1312</x>
-      <y>360</y>
+      <x>1304</x>
+      <y>288</y>
       <w>128</w>
       <h>80</h>
     </coordinates>
@@ -275,8 +275,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3848</x>
-      <y>1360</y>
+      <x>3840</x>
+      <y>1288</y>
       <w>128</w>
       <h>80</h>
     </coordinates>
@@ -289,8 +289,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3800</x>
-      <y>1424</y>
+      <x>3792</x>
+      <y>1352</y>
       <w>120</w>
       <h>72</h>
     </coordinates>
@@ -300,8 +300,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3528</x>
-      <y>1984</y>
+      <x>3520</x>
+      <y>1912</y>
       <w>80</w>
       <h>112</h>
     </coordinates>
@@ -316,8 +316,8 @@ Class
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3480</x>
-      <y>2112</y>
+      <x>3472</x>
+      <y>2040</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -329,8 +329,8 @@ Class
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3568</x>
-      <y>2112</y>
+      <x>3560</x>
+      <y>2040</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -341,8 +341,8 @@ Class
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3512</x>
-      <y>2088</y>
+      <x>3504</x>
+      <y>2016</y>
       <w>64</w>
       <h>48</h>
     </coordinates>
@@ -352,8 +352,8 @@ Class
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3568</x>
-      <y>2088</y>
+      <x>3560</x>
+      <y>2016</y>
       <w>56</w>
       <h>48</h>
     </coordinates>
@@ -363,8 +363,8 @@ Class
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3712</x>
-      <y>1992</y>
+      <x>3704</x>
+      <y>1920</y>
       <w>96</w>
       <h>88</h>
     </coordinates>
@@ -377,8 +377,8 @@ Class
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3648</x>
-      <y>2112</y>
+      <x>3640</x>
+      <y>2040</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -390,8 +390,8 @@ Class
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3720</x>
-      <y>2112</y>
+      <x>3712</x>
+      <y>2040</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -403,8 +403,8 @@ Class
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3792</x>
-      <y>2112</y>
+      <x>3784</x>
+      <y>2040</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -416,8 +416,8 @@ Class
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3680</x>
-      <y>2072</y>
+      <x>3672</x>
+      <y>2000</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -427,8 +427,8 @@ Class
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3752</x>
-      <y>2072</y>
+      <x>3744</x>
+      <y>2000</y>
       <w>24</w>
       <h>64</h>
     </coordinates>
@@ -438,8 +438,8 @@ Class
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3768</x>
-      <y>2072</y>
+      <x>3760</x>
+      <y>2000</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -449,8 +449,8 @@ Class
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3720</x>
-      <y>1624</y>
+      <x>3712</x>
+      <y>1552</y>
       <w>24</w>
       <h>160</h>
     </coordinates>
@@ -460,8 +460,8 @@ Class
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3664</x>
-      <y>1936</y>
+      <x>3656</x>
+      <y>1864</y>
       <w>112</w>
       <h>80</h>
     </coordinates>
@@ -471,8 +471,8 @@ Class
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3248</x>
-      <y>2304</y>
+      <x>3240</x>
+      <y>2232</y>
       <w>216</w>
       <h>96</h>
     </coordinates>
@@ -492,8 +492,8 @@ Great icosahedron</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3576</x>
-      <y>2320</y>
+      <x>3568</x>
+      <y>2248</y>
       <w>360</w>
       <h>96</h>
     </coordinates>
@@ -508,8 +508,8 @@ symmetryGroup ::= Tetrahedral | Octahedral | Icosahedral | U</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3240</x>
-      <y>2232</y>
+      <x>3232</x>
+      <y>2160</y>
       <w>96</w>
       <h>40</h>
     </coordinates>
@@ -521,8 +521,8 @@ schlafli = (3, 3)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3344</x>
-      <y>2232</y>
+      <x>3336</x>
+      <y>2160</y>
       <w>96</w>
       <h>40</h>
     </coordinates>
@@ -534,8 +534,8 @@ schlafli = (4, 3)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3280</x>
-      <y>2160</y>
+      <x>3272</x>
+      <y>2088</y>
       <w>224</w>
       <h>88</h>
     </coordinates>
@@ -545,8 +545,8 @@ schlafli = (4, 3)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3312</x>
-      <y>2160</y>
+      <x>3304</x>
+      <y>2088</y>
       <w>392</w>
       <h>88</h>
     </coordinates>
@@ -556,8 +556,8 @@ schlafli = (4, 3)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3384</x>
-      <y>2160</y>
+      <x>3376</x>
+      <y>2088</y>
       <w>128</w>
       <h>88</h>
     </coordinates>
@@ -567,8 +567,8 @@ schlafli = (4, 3)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3384</x>
-      <y>2160</y>
+      <x>3376</x>
+      <y>2088</y>
       <w>384</w>
       <h>88</h>
     </coordinates>
@@ -578,8 +578,8 @@ schlafli = (4, 3)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3448</x>
-      <y>2232</y>
+      <x>3440</x>
+      <y>2160</y>
       <w>96</w>
       <h>40</h>
     </coordinates>
@@ -591,8 +591,8 @@ schlafli = (3, 4)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3488</x>
-      <y>2160</y>
+      <x>3480</x>
+      <y>2088</y>
       <w>40</w>
       <h>88</h>
     </coordinates>
@@ -602,8 +602,8 @@ schlafli = (3, 4)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3488</x>
-      <y>2160</y>
+      <x>3480</x>
+      <y>2088</y>
       <w>280</w>
       <h>88</h>
     </coordinates>
@@ -613,8 +613,8 @@ schlafli = (3, 4)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3552</x>
-      <y>2232</y>
+      <x>3544</x>
+      <y>2160</y>
       <w>96</w>
       <h>40</h>
     </coordinates>
@@ -626,8 +626,8 @@ schlafli = (5, 3)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3584</x>
-      <y>2160</y>
+      <x>3576</x>
+      <y>2088</y>
       <w>256</w>
       <h>88</h>
     </coordinates>
@@ -637,8 +637,8 @@ schlafli = (5, 3)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3520</x>
-      <y>2160</y>
+      <x>3512</x>
+      <y>2088</y>
       <w>72</w>
       <h>88</h>
     </coordinates>
@@ -648,8 +648,8 @@ schlafli = (5, 3)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3656</x>
-      <y>2232</y>
+      <x>3648</x>
+      <y>2160</y>
       <w>96</w>
       <h>40</h>
     </coordinates>
@@ -661,8 +661,8 @@ schlafli = (3, 5)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3536</x>
-      <y>2160</y>
+      <x>3528</x>
+      <y>2088</y>
       <w>168</w>
       <h>88</h>
     </coordinates>
@@ -672,8 +672,8 @@ schlafli = (3, 5)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3680</x>
-      <y>2160</y>
+      <x>3672</x>
+      <y>2088</y>
       <w>168</w>
       <h>88</h>
     </coordinates>
@@ -683,8 +683,8 @@ schlafli = (3, 5)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3760</x>
-      <y>2232</y>
+      <x>3752</x>
+      <y>2160</y>
       <w>112</w>
       <h>48</h>
     </coordinates>
@@ -697,8 +697,8 @@ schlafli = (5/2, 5)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3880</x>
-      <y>2232</y>
+      <x>3872</x>
+      <y>2160</y>
       <w>112</w>
       <h>40</h>
     </coordinates>
@@ -710,8 +710,8 @@ schlafli = (5, 5/2)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>4000</x>
-      <y>2232</y>
+      <x>3992</x>
+      <y>2160</y>
       <w>112</w>
       <h>48</h>
     </coordinates>
@@ -724,8 +724,8 @@ schlafli = (5/2, 3)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>4120</x>
-      <y>2232</y>
+      <x>4112</x>
+      <y>2160</y>
       <w>112</w>
       <h>48</h>
     </coordinates>
@@ -738,8 +738,8 @@ schlafli = (3, 5/2)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3584</x>
-      <y>2160</y>
+      <x>3576</x>
+      <y>2088</y>
       <w>240</w>
       <h>88</h>
     </coordinates>
@@ -749,8 +749,8 @@ schlafli = (3, 5/2)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3600</x>
-      <y>2160</y>
+      <x>3592</x>
+      <y>2088</y>
       <w>344</w>
       <h>88</h>
     </coordinates>
@@ -760,8 +760,8 @@ schlafli = (3, 5/2)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3616</x>
-      <y>2160</y>
+      <x>3608</x>
+      <y>2088</y>
       <w>456</w>
       <h>88</h>
     </coordinates>
@@ -771,8 +771,8 @@ schlafli = (3, 5/2)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3632</x>
-      <y>2160</y>
+      <x>3624</x>
+      <y>2088</y>
       <w>552</w>
       <h>88</h>
     </coordinates>
@@ -782,8 +782,8 @@ schlafli = (3, 5/2)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3800</x>
-      <y>2160</y>
+      <x>3792</x>
+      <y>2088</y>
       <w>48</w>
       <h>88</h>
     </coordinates>
@@ -793,8 +793,8 @@ schlafli = (3, 5/2)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3824</x>
-      <y>2160</y>
+      <x>3816</x>
+      <y>2088</y>
       <w>120</w>
       <h>88</h>
     </coordinates>
@@ -804,8 +804,8 @@ schlafli = (3, 5/2)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3832</x>
-      <y>2160</y>
+      <x>3824</x>
+      <y>2088</y>
       <w>240</w>
       <h>88</h>
     </coordinates>
@@ -815,8 +815,8 @@ schlafli = (3, 5/2)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3840</x>
-      <y>2160</y>
+      <x>3832</x>
+      <y>2088</y>
       <w>344</w>
       <h>88</h>
     </coordinates>
@@ -826,8 +826,8 @@ schlafli = (3, 5/2)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3968</x>
-      <y>1472</y>
+      <x>3960</x>
+      <y>1400</y>
       <w>80</w>
       <h>88</h>
     </coordinates>
@@ -840,8 +840,8 @@ schlafli = (3, 5/2)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4088</x>
-      <y>1792</y>
+      <x>4080</x>
+      <y>1720</y>
       <w>80</w>
       <h>88</h>
     </coordinates>
@@ -854,8 +854,8 @@ Polytope
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4016</x>
-      <y>1792</y>
+      <x>4008</x>
+      <y>1720</y>
       <w>80</w>
       <h>88</h>
     </coordinates>
@@ -868,8 +868,8 @@ Polytope
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3912</x>
-      <y>1424</y>
+      <x>3904</x>
+      <y>1352</y>
       <w>112</w>
       <h>72</h>
     </coordinates>
@@ -879,8 +879,8 @@ Polytope
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4088</x>
-      <y>1752</y>
+      <x>4080</x>
+      <y>1680</y>
       <w>56</w>
       <h>64</h>
     </coordinates>
@@ -890,8 +890,8 @@ Polytope
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4048</x>
-      <y>1752</y>
+      <x>4040</x>
+      <y>1680</y>
       <w>48</w>
       <h>64</h>
     </coordinates>
@@ -901,8 +901,8 @@ Polytope
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3608</x>
-      <y>2096</y>
+      <x>3600</x>
+      <y>2024</y>
       <w>232</w>
       <h>48</h>
     </coordinates>
@@ -912,8 +912,8 @@ Polytope
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1232</x>
-      <y>480</y>
+      <x>1224</x>
+      <y>408</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -927,8 +927,8 @@ height: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1280</x>
-      <y>424</y>
+      <x>1272</x>
+      <y>352</y>
       <w>112</w>
       <h>72</h>
     </coordinates>
@@ -938,8 +938,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1504</x>
-      <y>480</y>
+      <x>1496</x>
+      <y>408</y>
       <w>72</w>
       <h>32</h>
     </coordinates>
@@ -950,8 +950,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1584</x>
-      <y>480</y>
+      <x>1576</x>
+      <y>408</y>
       <w>80</w>
       <h>32</h>
     </coordinates>
@@ -962,8 +962,8 @@ height: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1552</x>
-      <y>424</y>
+      <x>1544</x>
+      <y>352</y>
       <w>48</w>
       <h>72</h>
     </coordinates>
@@ -973,8 +973,8 @@ height: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1584</x>
-      <y>424</y>
+      <x>1576</x>
+      <y>352</y>
       <w>56</w>
       <h>72</h>
     </coordinates>
@@ -984,8 +984,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>1768</x>
-      <y>360</y>
+      <x>1760</x>
+      <y>288</y>
       <w>128</w>
       <h>80</h>
     </coordinates>
@@ -998,8 +998,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3104</x>
-      <y>1456</y>
+      <x>3096</x>
+      <y>1384</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -1011,8 +1011,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3184</x>
-      <y>1560</y>
+      <x>3176</x>
+      <y>1488</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -1024,8 +1024,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3104</x>
-      <y>1560</y>
+      <x>3096</x>
+      <y>1488</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -1037,8 +1037,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3024</x>
-      <y>1560</y>
+      <x>3016</x>
+      <y>1488</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -1049,8 +1049,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3056</x>
-      <y>1520</y>
+      <x>3048</x>
+      <y>1448</y>
       <w>96</w>
       <h>64</h>
     </coordinates>
@@ -1060,8 +1060,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3136</x>
-      <y>1520</y>
+      <x>3128</x>
+      <y>1448</y>
       <w>24</w>
       <h>64</h>
     </coordinates>
@@ -1071,8 +1071,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3144</x>
-      <y>1520</y>
+      <x>3136</x>
+      <y>1448</y>
       <w>96</w>
       <h>64</h>
     </coordinates>
@@ -1082,8 +1082,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>2832</x>
-      <y>1448</y>
+      <x>2824</x>
+      <y>1376</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -1095,8 +1095,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2832</x>
-      <y>1512</y>
+      <x>2824</x>
+      <y>1440</y>
       <w>40</w>
       <h>64</h>
     </coordinates>
@@ -1106,8 +1106,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2880</x>
-      <y>1512</y>
+      <x>2872</x>
+      <y>1440</y>
       <w>48</w>
       <h>64</h>
     </coordinates>
@@ -1117,8 +1117,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>2872</x>
-      <y>1552</y>
+      <x>2864</x>
+      <y>1480</y>
       <w>80</w>
       <h>88</h>
     </coordinates>
@@ -1131,8 +1131,8 @@ Polytope
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>2800</x>
-      <y>1552</y>
+      <x>2792</x>
+      <y>1480</y>
       <w>80</w>
       <h>88</h>
     </coordinates>
@@ -1145,8 +1145,8 @@ Polytope
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>2976</x>
-      <y>1672</y>
+      <x>2968</x>
+      <y>1600</y>
       <w>120</w>
       <h>64</h>
     </coordinates>
@@ -1160,8 +1160,8 @@ height: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2904</x>
-      <y>1608</y>
+      <x>2896</x>
+      <y>1536</y>
       <w>144</w>
       <h>80</h>
     </coordinates>
@@ -1171,8 +1171,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>2952</x>
-      <y>1344</y>
+      <x>2944</x>
+      <y>1272</y>
       <w>128</w>
       <h>80</h>
     </coordinates>
@@ -1185,8 +1185,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>2808</x>
-      <y>1672</y>
+      <x>2800</x>
+      <y>1600</y>
       <w>120</w>
       <h>64</h>
     </coordinates>
@@ -1200,8 +1200,8 @@ height: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2832</x>
-      <y>1608</y>
+      <x>2824</x>
+      <y>1536</y>
       <w>48</w>
       <h>80</h>
     </coordinates>
@@ -1211,8 +1211,8 @@ height: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2864</x>
-      <y>1408</y>
+      <x>2856</x>
+      <y>1336</y>
       <w>152</w>
       <h>64</h>
     </coordinates>
@@ -1222,8 +1222,8 @@ height: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3016</x>
-      <y>1408</y>
+      <x>3008</x>
+      <y>1336</y>
       <w>144</w>
       <h>72</h>
     </coordinates>
@@ -1233,8 +1233,8 @@ height: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3056</x>
-      <y>1608</y>
+      <x>3048</x>
+      <y>1536</y>
       <w>104</w>
       <h>80</h>
     </coordinates>
@@ -1244,8 +1244,8 @@ height: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2896</x>
-      <y>1608</y>
+      <x>2888</x>
+      <y>1536</y>
       <w>176</w>
       <h>80</h>
     </coordinates>
@@ -1255,8 +1255,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3136</x>
-      <y>1672</y>
+      <x>3128</x>
+      <y>1600</y>
       <w>120</w>
       <h>48</h>
     </coordinates>
@@ -1269,8 +1269,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3184</x>
-      <y>1608</y>
+      <x>3176</x>
+      <y>1536</y>
       <w>56</w>
       <h>80</h>
     </coordinates>
@@ -1280,8 +1280,8 @@ length: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3672</x>
-      <y>1760</y>
+      <x>3664</x>
+      <y>1688</y>
       <w>112</w>
       <h>104</h>
     </coordinates>
@@ -1296,8 +1296,8 @@ length: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3624</x>
-      <y>1888</y>
+      <x>3616</x>
+      <y>1816</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -1309,8 +1309,8 @@ length: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3744</x>
-      <y>1888</y>
+      <x>3736</x>
+      <y>1816</y>
       <w>96</w>
       <h>72</h>
     </coordinates>
@@ -1322,8 +1322,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3560</x>
-      <y>1936</y>
+      <x>3552</x>
+      <y>1864</y>
       <w>112</w>
       <h>72</h>
     </coordinates>
@@ -1333,8 +1333,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3656</x>
-      <y>1848</y>
+      <x>3648</x>
+      <y>1776</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -1344,8 +1344,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3728</x>
-      <y>1848</y>
+      <x>3720</x>
+      <y>1776</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -1355,8 +1355,8 @@ length: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>4064</x>
-      <y>2064</y>
+      <x>4056</x>
+      <y>1992</y>
       <w>120</w>
       <h>64</h>
     </coordinates>
@@ -1370,8 +1370,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3936</x>
-      <y>2056</y>
+      <x>3928</x>
+      <y>1984</y>
       <w>120</w>
       <h>80</h>
     </coordinates>
@@ -1386,8 +1386,8 @@ schlafli = (4, 3)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3512</x>
-      <y>1736</y>
+      <x>3504</x>
+      <y>1664</y>
       <w>120</w>
       <h>48</h>
     </coordinates>
@@ -1400,8 +1400,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3792</x>
-      <y>1936</y>
+      <x>3784</x>
+      <y>1864</y>
       <w>208</w>
       <h>136</h>
     </coordinates>
@@ -1411,8 +1411,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3560</x>
-      <y>1624</y>
+      <x>3552</x>
+      <y>1552</y>
       <w>336</w>
       <h>128</h>
     </coordinates>
@@ -1422,8 +1422,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3864</x>
-      <y>1832</y>
+      <x>3856</x>
+      <y>1760</y>
       <w>272</w>
       <h>248</h>
     </coordinates>
@@ -1433,8 +1433,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4048</x>
-      <y>1856</y>
+      <x>4040</x>
+      <y>1784</y>
       <w>88</w>
       <h>224</h>
     </coordinates>
@@ -1444,8 +1444,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3976</x>
-      <y>1856</y>
+      <x>3968</x>
+      <y>1784</y>
       <w>168</w>
       <h>216</h>
     </coordinates>
@@ -1455,8 +1455,8 @@ length: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3816</x>
-      <y>1760</y>
+      <x>3808</x>
+      <y>1688</y>
       <w>80</w>
       <h>88</h>
     </coordinates>
@@ -1469,8 +1469,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3800</x>
-      <y>1624</y>
+      <x>3792</x>
+      <y>1552</y>
       <w>72</w>
       <h>160</h>
     </coordinates>
@@ -1480,8 +1480,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3560</x>
-      <y>1848</y>
+      <x>3552</x>
+      <y>1776</y>
       <w>496</w>
       <h>160</h>
     </coordinates>
@@ -1491,8 +1491,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3720</x>
-      <y>1624</y>
+      <x>3712</x>
+      <y>1552</y>
       <w>288</w>
       <h>160</h>
     </coordinates>
@@ -1502,8 +1502,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3848</x>
-      <y>1624</y>
+      <x>3840</x>
+      <y>1552</y>
       <w>160</w>
       <h>160</h>
     </coordinates>
@@ -1513,8 +1513,8 @@ length: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3968</x>
-      <y>1576</y>
+      <x>3960</x>
+      <y>1504</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -1525,8 +1525,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4000</x>
-      <y>1544</y>
+      <x>3992</x>
+      <y>1472</y>
       <w>24</w>
       <h>56</h>
     </coordinates>
@@ -1536,8 +1536,8 @@ length: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4048</x>
-      <y>1680</y>
+      <x>4040</x>
+      <y>1608</y>
       <w>80</w>
       <h>88</h>
     </coordinates>
@@ -1550,8 +1550,8 @@ Cardinality
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4000</x>
-      <y>1624</y>
+      <x>3992</x>
+      <y>1552</y>
       <w>96</w>
       <h>80</h>
     </coordinates>
@@ -1561,8 +1561,8 @@ Cardinality
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4200</x>
-      <y>1680</y>
+      <x>4192</x>
+      <y>1608</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -1574,8 +1574,8 @@ Cardinality
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4016</x>
-      <y>1624</y>
+      <x>4008</x>
+      <y>1552</y>
       <w>240</w>
       <h>80</h>
     </coordinates>
@@ -1585,8 +1585,8 @@ Cardinality
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4168</x>
-      <y>1792</y>
+      <x>4160</x>
+      <y>1720</y>
       <w>80</w>
       <h>88</h>
     </coordinates>
@@ -1599,8 +1599,8 @@ Polytope
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4248</x>
-      <y>1792</y>
+      <x>4240</x>
+      <y>1720</y>
       <w>80</w>
       <h>88</h>
     </coordinates>
@@ -1613,8 +1613,8 @@ Polytope
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4200</x>
-      <y>1744</y>
+      <x>4192</x>
+      <y>1672</y>
       <w>48</w>
       <h>72</h>
     </coordinates>
@@ -1624,8 +1624,8 @@ Polytope
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4248</x>
-      <y>1744</y>
+      <x>4240</x>
+      <y>1672</y>
       <w>56</w>
       <h>72</h>
     </coordinates>
@@ -1635,8 +1635,8 @@ Polytope
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3560</x>
-      <y>1856</y>
+      <x>3552</x>
+      <y>1784</y>
       <w>656</w>
       <h>152</h>
     </coordinates>
@@ -1646,8 +1646,8 @@ Polytope
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1432</x>
-      <y>272</y>
+      <x>1424</x>
+      <y>200</y>
       <w>136</w>
       <h>40</h>
     </coordinates>
@@ -1659,8 +1659,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1368</x>
-      <y>304</y>
+      <x>1360</x>
+      <y>232</y>
       <w>112</w>
       <h>80</h>
     </coordinates>
@@ -1670,8 +1670,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1504</x>
-      <y>304</y>
+      <x>1496</x>
+      <y>232</y>
       <w>96</w>
       <h>80</h>
     </coordinates>
@@ -1681,8 +1681,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1416</x>
-      <y>480</y>
+      <x>1408</x>
+      <y>408</y>
       <w>80</w>
       <h>48</h>
     </coordinates>
@@ -1695,8 +1695,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1368</x>
-      <y>424</y>
+      <x>1360</x>
+      <y>352</y>
       <w>120</w>
       <h>72</h>
     </coordinates>
@@ -1706,8 +1706,8 @@ length: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>960</x>
-      <y>456</y>
+      <x>952</x>
+      <y>384</y>
       <w>88</w>
       <h>64</h>
     </coordinates>
@@ -1721,8 +1721,8 @@ height: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1008</x>
-      <y>400</y>
+      <x>1000</x>
+      <y>328</y>
       <w>24</w>
       <h>72</h>
     </coordinates>
@@ -1732,8 +1732,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>952</x>
-      <y>336</y>
+      <x>944</x>
+      <y>264</y>
       <w>128</w>
       <h>80</h>
     </coordinates>
@@ -1746,8 +1746,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>872</x>
-      <y>456</y>
+      <x>864</x>
+      <y>384</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -1761,8 +1761,8 @@ height: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>920</x>
-      <y>400</y>
+      <x>912</x>
+      <y>328</y>
       <w>112</w>
       <h>72</h>
     </coordinates>
@@ -1772,8 +1772,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1056</x>
-      <y>456</y>
+      <x>1048</x>
+      <y>384</y>
       <w>80</w>
       <h>48</h>
     </coordinates>
@@ -1786,8 +1786,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1008</x>
-      <y>400</y>
+      <x>1000</x>
+      <y>328</y>
       <w>120</w>
       <h>72</h>
     </coordinates>
@@ -1797,8 +1797,8 @@ length: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>624</x>
-      <y>264</y>
+      <x>616</x>
+      <y>192</y>
       <w>136</w>
       <h>40</h>
     </coordinates>
@@ -1810,8 +1810,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1008</x>
-      <y>304</y>
+      <x>1000</x>
+      <y>232</y>
       <w>24</w>
       <h>56</h>
     </coordinates>
@@ -1821,8 +1821,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>968</x>
-      <y>272</y>
+      <x>960</x>
+      <y>200</y>
       <w>136</w>
       <h>40</h>
     </coordinates>
@@ -1834,8 +1834,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1840</x>
-      <y>264</y>
+      <x>1832</x>
+      <y>192</y>
       <w>144</w>
       <h>40</h>
     </coordinates>
@@ -1847,8 +1847,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1824</x>
-      <y>296</y>
+      <x>1816</x>
+      <y>224</y>
       <w>80</w>
       <h>88</h>
     </coordinates>
@@ -1858,8 +1858,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>1776</x>
-      <y>456</y>
+      <x>1768</x>
+      <y>384</y>
       <w>112</w>
       <h>64</h>
     </coordinates>
@@ -1870,8 +1870,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>1712</x>
-      <y>552</y>
+      <x>1704</x>
+      <y>480</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -1882,8 +1882,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>1792</x>
-      <y>552</y>
+      <x>1784</x>
+      <y>480</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -1895,8 +1895,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>1872</x>
-      <y>552</y>
+      <x>1864</x>
+      <y>480</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -1908,8 +1908,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1832</x>
-      <y>504</y>
+      <x>1824</x>
+      <y>432</y>
       <w>96</w>
       <h>72</h>
     </coordinates>
@@ -1919,8 +1919,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1824</x>
-      <y>504</y>
+      <x>1816</x>
+      <y>432</y>
       <w>24</w>
       <h>72</h>
     </coordinates>
@@ -1930,8 +1930,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1744</x>
-      <y>504</y>
+      <x>1736</x>
+      <y>432</y>
       <w>96</w>
       <h>72</h>
     </coordinates>
@@ -1941,8 +1941,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1824</x>
-      <y>424</y>
+      <x>1816</x>
+      <y>352</y>
       <w>24</w>
       <h>56</h>
     </coordinates>
@@ -1952,8 +1952,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1784</x>
-      <y>640</y>
+      <x>1776</x>
+      <y>568</y>
       <w>88</w>
       <h>64</h>
     </coordinates>
@@ -1967,8 +1967,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1696</x>
-      <y>640</y>
+      <x>1688</x>
+      <y>568</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -1982,8 +1982,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1880</x>
-      <y>640</y>
+      <x>1872</x>
+      <y>568</y>
       <w>80</w>
       <h>48</h>
     </coordinates>
@@ -1996,8 +1996,8 @@ length: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>1920</x>
-      <y>360</y>
+      <x>1912</x>
+      <y>288</y>
       <w>80</w>
       <h>80</h>
     </coordinates>
@@ -2010,8 +2010,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1888</x>
-      <y>480</y>
+      <x>1880</x>
+      <y>408</y>
       <w>72</w>
       <h>32</h>
     </coordinates>
@@ -2022,8 +2022,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1968</x>
-      <y>480</y>
+      <x>1960</x>
+      <y>408</y>
       <w>80</w>
       <h>32</h>
     </coordinates>
@@ -2034,8 +2034,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1920</x>
-      <y>424</y>
+      <x>1912</x>
+      <y>352</y>
       <w>48</w>
       <h>72</h>
     </coordinates>
@@ -2045,8 +2045,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1968</x>
-      <y>424</y>
+      <x>1960</x>
+      <y>352</y>
       <w>56</w>
       <h>72</h>
     </coordinates>
@@ -2056,8 +2056,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1896</x>
-      <y>296</y>
+      <x>1888</x>
+      <y>224</y>
       <w>80</w>
       <h>88</h>
     </coordinates>
@@ -2067,8 +2067,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1736</x>
-      <y>600</y>
+      <x>1728</x>
+      <y>528</y>
       <w>24</w>
       <h>56</h>
     </coordinates>
@@ -2078,8 +2078,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1824</x>
-      <y>600</y>
+      <x>1816</x>
+      <y>528</y>
       <w>24</w>
       <h>56</h>
     </coordinates>
@@ -2089,8 +2089,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1912</x>
-      <y>600</y>
+      <x>1904</x>
+      <y>528</y>
       <w>24</w>
       <h>56</h>
     </coordinates>
@@ -2100,8 +2100,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>632</x>
-      <y>344</y>
+      <x>624</x>
+      <y>272</y>
       <w>88</w>
       <h>64</h>
     </coordinates>
@@ -2115,8 +2115,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>544</x>
-      <y>344</y>
+      <x>536</x>
+      <y>272</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -2130,8 +2130,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>728</x>
-      <y>344</y>
+      <x>720</x>
+      <y>272</y>
       <w>80</w>
       <h>48</h>
     </coordinates>
@@ -2144,8 +2144,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>576</x>
-      <y>296</y>
+      <x>568</x>
+      <y>224</y>
       <w>104</w>
       <h>64</h>
     </coordinates>
@@ -2155,8 +2155,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>672</x>
-      <y>296</y>
+      <x>664</x>
+      <y>224</y>
       <w>24</w>
       <h>64</h>
     </coordinates>
@@ -2166,8 +2166,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>688</x>
-      <y>296</y>
+      <x>680</x>
+      <y>224</y>
       <w>96</w>
       <h>64</h>
     </coordinates>
@@ -2177,8 +2177,8 @@ length: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>8</x>
-      <y>264</y>
+      <x>0</x>
+      <y>192</y>
       <w>136</w>
       <h>40</h>
     </coordinates>
@@ -2190,10 +2190,10 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLNote</id>
     <coordinates>
-      <x>624</x>
-      <y>144</y>
+      <x>616</x>
+      <y>0</y>
       <w>208</w>
-      <h>88</h>
+      <h>160</h>
     </coordinates>
     <panel_attributes>or using traits:
 
@@ -2202,6 +2202,9 @@ Item with Cylinder
 Item with Rectangle
 Item with Line
 
+Nothing prevents it from invalid combinations such as:
+
+Item with Line with Cylinder
 
 bg=cyan</panel_attributes>
     <additional_attributes/>
@@ -2209,8 +2212,8 @@ bg=cyan</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>664</x>
-      <y>224</y>
+      <x>656</x>
+      <y>152</y>
       <w>24</w>
       <h>56</h>
     </coordinates>
@@ -2220,12 +2223,12 @@ bg=cyan</panel_attributes>
   <element>
     <id>UMLNote</id>
     <coordinates>
-      <x>968</x>
-      <y>144</y>
+      <x>960</x>
+      <y>72</y>
       <w>168</w>
       <h>88</h>
     </coordinates>
-    <panel_attributes>Using traits
+    <panel_attributes>Using dimensions and fragments
 
 Item
 Item with Cylinder
@@ -2239,8 +2242,8 @@ bg=cyan</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1016</x>
-      <y>224</y>
+      <x>1008</x>
+      <y>152</y>
       <w>24</w>
       <h>64</h>
     </coordinates>
@@ -2250,8 +2253,8 @@ bg=cyan</panel_attributes>
   <element>
     <id>UMLNote</id>
     <coordinates>
-      <x>1392</x>
-      <y>120</y>
+      <x>1384</x>
+      <y>48</y>
       <w>240</w>
       <h>120</h>
     </coordinates>
@@ -2270,8 +2273,8 @@ bg=cyan</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1480</x>
-      <y>232</y>
+      <x>1472</x>
+      <y>160</y>
       <w>24</w>
       <h>56</h>
     </coordinates>
@@ -2281,8 +2284,8 @@ bg=cyan</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>2208</x>
-      <y>360</y>
+      <x>2200</x>
+      <y>288</y>
       <w>128</w>
       <h>80</h>
     </coordinates>
@@ -2295,8 +2298,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>2336</x>
-      <y>264</y>
+      <x>2328</x>
+      <y>192</y>
       <w>144</w>
       <h>40</h>
     </coordinates>
@@ -2308,8 +2311,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2264</x>
-      <y>296</y>
+      <x>2256</x>
+      <y>224</y>
       <w>136</w>
       <h>88</h>
     </coordinates>
@@ -2319,8 +2322,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>2152</x>
-      <y>456</y>
+      <x>2144</x>
+      <y>384</y>
       <w>112</w>
       <h>64</h>
     </coordinates>
@@ -2331,8 +2334,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>2088</x>
-      <y>560</y>
+      <x>2080</x>
+      <y>488</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -2343,8 +2346,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>2168</x>
-      <y>560</y>
+      <x>2160</x>
+      <y>488</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -2356,8 +2359,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>2248</x>
-      <y>560</y>
+      <x>2240</x>
+      <y>488</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -2369,8 +2372,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2208</x>
-      <y>504</y>
+      <x>2200</x>
+      <y>432</y>
       <w>96</w>
       <h>80</h>
     </coordinates>
@@ -2380,8 +2383,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2200</x>
-      <y>504</y>
+      <x>2192</x>
+      <y>432</y>
       <w>24</w>
       <h>80</h>
     </coordinates>
@@ -2391,8 +2394,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2120</x>
-      <y>504</y>
+      <x>2112</x>
+      <y>432</y>
       <w>96</w>
       <h>80</h>
     </coordinates>
@@ -2402,8 +2405,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2200</x>
-      <y>424</y>
+      <x>2192</x>
+      <y>352</y>
       <w>80</w>
       <h>56</h>
     </coordinates>
@@ -2413,8 +2416,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>2168</x>
-      <y>672</y>
+      <x>2160</x>
+      <y>600</y>
       <w>88</w>
       <h>64</h>
     </coordinates>
@@ -2428,8 +2431,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>2080</x>
-      <y>672</y>
+      <x>2072</x>
+      <y>600</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -2443,8 +2446,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>2264</x>
-      <y>672</y>
+      <x>2256</x>
+      <y>600</y>
       <w>80</w>
       <h>48</h>
     </coordinates>
@@ -2457,8 +2460,8 @@ length: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>2464</x>
-      <y>360</y>
+      <x>2456</x>
+      <y>288</y>
       <w>80</w>
       <h>80</h>
     </coordinates>
@@ -2471,8 +2474,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>2432</x>
-      <y>480</y>
+      <x>2424</x>
+      <y>408</y>
       <w>72</w>
       <h>32</h>
     </coordinates>
@@ -2483,8 +2486,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>2512</x>
-      <y>480</y>
+      <x>2504</x>
+      <y>408</y>
       <w>80</w>
       <h>32</h>
     </coordinates>
@@ -2495,8 +2498,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2464</x>
-      <y>424</y>
+      <x>2456</x>
+      <y>352</y>
       <w>48</w>
       <h>72</h>
     </coordinates>
@@ -2506,8 +2509,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2512</x>
-      <y>424</y>
+      <x>2504</x>
+      <y>352</y>
       <w>56</w>
       <h>72</h>
     </coordinates>
@@ -2517,8 +2520,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2392</x>
-      <y>296</y>
+      <x>2384</x>
+      <y>224</y>
       <w>128</w>
       <h>88</h>
     </coordinates>
@@ -2528,8 +2531,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2120</x>
-      <y>608</y>
+      <x>2112</x>
+      <y>536</y>
       <w>24</w>
       <h>80</h>
     </coordinates>
@@ -2539,8 +2542,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2208</x>
-      <y>608</y>
+      <x>2200</x>
+      <y>536</y>
       <w>24</w>
       <h>80</h>
     </coordinates>
@@ -2550,8 +2553,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2296</x>
-      <y>608</y>
+      <x>2288</x>
+      <y>536</y>
       <w>24</w>
       <h>80</h>
     </coordinates>
@@ -2561,8 +2564,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>2328</x>
-      <y>560</y>
+      <x>2320</x>
+      <y>488</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -2573,8 +2576,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2360</x>
-      <y>512</y>
+      <x>2352</x>
+      <y>440</y>
       <w>24</w>
       <h>72</h>
     </coordinates>
@@ -2584,8 +2587,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>2312</x>
-      <y>456</y>
+      <x>2304</x>
+      <y>384</y>
       <w>112</w>
       <h>72</h>
     </coordinates>
@@ -2597,8 +2600,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2288</x>
-      <y>424</y>
+      <x>2280</x>
+      <y>352</y>
       <w>96</w>
       <h>56</h>
     </coordinates>
@@ -2608,8 +2611,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2208</x>
-      <y>608</y>
+      <x>2200</x>
+      <y>536</y>
       <w>184</w>
       <h>80</h>
     </coordinates>
@@ -2619,8 +2622,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2120</x>
-      <y>608</y>
+      <x>2112</x>
+      <y>536</y>
       <w>256</w>
       <h>80</h>
     </coordinates>
@@ -2630,8 +2633,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>2752</x>
-      <y>360</y>
+      <x>2744</x>
+      <y>288</y>
       <w>128</w>
       <h>80</h>
     </coordinates>
@@ -2644,8 +2647,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>2872</x>
-      <y>264</y>
+      <x>2864</x>
+      <y>192</y>
       <w>144</w>
       <h>40</h>
     </coordinates>
@@ -2657,8 +2660,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2808</x>
-      <y>296</y>
+      <x>2800</x>
+      <y>224</y>
       <w>128</w>
       <h>88</h>
     </coordinates>
@@ -2668,8 +2671,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>2680</x>
-      <y>456</y>
+      <x>2672</x>
+      <y>384</y>
       <w>112</w>
       <h>64</h>
     </coordinates>
@@ -2680,8 +2683,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>2616</x>
-      <y>560</y>
+      <x>2608</x>
+      <y>488</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -2692,8 +2695,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>2696</x>
-      <y>560</y>
+      <x>2688</x>
+      <y>488</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -2705,8 +2708,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>2776</x>
-      <y>560</y>
+      <x>2768</x>
+      <y>488</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -2718,8 +2721,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2736</x>
-      <y>504</y>
+      <x>2728</x>
+      <y>432</y>
       <w>96</w>
       <h>80</h>
     </coordinates>
@@ -2729,8 +2732,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2728</x>
-      <y>504</y>
+      <x>2720</x>
+      <y>432</y>
       <w>24</w>
       <h>80</h>
     </coordinates>
@@ -2740,8 +2743,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2648</x>
-      <y>504</y>
+      <x>2640</x>
+      <y>432</y>
       <w>96</w>
       <h>80</h>
     </coordinates>
@@ -2751,8 +2754,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2728</x>
-      <y>424</y>
+      <x>2720</x>
+      <y>352</y>
       <w>80</w>
       <h>56</h>
     </coordinates>
@@ -2762,8 +2765,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>2696</x>
-      <y>776</y>
+      <x>2688</x>
+      <y>704</y>
       <w>88</w>
       <h>64</h>
     </coordinates>
@@ -2777,8 +2780,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>2504</x>
-      <y>776</y>
+      <x>2496</x>
+      <y>704</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -2792,8 +2795,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>2792</x>
-      <y>776</y>
+      <x>2784</x>
+      <y>704</y>
       <w>80</w>
       <h>48</h>
     </coordinates>
@@ -2806,8 +2809,8 @@ length: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>2992</x>
-      <y>360</y>
+      <x>2984</x>
+      <y>288</y>
       <w>80</w>
       <h>80</h>
     </coordinates>
@@ -2820,8 +2823,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>2960</x>
-      <y>480</y>
+      <x>2952</x>
+      <y>408</y>
       <w>72</w>
       <h>32</h>
     </coordinates>
@@ -2832,8 +2835,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3040</x>
-      <y>480</y>
+      <x>3032</x>
+      <y>408</y>
       <w>80</w>
       <h>32</h>
     </coordinates>
@@ -2844,8 +2847,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2992</x>
-      <y>424</y>
+      <x>2984</x>
+      <y>352</y>
       <w>48</w>
       <h>72</h>
     </coordinates>
@@ -2855,8 +2858,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3040</x>
-      <y>424</y>
+      <x>3032</x>
+      <y>352</y>
       <w>56</w>
       <h>72</h>
     </coordinates>
@@ -2866,8 +2869,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2928</x>
-      <y>296</y>
+      <x>2920</x>
+      <y>224</y>
       <w>120</w>
       <h>88</h>
     </coordinates>
@@ -2877,8 +2880,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2544</x>
-      <y>720</y>
+      <x>2536</x>
+      <y>648</y>
       <w>128</w>
       <h>72</h>
     </coordinates>
@@ -2888,8 +2891,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2728</x>
-      <y>720</y>
+      <x>2720</x>
+      <y>648</y>
       <w>24</w>
       <h>72</h>
     </coordinates>
@@ -2899,8 +2902,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2808</x>
-      <y>608</y>
+      <x>2800</x>
+      <y>536</y>
       <w>24</w>
       <h>184</h>
     </coordinates>
@@ -2910,8 +2913,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>2856</x>
-      <y>560</y>
+      <x>2848</x>
+      <y>488</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -2923,8 +2926,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2808</x>
-      <y>424</y>
+      <x>2800</x>
+      <y>352</y>
       <w>104</w>
       <h>160</h>
     </coordinates>
@@ -2934,8 +2937,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>2704</x>
-      <y>672</y>
+      <x>2696</x>
+      <y>600</y>
       <w>64</w>
       <h>64</h>
     </coordinates>
@@ -2946,8 +2949,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>2624</x>
-      <y>672</y>
+      <x>2616</x>
+      <y>600</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -2958,8 +2961,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2656</x>
-      <y>624</y>
+      <x>2648</x>
+      <y>552</y>
       <w>232</w>
       <h>72</h>
     </coordinates>
@@ -2969,8 +2972,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2656</x>
-      <y>608</y>
+      <x>2648</x>
+      <y>536</y>
       <w>24</w>
       <h>88</h>
     </coordinates>
@@ -2980,8 +2983,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2728</x>
-      <y>608</y>
+      <x>2720</x>
+      <y>536</y>
       <w>24</w>
       <h>88</h>
     </coordinates>
@@ -2991,8 +2994,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2728</x>
-      <y>624</y>
+      <x>2720</x>
+      <y>552</y>
       <w>160</w>
       <h>72</h>
     </coordinates>
@@ -3002,8 +3005,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3344</x>
-      <y>376</y>
+      <x>3336</x>
+      <y>304</y>
       <w>128</w>
       <h>80</h>
     </coordinates>
@@ -3016,8 +3019,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3472</x>
-      <y>280</y>
+      <x>3464</x>
+      <y>208</y>
       <w>136</w>
       <h>40</h>
     </coordinates>
@@ -3029,8 +3032,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3408</x>
-      <y>312</y>
+      <x>3400</x>
+      <y>240</y>
       <w>120</w>
       <h>88</h>
     </coordinates>
@@ -3040,8 +3043,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3288</x>
-      <y>472</y>
+      <x>3280</x>
+      <y>400</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -3053,8 +3056,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3208</x>
-      <y>576</y>
+      <x>3200</x>
+      <y>504</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -3065,8 +3068,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3288</x>
-      <y>576</y>
+      <x>3280</x>
+      <y>504</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -3078,8 +3081,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3368</x>
-      <y>576</y>
+      <x>3360</x>
+      <y>504</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -3091,8 +3094,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3328</x>
-      <y>536</y>
+      <x>3320</x>
+      <y>464</y>
       <w>96</w>
       <h>64</h>
     </coordinates>
@@ -3102,8 +3105,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3320</x>
-      <y>536</y>
+      <x>3312</x>
+      <y>464</y>
       <w>24</w>
       <h>64</h>
     </coordinates>
@@ -3113,8 +3116,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3240</x>
-      <y>536</y>
+      <x>3232</x>
+      <y>464</y>
       <w>96</w>
       <h>64</h>
     </coordinates>
@@ -3124,8 +3127,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3320</x>
-      <y>440</y>
+      <x>3312</x>
+      <y>368</y>
       <w>80</w>
       <h>56</h>
     </coordinates>
@@ -3135,8 +3138,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3408</x>
-      <y>936</y>
+      <x>3400</x>
+      <y>864</y>
       <w>88</w>
       <h>64</h>
     </coordinates>
@@ -3150,8 +3153,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3112</x>
-      <y>936</y>
+      <x>3104</x>
+      <y>864</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -3165,8 +3168,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3528</x>
-      <y>936</y>
+      <x>3520</x>
+      <y>864</y>
       <w>80</w>
       <h>48</h>
     </coordinates>
@@ -3179,8 +3182,8 @@ length: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3584</x>
-      <y>376</y>
+      <x>3576</x>
+      <y>304</y>
       <w>80</w>
       <h>80</h>
     </coordinates>
@@ -3193,8 +3196,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3560</x>
-      <y>496</y>
+      <x>3552</x>
+      <y>424</y>
       <w>72</w>
       <h>32</h>
     </coordinates>
@@ -3205,8 +3208,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3640</x>
-      <y>496</y>
+      <x>3632</x>
+      <y>424</y>
       <w>80</w>
       <h>32</h>
     </coordinates>
@@ -3217,8 +3220,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3592</x>
-      <y>440</y>
+      <x>3584</x>
+      <y>368</y>
       <w>48</w>
       <h>72</h>
     </coordinates>
@@ -3228,8 +3231,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3640</x>
-      <y>440</y>
+      <x>3632</x>
+      <y>368</y>
       <w>56</w>
       <h>72</h>
     </coordinates>
@@ -3239,8 +3242,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3520</x>
-      <y>312</y>
+      <x>3512</x>
+      <y>240</y>
       <w>120</w>
       <h>88</h>
     </coordinates>
@@ -3250,8 +3253,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3328</x>
-      <y>744</y>
+      <x>3320</x>
+      <y>672</y>
       <w>136</w>
       <h>208</h>
     </coordinates>
@@ -3261,8 +3264,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3408</x>
-      <y>624</y>
+      <x>3400</x>
+      <y>552</y>
       <w>160</w>
       <h>328</h>
     </coordinates>
@@ -3272,8 +3275,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3448</x>
-      <y>576</y>
+      <x>3440</x>
+      <y>504</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -3285,8 +3288,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3408</x>
-      <y>440</y>
+      <x>3400</x>
+      <y>368</y>
       <w>96</w>
       <h>160</h>
     </coordinates>
@@ -3296,8 +3299,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3240</x>
-      <y>800</y>
+      <x>3232</x>
+      <y>728</y>
       <w>112</w>
       <h>104</h>
     </coordinates>
@@ -3312,8 +3315,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3328</x>
-      <y>640</y>
+      <x>3320</x>
+      <y>568</y>
       <w>168</w>
       <h>80</h>
     </coordinates>
@@ -3323,8 +3326,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3304</x>
-      <y>696</y>
+      <x>3296</x>
+      <y>624</y>
       <w>64</w>
       <h>64</h>
     </coordinates>
@@ -3335,8 +3338,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3328</x>
-      <y>624</y>
+      <x>3320</x>
+      <y>552</y>
       <w>24</w>
       <h>96</h>
     </coordinates>
@@ -3346,8 +3349,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3240</x>
-      <y>640</y>
+      <x>3232</x>
+      <y>568</y>
       <w>256</w>
       <h>80</h>
     </coordinates>
@@ -3357,8 +3360,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3240</x>
-      <y>624</y>
+      <x>3232</x>
+      <y>552</y>
       <w>24</w>
       <h>96</h>
     </coordinates>
@@ -3368,8 +3371,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3208</x>
-      <y>696</y>
+      <x>3200</x>
+      <y>624</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -3380,8 +3383,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3208</x>
-      <y>936</y>
+      <x>3200</x>
+      <y>864</y>
       <w>88</w>
       <h>48</h>
     </coordinates>
@@ -3394,8 +3397,8 @@ schlafli=(3, 3)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3240</x>
-      <y>888</y>
+      <x>3232</x>
+      <y>816</y>
       <w>64</w>
       <h>64</h>
     </coordinates>
@@ -3405,8 +3408,8 @@ schlafli=(3, 3)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3248</x>
-      <y>744</y>
+      <x>3240</x>
+      <y>672</y>
       <w>64</w>
       <h>80</h>
     </coordinates>
@@ -3416,8 +3419,8 @@ schlafli=(3, 3)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3144</x>
-      <y>744</y>
+      <x>3136</x>
+      <y>672</y>
       <w>112</w>
       <h>208</h>
     </coordinates>
@@ -3427,8 +3430,8 @@ schlafli=(3, 3)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3976</x>
-      <y>360</y>
+      <x>3968</x>
+      <y>288</y>
       <w>128</w>
       <h>80</h>
     </coordinates>
@@ -3441,8 +3444,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>4104</x>
-      <y>264</y>
+      <x>4096</x>
+      <y>192</y>
       <w>136</w>
       <h>40</h>
     </coordinates>
@@ -3454,8 +3457,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4040</x>
-      <y>296</y>
+      <x>4032</x>
+      <y>224</y>
       <w>120</w>
       <h>88</h>
     </coordinates>
@@ -3465,8 +3468,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3920</x>
-      <y>456</y>
+      <x>3912</x>
+      <y>384</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -3478,8 +3481,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3840</x>
-      <y>560</y>
+      <x>3832</x>
+      <y>488</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -3490,8 +3493,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3920</x>
-      <y>560</y>
+      <x>3912</x>
+      <y>488</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -3503,8 +3506,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4000</x>
-      <y>560</y>
+      <x>3992</x>
+      <y>488</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -3516,8 +3519,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3960</x>
-      <y>520</y>
+      <x>3952</x>
+      <y>448</y>
       <w>96</w>
       <h>64</h>
     </coordinates>
@@ -3527,8 +3530,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3952</x>
-      <y>520</y>
+      <x>3944</x>
+      <y>448</y>
       <w>24</w>
       <h>64</h>
     </coordinates>
@@ -3538,8 +3541,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3872</x>
-      <y>520</y>
+      <x>3864</x>
+      <y>448</y>
       <w>96</w>
       <h>64</h>
     </coordinates>
@@ -3549,8 +3552,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3952</x>
-      <y>424</y>
+      <x>3944</x>
+      <y>352</y>
       <w>80</w>
       <h>56</h>
     </coordinates>
@@ -3560,8 +3563,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>4216</x>
-      <y>936</y>
+      <x>4208</x>
+      <y>864</y>
       <w>88</w>
       <h>64</h>
     </coordinates>
@@ -3575,8 +3578,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3728</x>
-      <y>936</y>
+      <x>3720</x>
+      <y>864</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -3590,8 +3593,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>4320</x>
-      <y>936</y>
+      <x>4312</x>
+      <y>864</y>
       <w>80</w>
       <h>48</h>
     </coordinates>
@@ -3604,8 +3607,8 @@ length: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4320</x>
-      <y>360</y>
+      <x>4312</x>
+      <y>288</y>
       <w>80</w>
       <h>80</h>
     </coordinates>
@@ -3618,8 +3621,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>4288</x>
-      <y>480</y>
+      <x>4280</x>
+      <y>408</y>
       <w>72</w>
       <h>32</h>
     </coordinates>
@@ -3630,8 +3633,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>4368</x>
-      <y>480</y>
+      <x>4360</x>
+      <y>408</y>
       <w>80</w>
       <h>32</h>
     </coordinates>
@@ -3642,8 +3645,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4320</x>
-      <y>424</y>
+      <x>4312</x>
+      <y>352</y>
       <w>48</w>
       <h>72</h>
     </coordinates>
@@ -3653,8 +3656,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4368</x>
-      <y>424</y>
+      <x>4360</x>
+      <y>352</y>
       <w>56</w>
       <h>72</h>
     </coordinates>
@@ -3664,8 +3667,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4152</x>
-      <y>296</y>
+      <x>4144</x>
+      <y>224</y>
       <w>224</w>
       <h>88</h>
     </coordinates>
@@ -3675,8 +3678,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3968</x>
-      <y>728</y>
+      <x>3960</x>
+      <y>656</y>
       <w>304</w>
       <h>224</h>
     </coordinates>
@@ -3686,8 +3689,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4048</x>
-      <y>608</y>
+      <x>4040</x>
+      <y>536</y>
       <w>312</w>
       <h>344</h>
     </coordinates>
@@ -3697,8 +3700,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4080</x>
-      <y>560</y>
+      <x>4072</x>
+      <y>488</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -3710,8 +3713,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4048</x>
-      <y>424</y>
+      <x>4040</x>
+      <y>352</y>
       <w>88</w>
       <h>160</h>
     </coordinates>
@@ -3721,8 +3724,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3848</x>
-      <y>800</y>
+      <x>3840</x>
+      <y>728</y>
       <w>112</w>
       <h>104</h>
     </coordinates>
@@ -3737,8 +3740,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3872</x>
-      <y>728</y>
+      <x>3864</x>
+      <y>656</y>
       <w>48</w>
       <h>96</h>
     </coordinates>
@@ -3748,8 +3751,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3960</x>
-      <y>624</y>
+      <x>3952</x>
+      <y>552</y>
       <w>168</w>
       <h>80</h>
     </coordinates>
@@ -3759,8 +3762,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3936</x>
-      <y>680</y>
+      <x>3928</x>
+      <y>608</y>
       <w>64</w>
       <h>64</h>
     </coordinates>
@@ -3771,8 +3774,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3960</x>
-      <y>608</y>
+      <x>3952</x>
+      <y>536</y>
       <w>24</w>
       <h>96</h>
     </coordinates>
@@ -3782,8 +3785,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3872</x>
-      <y>624</y>
+      <x>3864</x>
+      <y>552</y>
       <w>256</w>
       <h>80</h>
     </coordinates>
@@ -3793,8 +3796,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3872</x>
-      <y>608</y>
+      <x>3864</x>
+      <y>536</y>
       <w>24</w>
       <h>96</h>
     </coordinates>
@@ -3804,8 +3807,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3840</x>
-      <y>680</y>
+      <x>3832</x>
+      <y>608</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -3816,8 +3819,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3912</x>
-      <y>936</y>
+      <x>3904</x>
+      <y>864</y>
       <w>88</w>
       <h>48</h>
     </coordinates>
@@ -3830,8 +3833,8 @@ schlafli=(4, 3)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3904</x>
-      <y>888</y>
+      <x>3896</x>
+      <y>816</y>
       <w>64</w>
       <h>64</h>
     </coordinates>
@@ -3841,8 +3844,8 @@ schlafli=(4, 3)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3760</x>
-      <y>728</y>
+      <x>3752</x>
+      <y>656</y>
       <w>128</w>
       <h>224</h>
     </coordinates>
@@ -3852,8 +3855,8 @@ schlafli=(4, 3)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>4056</x>
-      <y>936</y>
+      <x>4048</x>
+      <y>864</y>
       <w>144</w>
       <h>56</h>
     </coordinates>
@@ -3866,8 +3869,8 @@ sides: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3880</x>
-      <y>728</y>
+      <x>3872</x>
+      <y>656</y>
       <w>256</w>
       <h>224</h>
     </coordinates>
@@ -3877,8 +3880,8 @@ sides: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4192</x>
-      <y>560</y>
+      <x>4184</x>
+      <y>488</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -3890,8 +3893,8 @@ sides: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4088</x>
-      <y>424</y>
+      <x>4080</x>
+      <y>352</y>
       <w>160</w>
       <h>160</h>
     </coordinates>
@@ -3901,8 +3904,8 @@ sides: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4224</x>
-      <y>624</y>
+      <x>4216</x>
+      <y>552</y>
       <w>48</w>
       <h>328</h>
     </coordinates>
@@ -3912,8 +3915,8 @@ sides: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4112</x>
-      <y>624</y>
+      <x>4104</x>
+      <y>552</y>
       <w>136</w>
       <h>328</h>
     </coordinates>
@@ -3923,8 +3926,8 @@ sides: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4112</x>
-      <y>624</y>
+      <x>4104</x>
+      <y>552</y>
       <w>248</w>
       <h>328</h>
     </coordinates>
@@ -3934,8 +3937,8 @@ sides: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3480</x>
-      <y>640</y>
+      <x>3472</x>
+      <y>568</y>
       <w>88</w>
       <h>312</h>
     </coordinates>
@@ -3945,8 +3948,8 @@ sides: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2808</x>
-      <y>624</y>
+      <x>2800</x>
+      <y>552</y>
       <w>88</w>
       <h>168</h>
     </coordinates>
@@ -3956,8 +3959,8 @@ sides: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>952</x>
-      <y>880</y>
+      <x>944</x>
+      <y>808</y>
       <w>88</w>
       <h>64</h>
     </coordinates>
@@ -3971,8 +3974,8 @@ height: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1000</x>
-      <y>824</y>
+      <x>992</x>
+      <y>752</y>
       <w>24</w>
       <h>72</h>
     </coordinates>
@@ -3982,8 +3985,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>944</x>
-      <y>760</y>
+      <x>936</x>
+      <y>688</y>
       <w>128</w>
       <h>80</h>
     </coordinates>
@@ -3996,8 +3999,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>912</x>
-      <y>824</y>
+      <x>904</x>
+      <y>752</y>
       <w>112</w>
       <h>72</h>
     </coordinates>
@@ -4007,8 +4010,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1048</x>
-      <y>880</y>
+      <x>1040</x>
+      <y>808</y>
       <w>80</w>
       <h>48</h>
     </coordinates>
@@ -4021,8 +4024,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1000</x>
-      <y>824</y>
+      <x>992</x>
+      <y>752</y>
       <w>120</w>
       <h>72</h>
     </coordinates>
@@ -4032,8 +4035,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1000</x>
-      <y>640</y>
+      <x>992</x>
+      <y>568</y>
       <w>24</w>
       <h>56</h>
     </coordinates>
@@ -4043,8 +4046,8 @@ length: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>960</x>
-      <y>608</y>
+      <x>952</x>
+      <y>536</y>
       <w>136</w>
       <h>40</h>
     </coordinates>
@@ -4056,8 +4059,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>864</x>
-      <y>880</y>
+      <x>856</x>
+      <y>808</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -4071,8 +4074,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>952</x>
-      <y>672</y>
+      <x>944</x>
+      <y>600</y>
       <w>112</w>
       <h>64</h>
     </coordinates>
@@ -4083,8 +4086,8 @@ height: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1000</x>
-      <y>720</y>
+      <x>992</x>
+      <y>648</y>
       <w>24</w>
       <h>64</h>
     </coordinates>
@@ -4094,8 +4097,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>936</x>
-      <y>672</y>
+      <x>928</x>
+      <y>600</y>
       <w>152</w>
       <h>160</h>
     </coordinates>
@@ -4106,8 +4109,8 @@ layer=0</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>856</x>
-      <y>1280</y>
+      <x>848</x>
+      <y>1208</y>
       <w>88</w>
       <h>64</h>
     </coordinates>
@@ -4121,8 +4124,8 @@ height: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>904</x>
-      <y>1224</y>
+      <x>896</x>
+      <y>1152</y>
       <w>24</w>
       <h>72</h>
     </coordinates>
@@ -4132,8 +4135,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>848</x>
-      <y>1160</y>
+      <x>840</x>
+      <y>1088</y>
       <w>128</w>
       <h>80</h>
     </coordinates>
@@ -4146,8 +4149,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>816</x>
-      <y>1224</y>
+      <x>808</x>
+      <y>1152</y>
       <w>112</w>
       <h>72</h>
     </coordinates>
@@ -4157,8 +4160,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>952</x>
-      <y>1280</y>
+      <x>944</x>
+      <y>1208</y>
       <w>80</w>
       <h>48</h>
     </coordinates>
@@ -4171,8 +4174,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>904</x>
-      <y>1224</y>
+      <x>896</x>
+      <y>1152</y>
       <w>120</w>
       <h>72</h>
     </coordinates>
@@ -4182,8 +4185,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>984</x>
-      <y>1040</y>
+      <x>976</x>
+      <y>968</y>
       <w>24</w>
       <h>56</h>
     </coordinates>
@@ -4193,8 +4196,8 @@ length: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>944</x>
-      <y>1008</y>
+      <x>936</x>
+      <y>936</y>
       <w>136</w>
       <h>40</h>
     </coordinates>
@@ -4206,8 +4209,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>768</x>
-      <y>1280</y>
+      <x>760</x>
+      <y>1208</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -4221,8 +4224,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>936</x>
-      <y>1072</y>
+      <x>928</x>
+      <y>1000</y>
       <w>112</w>
       <h>64</h>
     </coordinates>
@@ -4233,8 +4236,8 @@ height: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>904</x>
-      <y>1120</y>
+      <x>896</x>
+      <y>1048</y>
       <w>96</w>
       <h>64</h>
     </coordinates>
@@ -4244,8 +4247,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>1024</x>
-      <y>1160</y>
+      <x>1016</x>
+      <y>1088</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -4256,8 +4259,8 @@ height: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>992</x>
-      <y>1120</y>
+      <x>984</x>
+      <y>1048</y>
       <w>88</w>
       <h>64</h>
     </coordinates>
@@ -4267,8 +4270,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1056</x>
-      <y>1280</y>
+      <x>1048</x>
+      <y>1208</y>
       <w>80</w>
       <h>32</h>
     </coordinates>
@@ -4279,8 +4282,8 @@ height: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1056</x>
-      <y>1208</y>
+      <x>1048</x>
+      <y>1136</y>
       <w>48</w>
       <h>88</h>
     </coordinates>
@@ -4290,8 +4293,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>304</x>
-      <y>264</y>
+      <x>296</x>
+      <y>192</y>
       <w>136</w>
       <h>40</h>
     </coordinates>
@@ -4303,8 +4306,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>312</x>
-      <y>344</y>
+      <x>304</x>
+      <y>272</y>
       <w>88</w>
       <h>48</h>
     </coordinates>
@@ -4317,8 +4320,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>224</x>
-      <y>344</y>
+      <x>216</x>
+      <y>272</y>
       <w>80</w>
       <h>48</h>
     </coordinates>
@@ -4331,8 +4334,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>408</x>
-      <y>344</y>
+      <x>400</x>
+      <y>272</y>
       <w>80</w>
       <h>40</h>
     </coordinates>
@@ -4344,8 +4347,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>256</x>
-      <y>296</y>
+      <x>248</x>
+      <y>224</y>
       <w>104</w>
       <h>64</h>
     </coordinates>
@@ -4355,8 +4358,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>352</x>
-      <y>296</y>
+      <x>344</x>
+      <y>224</y>
       <w>24</w>
       <h>64</h>
     </coordinates>
@@ -4366,8 +4369,8 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>368</x>
-      <y>296</y>
+      <x>360</x>
+      <y>224</y>
       <w>96</w>
       <h>64</h>
     </coordinates>
@@ -4377,10 +4380,10 @@ length: Float</panel_attributes>
   <element>
     <id>UMLNote</id>
     <coordinates>
-      <x>304</x>
-      <y>144</y>
+      <x>296</x>
+      <y>0</y>
       <w>208</w>
-      <h>88</h>
+      <h>160</h>
     </coordinates>
     <panel_attributes>Traditional inheritance hierarchy
 
@@ -4389,14 +4392,18 @@ Cylinder
 Rectangle
 Line
 
+But inheritance is not suitable for
+expressing a multidimensional objets
+as shown in the case-study analysis
+
 bg=cyan</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>344</x>
-      <y>224</y>
+      <x>336</x>
+      <y>152</y>
       <w>24</w>
       <h>56</h>
     </coordinates>
@@ -4406,10 +4413,10 @@ bg=cyan</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>2632</x>
-      <y>888</y>
+      <x>2624</x>
+      <y>816</y>
       <w>208</w>
-      <h>96</h>
+      <h>112</h>
     </coordinates>
     <panel_attributes>halign=left
 
@@ -4425,8 +4432,8 @@ a self-categorized dimension</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>2600</x>
-      <y>776</y>
+      <x>2592</x>
+      <y>704</y>
       <w>88</w>
       <h>48</h>
     </coordinates>
@@ -4439,8 +4446,8 @@ side: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2640</x>
-      <y>720</y>
+      <x>2632</x>
+      <y>648</y>
       <w>40</w>
       <h>72</h>
     </coordinates>
@@ -4450,8 +4457,8 @@ side: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3304</x>
-      <y>936</y>
+      <x>3296</x>
+      <y>864</y>
       <w>88</w>
       <h>48</h>
     </coordinates>
@@ -4464,8 +4471,8 @@ schlafli=(4, 3)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3296</x>
-      <y>888</y>
+      <x>3288</x>
+      <y>816</y>
       <w>64</w>
       <h>64</h>
     </coordinates>
@@ -4475,8 +4482,8 @@ schlafli=(4, 3)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>3816</x>
-      <y>936</y>
+      <x>3808</x>
+      <y>864</y>
       <w>88</w>
       <h>48</h>
     </coordinates>
@@ -4489,8 +4496,8 @@ schlafli=(3, 3)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>3848</x>
-      <y>888</y>
+      <x>3840</x>
+      <y>816</y>
       <w>64</w>
       <h>64</h>
     </coordinates>
@@ -4500,8 +4507,8 @@ schlafli=(3, 3)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4928</x>
-      <y>376</y>
+      <x>4920</x>
+      <y>304</y>
       <w>128</w>
       <h>80</h>
     </coordinates>
@@ -4514,8 +4521,8 @@ calculateArea(): Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>5056</x>
-      <y>280</y>
+      <x>5048</x>
+      <y>208</y>
       <w>136</w>
       <h>40</h>
     </coordinates>
@@ -4527,8 +4534,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4992</x>
-      <y>312</y>
+      <x>4984</x>
+      <y>240</y>
       <w>120</w>
       <h>88</h>
     </coordinates>
@@ -4538,8 +4545,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4872</x>
-      <y>472</y>
+      <x>4864</x>
+      <y>400</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -4551,8 +4558,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4792</x>
-      <y>576</y>
+      <x>4784</x>
+      <y>504</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -4563,8 +4570,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4872</x>
-      <y>576</y>
+      <x>4864</x>
+      <y>504</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -4576,8 +4583,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4952</x>
-      <y>576</y>
+      <x>4944</x>
+      <y>504</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -4589,8 +4596,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4912</x>
-      <y>536</y>
+      <x>4904</x>
+      <y>464</y>
       <w>96</w>
       <h>64</h>
     </coordinates>
@@ -4600,8 +4607,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4904</x>
-      <y>536</y>
+      <x>4896</x>
+      <y>464</y>
       <w>24</w>
       <h>64</h>
     </coordinates>
@@ -4611,8 +4618,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4832</x>
-      <y>536</y>
+      <x>4824</x>
+      <y>464</y>
       <w>88</w>
       <h>64</h>
     </coordinates>
@@ -4622,8 +4629,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4912</x>
-      <y>440</y>
+      <x>4904</x>
+      <y>368</y>
       <w>72</w>
       <h>56</h>
     </coordinates>
@@ -4633,8 +4640,8 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>5384</x>
-      <y>1296</y>
+      <x>5400</x>
+      <y>1224</y>
       <w>88</w>
       <h>64</h>
     </coordinates>
@@ -4648,8 +4655,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>4512</x>
-      <y>1288</y>
+      <x>4504</x>
+      <y>1216</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -4663,8 +4670,8 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>5480</x>
-      <y>1304</y>
+      <x>5496</x>
+      <y>1232</y>
       <w>80</w>
       <h>48</h>
     </coordinates>
@@ -4677,8 +4684,8 @@ length: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>5272</x>
-      <y>376</y>
+      <x>5264</x>
+      <y>304</y>
       <w>80</w>
       <h>80</h>
     </coordinates>
@@ -4691,8 +4698,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>5240</x>
-      <y>496</y>
+      <x>5232</x>
+      <y>424</y>
       <w>72</w>
       <h>32</h>
     </coordinates>
@@ -4703,8 +4710,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>5320</x>
-      <y>496</y>
+      <x>5312</x>
+      <y>424</y>
       <w>80</w>
       <h>32</h>
     </coordinates>
@@ -4715,8 +4722,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>5272</x>
-      <y>440</y>
+      <x>5264</x>
+      <y>368</y>
       <w>48</w>
       <h>72</h>
     </coordinates>
@@ -4726,8 +4733,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>5320</x>
-      <y>440</y>
+      <x>5312</x>
+      <y>368</y>
       <w>56</w>
       <h>72</h>
     </coordinates>
@@ -4737,8 +4744,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>5152</x>
-      <y>312</y>
+      <x>5144</x>
+      <y>240</y>
       <w>176</w>
       <h>88</h>
     </coordinates>
@@ -4748,30 +4755,30 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4904</x>
-      <y>744</y>
-      <w>536</w>
+      <x>4896</x>
+      <y>672</y>
+      <w>560</w>
       <h>568</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;.</panel_attributes>
-    <additional_attributes>10.0;10.0;80.0;150.0;650.0;690.0</additional_attributes>
+    <additional_attributes>10.0;10.0;80.0;150.0;680.0;690.0</additional_attributes>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>5000</x>
-      <y>624</y>
-      <w>520</w>
+      <x>4992</x>
+      <y>552</y>
+      <w>544</w>
       <h>696</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;.</panel_attributes>
-    <additional_attributes>10.0;10.0;630.0;850.0</additional_attributes>
+    <additional_attributes>10.0;10.0;660.0;850.0</additional_attributes>
   </element>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>5032</x>
-      <y>576</y>
+      <x>5024</x>
+      <y>504</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -4783,8 +4790,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>5000</x>
-      <y>440</y>
+      <x>4992</x>
+      <y>368</y>
       <w>88</w>
       <h>160</h>
     </coordinates>
@@ -4794,8 +4801,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4776</x>
-      <y>872</y>
+      <x>4768</x>
+      <y>800</y>
       <w>112</w>
       <h>104</h>
     </coordinates>
@@ -4810,8 +4817,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4824</x>
-      <y>848</y>
+      <x>4816</x>
+      <y>776</y>
       <w>24</w>
       <h>48</h>
     </coordinates>
@@ -4821,8 +4828,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4904</x>
-      <y>640</y>
+      <x>4896</x>
+      <y>568</y>
       <w>176</w>
       <h>80</h>
     </coordinates>
@@ -4832,8 +4839,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4880</x>
-      <y>696</y>
+      <x>4872</x>
+      <y>624</y>
       <w>64</w>
       <h>64</h>
     </coordinates>
@@ -4844,8 +4851,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4904</x>
-      <y>624</y>
+      <x>4896</x>
+      <y>552</y>
       <w>24</w>
       <h>96</h>
     </coordinates>
@@ -4855,8 +4862,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4824</x>
-      <y>640</y>
+      <x>4816</x>
+      <y>568</y>
       <w>256</w>
       <h>80</h>
     </coordinates>
@@ -4866,8 +4873,8 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4824</x>
-      <y>624</y>
+      <x>4816</x>
+      <y>552</y>
       <w>24</w>
       <h>96</h>
     </coordinates>
@@ -4877,8 +4884,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4792</x>
-      <y>696</y>
+      <x>4784</x>
+      <y>624</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -4889,8 +4896,8 @@ density: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>4976</x>
-      <y>1304</y>
+      <x>4968</x>
+      <y>1232</y>
       <w>88</w>
       <h>48</h>
     </coordinates>
@@ -4903,8 +4910,8 @@ schlafli=(4, 3)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4952</x>
-      <y>1192</y>
+      <x>4944</x>
+      <y>1120</y>
       <w>80</w>
       <h>128</h>
     </coordinates>
@@ -4914,8 +4921,8 @@ schlafli=(4, 3)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4536</x>
-      <y>744</y>
+      <x>4528</x>
+      <y>672</y>
       <w>304</w>
       <h>560</h>
     </coordinates>
@@ -4925,8 +4932,8 @@ schlafli=(4, 3)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>5096</x>
-      <y>1304</y>
+      <x>5104</x>
+      <y>1232</y>
       <w>144</w>
       <h>56</h>
     </coordinates>
@@ -4939,19 +4946,19 @@ sides: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4832</x>
-      <y>744</y>
-      <w>344</w>
+      <x>4824</x>
+      <y>672</y>
+      <w>360</w>
       <h>576</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;.</panel_attributes>
-    <additional_attributes>10.0;10.0;410.0;700.0</additional_attributes>
+    <additional_attributes>10.0;10.0;430.0;700.0</additional_attributes>
   </element>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>5144</x>
-      <y>576</y>
+      <x>5136</x>
+      <y>504</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -4963,8 +4970,8 @@ sides: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>5032</x>
-      <y>440</y>
+      <x>5024</x>
+      <y>368</y>
       <w>168</w>
       <h>160</h>
     </coordinates>
@@ -4974,41 +4981,41 @@ sides: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>5176</x>
-      <y>640</y>
-      <w>264</w>
+      <x>5168</x>
+      <y>568</y>
+      <w>288</w>
       <h>672</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;.</panel_attributes>
-    <additional_attributes>10.0;10.0;310.0;820.0</additional_attributes>
+    <additional_attributes>10.0;10.0;340.0;820.0</additional_attributes>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>5152</x>
-      <y>640</y>
-      <w>48</w>
+      <x>5160</x>
+      <y>568</y>
+      <w>32</w>
       <h>680</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;.</panel_attributes>
-    <additional_attributes>40.0;10.0;10.0;830.0</additional_attributes>
+    <additional_attributes>20.0;10.0;10.0;830.0</additional_attributes>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>5064</x>
-      <y>640</y>
-      <w>456</w>
+      <x>5056</x>
+      <y>568</y>
+      <w>480</w>
       <h>680</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;.</panel_attributes>
-    <additional_attributes>10.0;10.0;550.0;830.0</additional_attributes>
+    <additional_attributes>10.0;10.0;580.0;830.0</additional_attributes>
   </element>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>4880</x>
-      <y>1304</y>
+      <x>4872</x>
+      <y>1232</y>
       <w>88</w>
       <h>48</h>
     </coordinates>
@@ -5021,8 +5028,8 @@ schlafli=(3, 3)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4912</x>
-      <y>1192</y>
+      <x>4904</x>
+      <y>1120</y>
       <w>40</w>
       <h>128</h>
     </coordinates>
@@ -5032,8 +5039,8 @@ schlafli=(3, 3)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4632</x>
-      <y>1032</y>
+      <x>4624</x>
+      <y>960</y>
       <w>112</w>
       <h>72</h>
     </coordinates>
@@ -5045,8 +5052,8 @@ SymmetryGroup
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4608</x>
-      <y>1096</y>
+      <x>4600</x>
+      <y>1024</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -5056,8 +5063,8 @@ SymmetryGroup
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4680</x>
-      <y>1096</y>
+      <x>4672</x>
+      <y>1024</y>
       <w>24</w>
       <h>72</h>
     </coordinates>
@@ -5067,8 +5074,8 @@ SymmetryGroup
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4696</x>
-      <y>1096</y>
+      <x>4688</x>
+      <y>1024</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -5078,8 +5085,8 @@ SymmetryGroup
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4720</x>
-      <y>1144</y>
+      <x>4712</x>
+      <y>1072</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -5091,8 +5098,8 @@ SymmetryGroup
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4648</x>
-      <y>1144</y>
+      <x>4640</x>
+      <y>1072</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -5104,8 +5111,8 @@ SymmetryGroup
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4576</x>
-      <y>1144</y>
+      <x>4568</x>
+      <y>1072</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -5117,8 +5124,8 @@ SymmetryGroup
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4680</x>
-      <y>960</y>
+      <x>4672</x>
+      <y>888</y>
       <w>144</w>
       <h>96</h>
     </coordinates>
@@ -5128,8 +5135,8 @@ SymmetryGroup
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4912</x>
-      <y>1144</y>
+      <x>4904</x>
+      <y>1072</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -5140,8 +5147,8 @@ SymmetryGroup
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4912</x>
-      <y>1080</y>
+      <x>4904</x>
+      <y>1008</y>
       <w>56</w>
       <h>88</h>
     </coordinates>
@@ -5151,8 +5158,8 @@ SymmetryGroup
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4824</x>
-      <y>1144</y>
+      <x>4816</x>
+      <y>1072</y>
       <w>80</w>
       <h>64</h>
     </coordinates>
@@ -5163,8 +5170,8 @@ SymmetryGroup
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>4752</x>
-      <y>1304</y>
+      <x>4744</x>
+      <y>1232</y>
       <w>112</w>
       <h>48</h>
     </coordinates>
@@ -5177,8 +5184,8 @@ schlafli = (5/2, 5)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4808</x>
-      <y>1192</y>
+      <x>4800</x>
+      <y>1120</y>
       <w>64</w>
       <h>128</h>
     </coordinates>
@@ -5188,8 +5195,8 @@ schlafli = (5/2, 5)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4856</x>
-      <y>1080</y>
+      <x>4848</x>
+      <y>1008</y>
       <w>56</w>
       <h>88</h>
     </coordinates>
@@ -5199,8 +5206,8 @@ schlafli = (5/2, 5)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4688</x>
-      <y>1192</y>
+      <x>4680</x>
+      <y>1120</y>
       <w>344</w>
       <h>128</h>
     </coordinates>
@@ -5210,8 +5217,8 @@ schlafli = (5/2, 5)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4624</x>
-      <y>1192</y>
+      <x>4616</x>
+      <y>1120</y>
       <w>312</w>
       <h>128</h>
     </coordinates>
@@ -5221,8 +5228,8 @@ schlafli = (5/2, 5)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4760</x>
-      <y>1192</y>
+      <x>4752</x>
+      <y>1120</y>
       <w>72</w>
       <h>128</h>
     </coordinates>
@@ -5232,20 +5239,20 @@ schlafli = (5/2, 5)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4848</x>
-      <y>1032</y>
+      <x>4840</x>
+      <y>960</y>
       <w>112</w>
       <h>64</h>
     </coordinates>
-    <panel_attributes>regularPolyClass
+    <panel_attributes>regularPolyHClass
 &lt;&lt;categorization&gt;&gt;</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4840</x>
-      <y>960</y>
+      <x>4832</x>
+      <y>888</y>
       <w>80</w>
       <h>96</h>
     </coordinates>
@@ -5255,8 +5262,8 @@ schlafli = (5/2, 5)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>5248</x>
-      <y>576</y>
+      <x>5240</x>
+      <y>504</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -5268,8 +5275,8 @@ schlafli = (5/2, 5)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>5056</x>
-      <y>440</y>
+      <x>5048</x>
+      <y>368</y>
       <w>240</w>
       <h>160</h>
     </coordinates>
@@ -5279,8 +5286,8 @@ schlafli = (5/2, 5)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4792</x>
-      <y>792</y>
+      <x>4784</x>
+      <y>720</y>
       <w>80</w>
       <h>72</h>
     </coordinates>
@@ -5292,8 +5299,8 @@ Polyhedron
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4824</x>
-      <y>744</y>
+      <x>4816</x>
+      <y>672</y>
       <w>24</w>
       <h>72</h>
     </coordinates>
@@ -5303,8 +5310,8 @@ Polyhedron
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4824</x>
-      <y>640</y>
+      <x>4816</x>
+      <y>568</y>
       <w>464</w>
       <h>176</h>
     </coordinates>
@@ -5314,8 +5321,8 @@ Polyhedron
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4976</x>
-      <y>784</y>
+      <x>4968</x>
+      <y>712</y>
       <w>64</w>
       <h>72</h>
     </coordinates>
@@ -5327,8 +5334,8 @@ Polygon
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4920</x>
-      <y>744</y>
+      <x>4912</x>
+      <y>672</y>
       <w>104</w>
       <h>64</h>
     </coordinates>
@@ -5338,8 +5345,8 @@ Polygon
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>5000</x>
-      <y>640</y>
+      <x>4992</x>
+      <y>568</y>
       <w>288</w>
       <h>168</h>
     </coordinates>
@@ -5349,8 +5356,8 @@ Polygon
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>5256</x>
-      <y>1304</y>
+      <x>5264</x>
+      <y>1232</y>
       <w>88</w>
       <h>48</h>
     </coordinates>
@@ -5363,19 +5370,19 @@ side: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>5008</x>
-      <y>840</y>
-      <w>304</w>
+      <x>5000</x>
+      <y>768</y>
+      <w>320</w>
       <h>480</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;.</panel_attributes>
-    <additional_attributes>10.0;10.0;360.0;580.0</additional_attributes>
+    <additional_attributes>10.0;10.0;380.0;580.0</additional_attributes>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>4760</x>
-      <y>1152</y>
+      <x>4752</x>
+      <y>1080</y>
       <w>112</w>
       <h>24</h>
     </coordinates>
@@ -5383,36 +5390,104 @@ side: Float</panel_attributes>
     <additional_attributes>10.0;10.0;120.0;10.0</additional_attributes>
   </element>
   <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>3112</x>
+      <y>944</y>
+      <w>248</w>
+      <h>112</h>
+    </coordinates>
+    <panel_attributes>halign=left
+
+Tetrahedron added
+
+RegularPolyH self-cat dimension introduced</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>3728</x>
+      <y>960</y>
+      <w>208</w>
+      <h>112</h>
+    </coordinates>
+    <panel_attributes>halign=left
+
+Rectangular feature introduced
+
+Cuboid added
+
+Cube conditionally extends Cuboid</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
     <id>Relation</id>
     <coordinates>
-      <x>3992</x>
-      <y>952</y>
+      <x>3984</x>
+      <y>872</y>
       <w>80</w>
-      <h>24</h>
+      <h>32</h>
     </coordinates>
-    <panel_attributes>lt=&lt;.</panel_attributes>
-    <additional_attributes>80.0;10.0;10.0;10.0</additional_attributes>
+    <panel_attributes>lt=&lt;&lt;-
+&lt;&lt;cond&gt;&gt;</panel_attributes>
+    <additional_attributes>80.0;20.0;10.0;20.0</additional_attributes>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>5056</x>
-      <y>1320</y>
-      <w>56</w>
-      <h>24</h>
+      <x>5048</x>
+      <y>1240</y>
+      <w>72</w>
+      <h>32</h>
     </coordinates>
-    <panel_attributes>lt=&lt;.</panel_attributes>
-    <additional_attributes>50.0;10.0;10.0;10.0</additional_attributes>
+    <panel_attributes>lt=&lt;&lt;-
+&lt;&lt;cond&gt;&gt;</panel_attributes>
+    <additional_attributes>70.0;20.0;10.0;20.0</additional_attributes>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>5336</x>
-      <y>1320</y>
-      <w>64</w>
-      <h>24</h>
+      <x>5344</x>
+      <y>1240</y>
+      <w>72</w>
+      <h>32</h>
     </coordinates>
-    <panel_attributes>lt=&lt;.</panel_attributes>
-    <additional_attributes>60.0;10.0;10.0;10.0</additional_attributes>
+    <panel_attributes>lt=&lt;&lt;-
+&lt;&lt;cond&gt;&gt;</panel_attributes>
+    <additional_attributes>70.0;20.0;10.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>4672</x>
+      <y>1336</y>
+      <w>208</w>
+      <h>112</h>
+    </coordinates>
+    <panel_attributes>halign=left
+
+RegularPolyH categorized to:
+ - regularPolyHSymmetryGroup
+ - regularPolyHClass
+
+Regular feature introduced
+
+RegularPolygon added
+
+SmallStellatedDodecahedron added
+Square added</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2288</x>
+      <y>536</y>
+      <w>104</w>
+      <h>80</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;.</panel_attributes>
+    <additional_attributes>110.0;10.0;10.0;80.0</additional_attributes>
   </element>
 </diagram>
