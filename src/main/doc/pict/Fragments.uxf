@@ -20,7 +20,7 @@ scanner: Scanner</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1312</x>
+      <x>1352</x>
       <y>408</y>
       <w>88</w>
       <h>64</h>
@@ -48,7 +48,7 @@ height: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1360</x>
+      <x>1400</x>
       <y>352</y>
       <w>24</w>
       <h>72</h>
@@ -176,7 +176,7 @@ lt=&lt;.</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>1536</x>
+      <x>1576</x>
       <y>288</y>
       <w>80</w>
       <h>80</h>
@@ -261,7 +261,7 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>1304</x>
+      <x>1344</x>
       <y>288</y>
       <w>128</w>
       <h>80</h>
@@ -912,7 +912,7 @@ Polytope
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1224</x>
+      <x>1168</x>
       <y>408</y>
       <w>80</w>
       <h>64</h>
@@ -927,18 +927,18 @@ height: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1272</x>
+      <x>1216</x>
       <y>352</y>
-      <w>112</w>
+      <w>208</w>
       <h>72</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;.</panel_attributes>
-    <additional_attributes>120.0;10.0;10.0;70.0</additional_attributes>
+    <additional_attributes>240.0;10.0;10.0;70.0</additional_attributes>
   </element>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1496</x>
+      <x>1536</x>
       <y>408</y>
       <w>72</w>
       <h>32</h>
@@ -950,7 +950,7 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1576</x>
+      <x>1616</x>
       <y>408</y>
       <w>80</w>
       <h>32</h>
@@ -962,7 +962,7 @@ height: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1544</x>
+      <x>1584</x>
       <y>352</y>
       <w>48</w>
       <h>72</h>
@@ -973,7 +973,7 @@ height: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1576</x>
+      <x>1616</x>
       <y>352</y>
       <w>56</w>
       <h>72</h>
@@ -1260,7 +1260,7 @@ height: Float</panel_attributes>
       <w>120</w>
       <h>48</h>
     </coordinates>
-    <panel_attributes>Line
+    <panel_attributes>Segment
 &lt;&lt;fragment&gt;&gt;
 --
 length: Float</panel_attributes>
@@ -1391,7 +1391,7 @@ schlafli = (4, 3)</panel_attributes>
       <w>120</w>
       <h>48</h>
     </coordinates>
-    <panel_attributes>Line
+    <panel_attributes>Segment
 &lt;&lt;fragment&gt;&gt;
 --
 length: Float</panel_attributes>
@@ -1646,7 +1646,7 @@ Polytope
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1424</x>
+      <x>1464</x>
       <y>200</y>
       <w>136</w>
       <h>40</h>
@@ -1659,7 +1659,7 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1360</x>
+      <x>1400</x>
       <y>232</y>
       <w>112</w>
       <h>80</h>
@@ -1670,7 +1670,7 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1496</x>
+      <x>1536</x>
       <y>232</y>
       <w>96</w>
       <h>80</h>
@@ -1681,12 +1681,12 @@ pos: (Float, Float, Float)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1408</x>
+      <x>1448</x>
       <y>408</y>
       <w>80</w>
       <h>48</h>
     </coordinates>
-    <panel_attributes>Line
+    <panel_attributes>Segment
 &lt;&lt;fragment&gt;&gt;
 --
 length: Float</panel_attributes>
@@ -1695,7 +1695,7 @@ length: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1360</x>
+      <x>1400</x>
       <y>352</y>
       <w>120</w>
       <h>72</h>
@@ -1777,7 +1777,7 @@ height: Float</panel_attributes>
       <w>80</w>
       <h>48</h>
     </coordinates>
-    <panel_attributes>Line
+    <panel_attributes>Segment
 &lt;&lt;fragment&gt;&gt;
 --
 length: Float</panel_attributes>
@@ -1967,7 +1967,7 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1688</x>
+      <x>1576</x>
       <y>568</y>
       <w>80</w>
       <h>64</h>
@@ -1987,7 +1987,7 @@ height: Float</panel_attributes>
       <w>80</w>
       <h>48</h>
     </coordinates>
-    <panel_attributes>Line
+    <panel_attributes>Segment
 &lt;&lt;fragment&gt;&gt;
 --
 length: Float</panel_attributes>
@@ -2067,24 +2067,24 @@ density: Float</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1728</x>
+      <x>1616</x>
       <y>528</y>
-      <w>24</w>
+      <w>136</w>
       <h>56</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;.</panel_attributes>
-    <additional_attributes>10.0;10.0;10.0;50.0</additional_attributes>
+    <additional_attributes>150.0;10.0;10.0;50.0</additional_attributes>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
       <x>1816</x>
-      <y>528</y>
+      <y>512</y>
       <w>24</w>
-      <h>56</h>
+      <h>72</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;.</panel_attributes>
-    <additional_attributes>10.0;10.0;10.0;50.0</additional_attributes>
+    <additional_attributes>10.0;10.0;10.0;70.0</additional_attributes>
   </element>
   <element>
     <id>Relation</id>
@@ -2135,7 +2135,7 @@ height: Float</panel_attributes>
       <w>80</w>
       <h>48</h>
     </coordinates>
-    <panel_attributes>Line
+    <panel_attributes>Segment
 &lt;&lt;trait&gt;&gt;
 --
 length: Float</panel_attributes>
@@ -2253,7 +2253,7 @@ bg=cyan</panel_attributes>
   <element>
     <id>UMLNote</id>
     <coordinates>
-      <x>1384</x>
+      <x>1424</x>
       <y>48</y>
       <w>240</w>
       <h>120</h>
@@ -2273,7 +2273,7 @@ bg=cyan</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1472</x>
+      <x>1512</x>
       <y>160</y>
       <w>24</w>
       <h>56</h>
@@ -2431,27 +2431,12 @@ height: Float</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>2064</x>
-      <y>600</y>
-      <w>80</w>
-      <h>64</h>
-    </coordinates>
-    <panel_attributes>Cylinder
-&lt;&lt;fragment&gt;&gt;
---
-radius: Float
-height: Float</panel_attributes>
-    <additional_attributes/>
-  </element>
-  <element>
-    <id>UMLClass</id>
-    <coordinates>
       <x>2248</x>
       <y>600</y>
       <w>80</w>
       <h>48</h>
     </coordinates>
-    <panel_attributes>Line
+    <panel_attributes>Segment
 &lt;&lt;fragment&gt;&gt;
 --
 length: Float</panel_attributes>
@@ -2800,7 +2785,7 @@ height: Float</panel_attributes>
       <w>80</w>
       <h>48</h>
     </coordinates>
-    <panel_attributes>Line
+    <panel_attributes>Segment
 &lt;&lt;fragment&gt;&gt;
 --
 length: Float</panel_attributes>
@@ -3172,7 +3157,7 @@ height: Float</panel_attributes>
       <w>80</w>
       <h>48</h>
     </coordinates>
-    <panel_attributes>Line
+    <panel_attributes>Segment
 &lt;&lt;fragment&gt;&gt;
 --
 length: Float</panel_attributes>
@@ -3552,7 +3537,7 @@ height: Float</panel_attributes>
       <w>80</w>
       <h>48</h>
     </coordinates>
-    <panel_attributes>Line
+    <panel_attributes>Segment
 &lt;&lt;fragment&gt;&gt;
 --
 length: Float</panel_attributes>
@@ -3922,7 +3907,7 @@ height: Float</panel_attributes>
       <w>80</w>
       <h>48</h>
     </coordinates>
-    <panel_attributes>Line
+    <panel_attributes>Segment
 &lt;&lt;fragment&gt;&gt;
 --
 length: Float</panel_attributes>
@@ -4098,7 +4083,7 @@ height: Float</panel_attributes>
       <w>80</w>
       <h>40</h>
     </coordinates>
-    <panel_attributes>Line
+    <panel_attributes>Segment
 --
 length: Float</panel_attributes>
     <additional_attributes/>
@@ -4433,7 +4418,7 @@ height: Float</panel_attributes>
       <w>80</w>
       <h>48</h>
     </coordinates>
-    <panel_attributes>Line
+    <panel_attributes>Segment
 &lt;&lt;fragment&gt;&gt;
 --
 length: Float</panel_attributes>
@@ -5178,7 +5163,7 @@ height: Float</panel_attributes>
       <w>80</w>
       <h>48</h>
     </coordinates>
-    <panel_attributes>Line
+    <panel_attributes>Segment
 &lt;&lt;fragment&gt;&gt;
 --
 length: Float</panel_attributes>
@@ -5527,7 +5512,7 @@ bg=cyan</panel_attributes>
       <h>32</h>
     </coordinates>
     <panel_attributes>C
-&lt;&lt;dimension&gt;&gt;</panel_attributes>
+&lt;&lt;category&gt;&gt;</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
@@ -6054,7 +6039,7 @@ pos: (Float, Float, Float)</panel_attributes>
       <w>80</w>
       <h>48</h>
     </coordinates>
-    <panel_attributes>Line
+    <panel_attributes>Segment
 &lt;&lt;fragment&gt;&gt;
 --
 length: Float</panel_attributes>
@@ -6082,7 +6067,7 @@ mixture: List</panel_attributes>
       <w>80</w>
       <h>64</h>
     </coordinates>
-    <panel_attributes>Composition
+    <panel_attributes>Chemistry
 &lt;&lt;dimension&gt;&gt;</panel_attributes>
     <additional_attributes/>
   </element>
@@ -6094,7 +6079,7 @@ mixture: List</panel_attributes>
       <w>80</w>
       <h>48</h>
     </coordinates>
-    <panel_attributes>SingleElement
+    <panel_attributes>OneElement
 &lt;&lt;fragment&gt;&gt;
 --
 elementCode: Int</panel_attributes>
@@ -6226,5 +6211,291 @@ elementCode: Int</panel_attributes>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;.</panel_attributes>
     <additional_attributes>10.0;10.0;10.0;60.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1672</x>
+      <y>568</y>
+      <w>88</w>
+      <h>48</h>
+    </coordinates>
+    <panel_attributes>Cube
+&lt;&lt;fragment&gt;&gt;
+--
+side: Float</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1704</x>
+      <y>528</y>
+      <w>56</w>
+      <h>56</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;.</panel_attributes>
+    <additional_attributes>50.0;10.0;10.0;50.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1968</x>
+      <y>600</y>
+      <w>80</w>
+      <h>64</h>
+    </coordinates>
+    <panel_attributes>Cylinder
+&lt;&lt;fragment&gt;&gt;
+--
+radius: Float
+height: Float</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2008</x>
+      <y>536</y>
+      <w>104</w>
+      <h>80</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;.</panel_attributes>
+    <additional_attributes>110.0;10.0;10.0;80.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>2056</x>
+      <y>600</y>
+      <w>88</w>
+      <h>48</h>
+    </coordinates>
+    <panel_attributes>Cube
+&lt;&lt;fragment&gt;&gt;
+--
+side: Float</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1256</x>
+      <y>408</y>
+      <w>88</w>
+      <h>48</h>
+    </coordinates>
+    <panel_attributes>Cube
+&lt;&lt;fragment&gt;&gt;
+--
+side: Float</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1296</x>
+      <y>352</y>
+      <w>128</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;.</panel_attributes>
+    <additional_attributes>140.0;10.0;10.0;70.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLInterface</id>
+    <coordinates>
+      <x>1776</x>
+      <y>1144</y>
+      <w>80</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>A
+&lt;&lt;dimension&gt;&gt;
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLInterface</id>
+    <coordinates>
+      <x>1776</x>
+      <y>1224</y>
+      <w>80</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>B
+&lt;&lt;dimension&gt;&gt;
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1808</x>
+      <y>1192</y>
+      <w>24</w>
+      <h>56</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;50.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLInterface</id>
+    <coordinates>
+      <x>1864</x>
+      <y>1144</y>
+      <w>80</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>A
+&lt;&lt;dimension&gt;&gt;
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLInterface</id>
+    <coordinates>
+      <x>1864</x>
+      <y>1224</y>
+      <w>80</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>A
+&lt;&lt;category&gt;&gt;
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1896</x>
+      <y>1192</y>
+      <w>24</w>
+      <h>56</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;50.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLInterface</id>
+    <coordinates>
+      <x>1864</x>
+      <y>1304</y>
+      <w>80</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>B
+&lt;&lt;dimension&gt;&gt;
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1896</x>
+      <y>1272</y>
+      <w>24</w>
+      <h>56</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;50.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLInterface</id>
+    <coordinates>
+      <x>1960</x>
+      <y>1144</y>
+      <w>80</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>A
+&lt;&lt;category&gt;&gt;
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLInterface</id>
+    <coordinates>
+      <x>1960</x>
+      <y>1224</y>
+      <w>80</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>B
+&lt;&lt;category&gt;&gt;
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1992</x>
+      <y>1192</y>
+      <w>24</w>
+      <h>56</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;50.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLInterface</id>
+    <coordinates>
+      <x>2048</x>
+      <y>1144</y>
+      <w>80</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>A
+&lt;&lt;category&gt;&gt;
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLInterface</id>
+    <coordinates>
+      <x>2048</x>
+      <y>1224</y>
+      <w>80</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>A
+&lt;&lt;dimension&gt;&gt;
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2080</x>
+      <y>1192</y>
+      <w>24</w>
+      <h>56</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;50.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLInterface</id>
+    <coordinates>
+      <x>2048</x>
+      <y>1304</y>
+      <w>80</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>B
+&lt;&lt;category&gt;&gt;
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2080</x>
+      <y>1272</y>
+      <w>24</w>
+      <h>56</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;50.0</additional_attributes>
   </element>
 </diagram>
