@@ -2549,49 +2549,25 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>2320</x>
+      <x>2328</x>
       <y>488</y>
-      <w>80</w>
+      <w>64</w>
       <h>64</h>
     </coordinates>
     <panel_attributes>Polytope
-&lt;&lt;category&gt;&gt;</panel_attributes>
+&lt;&lt;feature&gt;&gt;</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>2352</x>
-      <y>440</y>
-      <w>24</w>
-      <h>72</h>
-    </coordinates>
-    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
-    <additional_attributes>10.0;10.0;10.0;70.0</additional_attributes>
-  </element>
-  <element>
-    <id>UMLInterface</id>
-    <coordinates>
-      <x>2320</x>
-      <y>384</y>
-      <w>80</w>
-      <h>72</h>
-    </coordinates>
-    <panel_attributes>Polytope
-&lt;&lt;dimension&gt;&gt;
-&lt;&lt;partial&gt;&gt;</panel_attributes>
-    <additional_attributes/>
-  </element>
-  <element>
-    <id>Relation</id>
-    <coordinates>
-      <x>2280</x>
+      <x>2272</x>
       <y>352</y>
-      <w>96</w>
-      <h>56</h>
+      <w>104</w>
+      <h>160</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;-</panel_attributes>
-    <additional_attributes>10.0;10.0;100.0;50.0</additional_attributes>
+    <additional_attributes>10.0;10.0;110.0;180.0</additional_attributes>
   </element>
   <element>
     <id>Relation</id>
@@ -2900,12 +2876,11 @@ density: Float</panel_attributes>
     <coordinates>
       <x>2848</x>
       <y>488</y>
-      <w>80</w>
-      <h>72</h>
+      <w>64</w>
+      <h>64</h>
     </coordinates>
     <panel_attributes>Polytope
-&lt;&lt;dimension&gt;&gt;
-&lt;&lt;partial&gt;&gt;</panel_attributes>
+&lt;&lt;feature&gt;&gt;</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
@@ -2913,11 +2888,11 @@ density: Float</panel_attributes>
     <coordinates>
       <x>2800</x>
       <y>352</y>
-      <w>104</w>
+      <w>96</w>
       <h>160</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;-</panel_attributes>
-    <additional_attributes>10.0;10.0;110.0;180.0</additional_attributes>
+    <additional_attributes>10.0;10.0;100.0;180.0</additional_attributes>
   </element>
   <element>
     <id>UMLInterface</id>
@@ -2947,12 +2922,12 @@ density: Float</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>2648</x>
-      <y>552</y>
+      <y>536</y>
       <w>232</w>
-      <h>72</h>
+      <h>88</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes>
-    <additional_attributes>10.0;70.0;270.0;10.0</additional_attributes>
+    <additional_attributes>10.0;90.0;270.0;10.0</additional_attributes>
   </element>
   <element>
     <id>Relation</id>
@@ -2980,12 +2955,12 @@ density: Float</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>2720</x>
-      <y>552</y>
+      <y>536</y>
       <w>160</w>
-      <h>72</h>
+      <h>88</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes>
-    <additional_attributes>10.0;70.0;180.0;10.0</additional_attributes>
+    <additional_attributes>10.0;90.0;180.0;10.0</additional_attributes>
   </element>
   <element>
     <id>UMLInterface</id>
@@ -3259,14 +3234,13 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>3440</x>
+      <x>3448</x>
       <y>504</y>
-      <w>80</w>
-      <h>72</h>
+      <w>64</w>
+      <h>64</h>
     </coordinates>
     <panel_attributes>Polytope
-&lt;&lt;dimension&gt;&gt;
-&lt;&lt;partial&gt;&gt;</panel_attributes>
+&lt;&lt;feature&gt;&gt;</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
@@ -3639,14 +3613,13 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>4072</x>
+      <x>4080</x>
       <y>488</y>
-      <w>80</w>
-      <h>72</h>
+      <w>64</w>
+      <h>64</h>
     </coordinates>
     <panel_attributes>Polytope
-&lt;&lt;dimension&gt;&gt;
-&lt;&lt;partial&gt;&gt;</panel_attributes>
+&lt;&lt;feature&gt;&gt;</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
@@ -3777,11 +3750,10 @@ sides: (Float, Float, Float)</panel_attributes>
       <x>4184</x>
       <y>488</y>
       <w>80</w>
-      <h>72</h>
+      <h>64</h>
     </coordinates>
     <panel_attributes>Rectangular
-&lt;&lt;dimension&gt;&gt;
-&lt;&lt;partial&gt;&gt;</panel_attributes>
+&lt;&lt;feature&gt;&gt;</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
@@ -3843,12 +3815,12 @@ sides: (Float, Float, Float)</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>2800</x>
-      <y>552</y>
-      <w>88</w>
-      <h>168</h>
+      <y>536</y>
+      <w>96</w>
+      <h>184</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;.</panel_attributes>
-    <additional_attributes>90.0;10.0;10.0;190.0</additional_attributes>
+    <additional_attributes>100.0;10.0;10.0;210.0</additional_attributes>
   </element>
   <element>
     <id>UMLClass</id>
@@ -4520,14 +4492,13 @@ density: Float</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>5024</x>
+      <x>5032</x>
       <y>504</y>
-      <w>80</w>
-      <h>72</h>
+      <w>64</w>
+      <h>64</h>
     </coordinates>
     <panel_attributes>Polytope
-&lt;&lt;dimension&gt;&gt;
-&lt;&lt;partial&gt;&gt;</panel_attributes>
+&lt;&lt;feature&gt;&gt;</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
@@ -4634,11 +4605,10 @@ sides: (Float, Float, Float)</panel_attributes>
       <x>5136</x>
       <y>504</y>
       <w>80</w>
-      <h>72</h>
+      <h>64</h>
     </coordinates>
     <panel_attributes>Rectangular
-&lt;&lt;dimension&gt;&gt;
-&lt;&lt;partial&gt;&gt;</panel_attributes>
+&lt;&lt;feature&gt;&gt;</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
@@ -4936,14 +4906,13 @@ schlafli = (5/2, 5)</panel_attributes>
   <element>
     <id>UMLInterface</id>
     <coordinates>
-      <x>5240</x>
+      <x>5248</x>
       <y>504</y>
-      <w>80</w>
-      <h>72</h>
+      <w>64</w>
+      <h>64</h>
     </coordinates>
     <panel_attributes>Regular
-&lt;&lt;dimension&gt;&gt;
-&lt;&lt;partial&gt;&gt;</panel_attributes>
+&lt;&lt;feature&gt;&gt;</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
@@ -6497,5 +6466,160 @@ side: Float</panel_attributes>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;-</panel_attributes>
     <additional_attributes>10.0;10.0;10.0;50.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLInterface</id>
+    <coordinates>
+      <x>1456</x>
+      <y>1040</y>
+      <w>80</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>P
+&lt;&lt;category&gt;&gt;
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLInterface</id>
+    <coordinates>
+      <x>1456</x>
+      <y>1120</y>
+      <w>80</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>D
+&lt;&lt;dimension&gt;&gt;
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1488</x>
+      <y>1088</y>
+      <w>24</w>
+      <h>56</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;50.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLInterface</id>
+    <coordinates>
+      <x>1416</x>
+      <y>1192</y>
+      <w>80</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>X
+&lt;&lt;category&gt;&gt;
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLInterface</id>
+    <coordinates>
+      <x>1488</x>
+      <y>1192</y>
+      <w>80</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>Y
+&lt;&lt;category&gt;&gt;
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1448</x>
+      <y>1168</y>
+      <w>56</w>
+      <h>48</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>50.0;10.0;10.0;40.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1496</x>
+      <y>1168</y>
+      <w>48</w>
+      <h>48</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;40.0;40.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLInterface</id>
+    <coordinates>
+      <x>1368</x>
+      <y>1296</y>
+      <w>80</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>C1
+&lt;&lt;category&gt;&gt;
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLInterface</id>
+    <coordinates>
+      <x>1520</x>
+      <y>1304</y>
+      <w>80</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>C2
+&lt;&lt;category&gt;&gt;
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1416</x>
+      <y>1240</y>
+      <w>40</w>
+      <h>48</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>30.0;10.0;10.0;40.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1400</x>
+      <y>1264</y>
+      <w>40</w>
+      <h>56</h>
+    </coordinates>
+    <panel_attributes>lt=..</panel_attributes>
+    <additional_attributes>10.0;50.0;30.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1528</x>
+      <y>1240</y>
+      <w>40</w>
+      <h>56</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;30.0;50.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1544</x>
+      <y>1272</y>
+      <w>32</w>
+      <h>56</h>
+    </coordinates>
+    <panel_attributes>lt=..</panel_attributes>
+    <additional_attributes>20.0;50.0;10.0;10.0</additional_attributes>
   </element>
 </diagram>
