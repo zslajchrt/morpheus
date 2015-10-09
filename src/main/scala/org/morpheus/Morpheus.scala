@@ -2905,7 +2905,7 @@ object Morpheus {
 
       val fragTraitName: String = fragTpe.typeSymbol.fullName
       //val fragClassTpName: String = if (isDimension(c)(fragTpe) || (fragId == 0 && !fragTpe.typeSymbol.isAbstract)) {
-      val fragClassTpName: String = if (isAbstractFragment(c)(fragTpe) || (fragId == 0 && !]fragTpe.typeSymbol.isAbstract)) {
+      val fragClassTpName: String = if (isAbstractFragment(c)(fragTpe) || (fragId == 0 && !fragTpe.typeSymbol.isAbstract)) {
         // TODO: verify this condition! Can be there an entity with dependencies or configuration?
         // composite entity fragment
         fragTraitName
