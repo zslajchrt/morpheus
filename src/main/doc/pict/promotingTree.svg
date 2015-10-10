@@ -269,7 +269,7 @@
        inkscape:export-ydpi="56.48" />
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="M 98.253008,104.63024 79.248677,137.56918"
+       d="M 97.591181,104.22562 76.110707,137.56918"
        id="path3238"
        inkscape:connector-type="polyline"
        inkscape:connector-curvature="0"
@@ -596,21 +596,21 @@
     <text
        sodipodi:linespacing="125%"
        id="text4233"
-       y="412.39386"
-       x="61.189751"
+       y="412.16412"
+       x="149.38669"
        style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
        xml:space="preserve"
        inkscape:export-filename="/Users/zslajchrt/IdeaProjects/git/morpheus/src/main/doc/pict/promotionTree1.png"
        inkscape:export-xdpi="56.48"
        inkscape:export-ydpi="56.48"><tspan
-         y="412.39386"
-         x="61.189751"
+         y="412.16412"
+         x="149.38669"
          id="tspan4235"
          sodipodi:role="line">0</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
-       x="147.18976"
+       x="61.189758"
        y="412.39386"
        id="text4237"
        sodipodi:linespacing="125%"
@@ -619,7 +619,7 @@
        inkscape:export-ydpi="56.48"><tspan
          sodipodi:role="line"
          id="tspan4239"
-         x="147.18976"
+         x="61.189758"
          y="412.39386">1</tspan></text>
     <text
        sodipodi:linespacing="125%"
@@ -659,7 +659,7 @@
            height="221.64517"
            x="6.5189753"
            y="226.30157" /></flowRegion><flowPara
-         id="flowPara4255"></flowPara></flowRoot>    <rect
+         id="flowPara4255" /></flowRoot>    <rect
        inkscape:export-ydpi="56.480656"
        inkscape:export-xdpi="56.480656"
        inkscape:export-filename="/Users/zslajchrt/IdeaProjects/git/morpheus/src/main/doc/pict/promotionTree3.png"
@@ -921,21 +921,21 @@
     <text
        sodipodi:linespacing="125%"
        id="text4319"
-       y="192.39388"
-       x="733.18976"
+       y="191.15695"
+       x="834.60724"
        style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
        xml:space="preserve"
        inkscape:export-filename="/Users/zslajchrt/IdeaProjects/git/morpheus/src/main/doc/pict/promotionTree3.png"
        inkscape:export-xdpi="56.480656"
        inkscape:export-ydpi="56.480656"><tspan
-         y="192.39388"
-         x="733.18976"
+         y="191.15695"
+         x="834.60724"
          id="tspan4321"
          sodipodi:role="line">2</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
-       x="835.18976"
+       x="731.18976"
        y="192.39388"
        id="text4323"
        sodipodi:linespacing="125%"
@@ -944,7 +944,7 @@
        inkscape:export-ydpi="56.480656"><tspan
          sodipodi:role="line"
          id="tspan4325"
-         x="835.18976"
+         x="731.18976"
          y="192.39388">3</tspan></text>
     <rect
        style="fill:none;stroke:#ff0000;stroke-width:2.61850405;stroke-miterlimit:4;stroke-dasharray:none"
@@ -1180,7 +1180,7 @@
     <text
        xml:space="preserve"
        style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
-       x="551.18976"
+       x="641.18976"
        y="412.39386"
        id="text4381"
        sodipodi:linespacing="125%"
@@ -1189,27 +1189,27 @@
        inkscape:export-ydpi="56.48"><tspan
          sodipodi:role="line"
          id="tspan4383"
-         x="551.18976"
+         x="641.18976"
          y="412.39386">0</tspan></text>
     <text
        sodipodi:linespacing="125%"
        id="text4385"
-       y="412.39386"
-       x="637.18976"
+       y="412.3631"
+       x="552.44305"
        style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
        xml:space="preserve"
        inkscape:export-filename="/Users/zslajchrt/IdeaProjects/git/morpheus/src/main/doc/pict/promotionTree2.png"
        inkscape:export-xdpi="56.48"
        inkscape:export-ydpi="56.48"><tspan
-         y="412.39386"
-         x="637.18976"
+         y="412.3631"
+         x="552.44305"
          id="tspan4387"
          sodipodi:role="line">1</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
-       x="733.18976"
-       y="412.39386"
+       x="835.6308"
+       y="411.0195"
        id="text4389"
        sodipodi:linespacing="125%"
        inkscape:export-filename="/Users/zslajchrt/IdeaProjects/git/morpheus/src/main/doc/pict/promotionTree2.png"
@@ -1217,20 +1217,20 @@
        inkscape:export-ydpi="56.48"><tspan
          sodipodi:role="line"
          id="tspan4391"
-         x="733.18976"
-         y="412.39386">2</tspan></text>
+         x="835.6308"
+         y="411.0195">2</tspan></text>
     <text
        sodipodi:linespacing="125%"
        id="text4393"
        y="412.39386"
-       x="835.18976"
+       x="731.18976"
        style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
        xml:space="preserve"
        inkscape:export-filename="/Users/zslajchrt/IdeaProjects/git/morpheus/src/main/doc/pict/promotionTree2.png"
        inkscape:export-xdpi="56.48"
        inkscape:export-ydpi="56.48"><tspan
          y="412.39386"
-         x="835.18976"
+         x="731.18976"
          id="tspan4395"
          sodipodi:role="line">3</tspan></text>
   </g>
