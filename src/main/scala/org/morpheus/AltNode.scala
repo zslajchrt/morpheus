@@ -11,7 +11,7 @@ sealed trait AltNode[+T] {
 
   def alternative: List[T]
 
-  def counters: CoupledCounters
+  def counters: CounterSequence
 
 }
 
@@ -19,41 +19,19 @@ case class SeqAltNode[+T](children: List[AltNode[T]]) extends AltNode[T] {
 
   def alternative: List[T] = children.flatMap(_.alternative)
 
-  val counters: CoupledCounters = CoupledCounters(children.flatMap(_.counters.counters))
+  val counters: CounterSequence = CounterSequence(children.flatMap(_.counters.counters))
 
 }
 
 case class ChoiceAltNode[+T](children: List[AltNode[T]]) extends AltNode[T] {
 
-  private val subCounters: List[(CoupledCounters, AltNode[T])] = children.map(ch => (ch.counters, ch))
-  private val length: Int = subCounters.map(_._1.length).sum
+  val choiceCounter = new CounterChoice(children.map(_.counters))
 
-  def findSubCounter(cntVal: Int): (CoupledCounters, AltNode[T]) = {
-    var seen = 0
-    subCounters.find(sc => {
-      seen += sc._1.length
-      seen > cntVal
-    }).get
-  }
+  def currentChild: AltNode[T] = children(choiceCounter.currentChildCountersIndex)
 
-  val counter = new Counter(length) {
+  def alternative: List[T] = if (children.isEmpty) Nil else children(choiceCounter.currentChildCountersIndex).alternative
 
-    private [this] var currentSubCounters = subCounters.head
-
-    override def set(v: Int): Unit = {
-
-      if (v != value) {
-        currentSubCounters._1.inc()
-        currentSubCounters = findSubCounter(v)
-      }
-
-      super.set(v)
-    }
-  }
-
-  def alternative: List[T] = if (children.isEmpty) Nil else findSubCounter(counter.value)._2.alternative
-
-  def counters: CoupledCounters = CoupledCounters(List(counter))
+  lazy val counters: CounterSequence = choiceCounter.asCoupledCounters
 
 }
 
@@ -65,7 +43,7 @@ case class LeafAltNode[+T](t: T) extends AltNode[T] {
 
   def alternative: List[T] = List(t)
 
-  def counters: CoupledCounters = CoupledCounters(List(new Counter(1)))
+  val counters: CounterSequence = CounterSequence(List(new CounterState(1)))
 
 }
 
@@ -77,6 +55,6 @@ case object NoneAltNode extends AltNode[Nothing] {
 
   def alternative: List[Nothing] = Nil
 
-  def counters: CoupledCounters = CoupledCounters(Nil)
+  val counters: CounterSequence = CounterSequence(Nil)
 
 }

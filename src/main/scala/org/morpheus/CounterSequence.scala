@@ -4,7 +4,7 @@ package org.morpheus
  * Created by zslajchrt on 11/03/15.
  */
 
-case class CoupledCounters(counters: List[Counter]) {
+case class CounterSequence(counters: List[CounterState]) {
 
   /**
    * The total length of the coupled counters is the product of all partial counters.
@@ -44,7 +44,36 @@ case class CoupledCounters(counters: List[Counter]) {
 
 }
 
-class Counter(val length: Int) {
+class CounterChoice(counters: List[CounterSequence]) extends CounterState(counters.map(_.length).sum) {
+
+  private [this] var curSubCntIndex = 0
+
+  def currentChildCountersIndex = curSubCntIndex
+
+  def findSubCounter(cntVal: Int): Int = {
+    var seen = 0
+    var i = 0
+    counters.indexWhere(sc => {
+      seen += sc.length
+      seen > cntVal
+    })
+  }
+
+  override def set(v: Int): Unit = {
+
+    if (v != value) {
+      val curSubCnt = counters(curSubCntIndex)
+      curSubCnt.inc()
+      curSubCntIndex = findSubCounter(v)
+    }
+
+    super.set(v)
+  }
+
+  lazy val asCoupledCounters = CounterSequence(List(this))
+}
+
+class CounterState(val length: Int) {
 
   private var cnt = 0
 

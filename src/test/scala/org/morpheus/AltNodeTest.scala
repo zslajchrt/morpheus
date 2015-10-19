@@ -10,44 +10,6 @@ import org.junit.Test
 class AltNodeTest {
 
   @Test
-  def testFindSubCounter(): Unit = {
-    var ch = ChoiceAltNode(List(LeafAltNode(0), LeafAltNode(1)))
-    assertEquals(2, ch.counter.length)
-    val (sc0, LeafAltNode(0)) = ch.findSubCounter(0)
-    assertEquals(1, sc0.length)
-    val (sc1, LeafAltNode(1)) = ch.findSubCounter(1)
-    assertEquals(1, sc1.length)
-
-    ch = ChoiceAltNode(List(SeqAltNode(List(LeafAltNode(0), LeafAltNode(1))), LeafAltNode(2)))
-    assertEquals(2, ch.counter.length)
-    val (sc2, SeqAltNode(List(LeafAltNode(0), LeafAltNode(1)))) = ch.findSubCounter(0)
-    assertEquals(1, sc2.length)
-    val (sc3, LeafAltNode(2)) = ch.findSubCounter(1)
-    assertEquals(1, sc3.length)
-
-    ch = ChoiceAltNode(List(ChoiceAltNode(List(LeafAltNode(0), LeafAltNode(1))), ChoiceAltNode(List(LeafAltNode(2), LeafAltNode(3)))))
-    assertEquals(4, ch.counter.length)
-    val (sc4, ChoiceAltNode(List(LeafAltNode(0), LeafAltNode(1)))) = ch.findSubCounter(0)
-    assertEquals(2, sc4.length)
-    val (sc5, ChoiceAltNode(List(LeafAltNode(0), LeafAltNode(1)))) = ch.findSubCounter(1)
-    assertEquals(2, sc5.length)
-    val (sc6, ChoiceAltNode(List(LeafAltNode(2), LeafAltNode(3)))) = ch.findSubCounter(2)
-    assertEquals(2, sc6.length)
-    val (sc7, ChoiceAltNode(List(LeafAltNode(2), LeafAltNode(3)))) = ch.findSubCounter(3)
-    assertEquals(2, sc7.length)
-
-    ch = ChoiceAltNode(List(LeafAltNode(0), ChoiceAltNode(List(LeafAltNode(1), LeafAltNode(2)))))
-    assertEquals(3, ch.counter.length)
-    val (sc8, LeafAltNode(0)) = ch.findSubCounter(0)
-    assertEquals(1, sc8.length)
-    val (sc9, ChoiceAltNode(List(LeafAltNode(1), LeafAltNode(2)))) = ch.findSubCounter(1)
-    assertEquals(2, sc9.length)
-    val (sc10, ChoiceAltNode(List(LeafAltNode(1), LeafAltNode(2)))) = ch.findSubCounter(2)
-    assertEquals(2, sc10.length)
-  }
-
-
-  @Test
   def testTwoIndependentChoices(): Unit = {
 
     val tree = SeqAltNode(List(ChoiceAltNode(List(LeafAltNode(0), LeafAltNode(1))), ChoiceAltNode(List(LeafAltNode(2), LeafAltNode(3), LeafAltNode(4)))))

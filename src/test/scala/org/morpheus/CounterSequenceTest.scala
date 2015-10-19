@@ -7,12 +7,12 @@ import org.junit.Test
  *
  * Created by zslajchrt on 11/03/15.
  */
-class CoupledCountersTest {
+class CounterSequenceTest {
 
   @Test
   def testNoCoupledCounters(): Unit = {
-    val counters = List.empty[Counter]
-    val coupled = new CoupledCounters(counters)
+    val counters = List.empty[CounterState]
+    val coupled = new CounterSequence(counters)
 
     var result = List.empty[List[Int]]
     do {
@@ -24,8 +24,8 @@ class CoupledCountersTest {
 
   @Test
   def testSingleCounterLength1(): Unit = {
-    val counters = List(new Counter(1))
-    val coupled = new CoupledCounters(counters)
+    val counters = List(new CounterState(1))
+    val coupled = new CounterSequence(counters)
 
     val expected = List(
       List(0)
@@ -42,8 +42,8 @@ class CoupledCountersTest {
 
   @Test
   def testSingleCounter(): Unit = {
-    val counters = List(new Counter(2))
-    val coupled = new CoupledCounters(counters)
+    val counters = List(new CounterState(2))
+    val coupled = new CounterSequence(counters)
 
     val expected = List(
       List(0),
@@ -61,8 +61,8 @@ class CoupledCountersTest {
 
   @Test
   def testTwoCoupledCounters(): Unit = {
-    val counters = List(new Counter(2), new Counter(3), new Counter(4))
-    val coupled = new CoupledCounters(counters)
+    val counters = List(new CounterState(2), new CounterState(3), new CounterState(4))
+    val coupled = new CounterSequence(counters)
 
     val expected = List(
         List(0, 0, 0),
@@ -99,5 +99,20 @@ class CoupledCountersTest {
     assertEquals(expected, result)
 
   }
+
+  @Test
+  def testFindSubCounter(): Unit = {
+    var ch = new CounterChoice(List(CounterSequence(List(new CounterState(1))), CounterSequence(List(new CounterState(1)))))
+    assertEquals(0, ch.findSubCounter(0))
+    assertEquals(1, ch.findSubCounter(1))
+
+    ch = new CounterChoice(List(CounterSequence(List(new CounterState(2))), CounterSequence(List(new CounterState(3)))))
+    assertEquals(0, ch.findSubCounter(0))
+    assertEquals(0, ch.findSubCounter(1))
+    assertEquals(1, ch.findSubCounter(2))
+    assertEquals(1, ch.findSubCounter(3))
+    assertEquals(1, ch.findSubCounter(4))
+  }
+
 
 }
