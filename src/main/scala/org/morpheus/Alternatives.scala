@@ -53,7 +53,7 @@ class Alternatives[M] private (private [morpheus] val rootNode: MorphModelNode,
 
     def reorderModel(altNode: AltNode[FragmentNode]): MorphModelNode = altNode match {
       case ch@ChoiceAltNode(children) =>
-        val (_, _, currentChild) = ch.findSubCounter(ch.counter.value)
+        val (_, currentChild) = ch.findSubCounter(ch.counter.value)
         val reorderedChildren = Alternatives.moveChildToHead(children.map(reorderModel), children.indexOf(currentChild))
         DisjNode(reorderedChildren)
       case SeqAltNode(children) => ConjNode(children.map(reorderModel))

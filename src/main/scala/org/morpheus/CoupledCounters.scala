@@ -6,20 +6,32 @@ package org.morpheus
 
 case class CoupledCounters(counters: List[Counter]) {
 
-  private var cnt = 0
+  /**
+   * The total length of the coupled counters is the product of all partial counters.
+   */
+  lazy val length = counters.foldLeft(1)((r, c) => r * c.length)
+
+  /**
+   * The master counter with range (0..length-1)
+   */
+  private var masterCnt = 0
 
   def inc(): Boolean = {
-    cnt += 1
+    masterCnt += 1
 
-    val res = counters.foldLeft(1)((div, counter) => {
-      val a = cnt / div
-      val b = if (a < counter.length) a else a % counter.length
-      counter.set(b)
-      div * counter.length
-    })
+    // Update each partial counter by its modulo calculated from the master counter
+    var partCntBase = 1
+    for (counter <- counters) {
+      val partCntIndex = masterCnt / partCntBase
+      val partCntModulo = partCntIndex % counter.length
+      // Update the partial counter
+      counter.set(partCntModulo)
+      // update the base for the next partial counter
+      partCntBase *= counter.length
+    }
 
-    if (res == cnt) {
-      cnt = 0
+    if (masterCnt == length) {
+      masterCnt = 0
       false
     } else {
       true

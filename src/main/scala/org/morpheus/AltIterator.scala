@@ -6,7 +6,7 @@ package org.morpheus
  */
 abstract class AltIterator[T, R](val rootAltNode: AltNode[T]) extends ResettableIterator[R] {
 
-  private val coupledCounters = new CoupledCounters(rootAltNode.collectCounters)
+  private val coupledCounters = rootAltNode.counters
 
   protected def mapAlt(alt: List[T]): R
 

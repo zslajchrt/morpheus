@@ -73,13 +73,4 @@ class MorphModelNodeTest {
     assertTrue(matrix1.isEmpty)
   }
 
-  @Test
-  def testToMetaAltNode() {
-    val root = DisjNode(List(FragmentNode(0), UnitNode))
-    val metaAltRoot: AltNode[AltNode[FragmentNode]] = root.toAltNode.toMetaAltNode
-    val alts = new IdentAltIterator(metaAltRoot).toList
-    assertEquals(List(List(LeafAltNode(FragmentNode(0,false))), List(NoneAltNode)), alts)
-
-  }
-
 }

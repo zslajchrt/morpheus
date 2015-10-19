@@ -13,26 +13,37 @@ class AltNodeTest {
   def testFindSubCounter(): Unit = {
     var ch = ChoiceAltNode(List(LeafAltNode(0), LeafAltNode(1)))
     assertEquals(2, ch.counter.length)
-    val (_, 1, LeafAltNode(0)) = ch.findSubCounter(0)
-    val (_, 1, LeafAltNode(1)) = ch.findSubCounter(1)
+    val (sc0, LeafAltNode(0)) = ch.findSubCounter(0)
+    assertEquals(1, sc0.length)
+    val (sc1, LeafAltNode(1)) = ch.findSubCounter(1)
+    assertEquals(1, sc1.length)
 
     ch = ChoiceAltNode(List(SeqAltNode(List(LeafAltNode(0), LeafAltNode(1))), LeafAltNode(2)))
     assertEquals(2, ch.counter.length)
-    val (_, 1, SeqAltNode(List(LeafAltNode(0), LeafAltNode(1)))) = ch.findSubCounter(0)
-    val (_, 1, LeafAltNode(2)) = ch.findSubCounter(1)
+    val (sc2, SeqAltNode(List(LeafAltNode(0), LeafAltNode(1)))) = ch.findSubCounter(0)
+    assertEquals(1, sc2.length)
+    val (sc3, LeafAltNode(2)) = ch.findSubCounter(1)
+    assertEquals(1, sc3.length)
 
     ch = ChoiceAltNode(List(ChoiceAltNode(List(LeafAltNode(0), LeafAltNode(1))), ChoiceAltNode(List(LeafAltNode(2), LeafAltNode(3)))))
     assertEquals(4, ch.counter.length)
-    val (_, 2, ChoiceAltNode(List(LeafAltNode(0), LeafAltNode(1)))) = ch.findSubCounter(0)
-    val (_, 2, ChoiceAltNode(List(LeafAltNode(0), LeafAltNode(1)))) = ch.findSubCounter(1)
-    val (_, 2, ChoiceAltNode(List(LeafAltNode(2), LeafAltNode(3)))) = ch.findSubCounter(2)
-    val (_, 2, ChoiceAltNode(List(LeafAltNode(2), LeafAltNode(3)))) = ch.findSubCounter(3)
+    val (sc4, ChoiceAltNode(List(LeafAltNode(0), LeafAltNode(1)))) = ch.findSubCounter(0)
+    assertEquals(2, sc4.length)
+    val (sc5, ChoiceAltNode(List(LeafAltNode(0), LeafAltNode(1)))) = ch.findSubCounter(1)
+    assertEquals(2, sc5.length)
+    val (sc6, ChoiceAltNode(List(LeafAltNode(2), LeafAltNode(3)))) = ch.findSubCounter(2)
+    assertEquals(2, sc6.length)
+    val (sc7, ChoiceAltNode(List(LeafAltNode(2), LeafAltNode(3)))) = ch.findSubCounter(3)
+    assertEquals(2, sc7.length)
 
     ch = ChoiceAltNode(List(LeafAltNode(0), ChoiceAltNode(List(LeafAltNode(1), LeafAltNode(2)))))
     assertEquals(3, ch.counter.length)
-    val (_, 1, LeafAltNode(0)) = ch.findSubCounter(0)
-    val (_, 2, ChoiceAltNode(List(LeafAltNode(1), LeafAltNode(2)))) = ch.findSubCounter(1)
-    val (_, 2, ChoiceAltNode(List(LeafAltNode(1), LeafAltNode(2)))) = ch.findSubCounter(2)
+    val (sc8, LeafAltNode(0)) = ch.findSubCounter(0)
+    assertEquals(1, sc8.length)
+    val (sc9, ChoiceAltNode(List(LeafAltNode(1), LeafAltNode(2)))) = ch.findSubCounter(1)
+    assertEquals(2, sc9.length)
+    val (sc10, ChoiceAltNode(List(LeafAltNode(1), LeafAltNode(2)))) = ch.findSubCounter(2)
+    assertEquals(2, sc10.length)
   }
 
 
@@ -40,7 +51,7 @@ class AltNodeTest {
   def testTwoIndependentChoices(): Unit = {
 
     val tree = SeqAltNode(List(ChoiceAltNode(List(LeafAltNode(0), LeafAltNode(1))), ChoiceAltNode(List(LeafAltNode(2), LeafAltNode(3), LeafAltNode(4)))))
-    val coupledCounters = new CoupledCounters(tree.collectCounters)
+    val coupledCounters = tree.counters
 
     val expected = List(
       List(0, 2),
@@ -63,7 +74,7 @@ class AltNodeTest {
   def testTwoDependentChoices(): Unit = {
 
     val tree = ChoiceAltNode(List(LeafAltNode(0), ChoiceAltNode(List(LeafAltNode(1), LeafAltNode(2)))))
-    val coupledCounters = new CoupledCounters(tree.collectCounters)
+    val coupledCounters = tree.counters
 
     val expected = List(
       List(0),
@@ -82,7 +93,7 @@ class AltNodeTest {
   @Test
   def testIndependentDependentChoices(): Unit = {
     val tree = SeqAltNode(List(ChoiceAltNode(List(LeafAltNode(0), LeafAltNode(1))), ChoiceAltNode(List(LeafAltNode(2), SeqAltNode(List(LeafAltNode(3), ChoiceAltNode(List(LeafAltNode(4), LeafAltNode(5)))))))))
-    val coupledCounters = new CoupledCounters(tree.collectCounters)
+    val coupledCounters = tree.counters
 
     val expected = List(
       List(0, 2),
@@ -100,4 +111,25 @@ class AltNodeTest {
 
     assertEquals(expected, result)
   }
+
+  @Test
+  def testThreeChoices(): Unit = {
+    val tree = ChoiceAltNode(List(ChoiceAltNode(List(LeafAltNode(0), LeafAltNode(1))), ChoiceAltNode(List(LeafAltNode(2), LeafAltNode(3)))))
+    val coupledCounters = tree.counters
+
+    val expected = List(
+      List(0),
+      List(1),
+      List(2),
+      List(3)
+    ).reverse
+
+    var result = List.empty[List[Int]]
+    do {
+      result ::= tree.alternative
+    } while (coupledCounters.inc())
+
+    assertEquals(expected, result)
+  }
+
 }
