@@ -8438,4 +8438,41 @@ side: Float</panel_attributes>
     <panel_attributes>lt=&lt;&lt;-</panel_attributes>
     <additional_attributes>10.0;10.0;10.0;50.0</additional_attributes>
   </element>
+  <element>
+    <id>UMLInterface</id>
+    <coordinates>
+      <x>1248</x>
+      <y>2144</y>
+      <w>80</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>A
+&lt;&lt;category&gt;&gt;
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLInterface</id>
+    <coordinates>
+      <x>1248</x>
+      <y>2064</y>
+      <w>80</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>A
+&lt;&lt;category&gt;&gt;
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1280</x>
+      <y>2112</y>
+      <w>24</w>
+      <h>56</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;50.0</additional_attributes>
+  </element>
 </diagram>
