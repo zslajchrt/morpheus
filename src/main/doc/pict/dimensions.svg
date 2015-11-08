@@ -144,15 +144,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.91789419"
-     inkscape:cx="209.15109"
-     inkscape:cy="764.24931"
+     inkscape:cx="165.57308"
+     inkscape:cy="328.46923"
      inkscape:current-layer="layer1"
      id="namedview3123"
      showgrid="false"
      inkscape:window-width="1805"
      inkscape:window-height="979"
-     inkscape:window-x="0"
-     inkscape:window-y="0"
+     inkscape:window-x="34"
+     inkscape:window-y="115"
      inkscape:window-maximized="0" />
   <metadata
      id="metadata3125">
@@ -1022,5 +1022,16 @@
        d="m 34.862406,-283.25705 25.057354,49.02526"
        id="path15542"
        inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="-56.830311"
+       y="-244.21574"
+       id="text15781"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan15783"
+         x="-56.830311"
+         y="-244.21574">I'</tspan></text>
   </g>
 </svg>

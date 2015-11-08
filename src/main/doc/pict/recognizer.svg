@@ -72,15 +72,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.0697566"
-     inkscape:cx="563.57277"
-     inkscape:cy="-1014.4288"
+     inkscape:cx="862.70623"
+     inkscape:cy="406.45518"
      inkscape:current-layer="layer1"
      id="namedview15830"
      showgrid="false"
      inkscape:window-width="1706"
      inkscape:window-height="982"
-     inkscape:window-x="20"
-     inkscape:window-y="20"
+     inkscape:window-x="46"
+     inkscape:window-y="28"
      inkscape:window-maximized="0" />
   <metadata
      id="metadata15832">
@@ -1611,7 +1611,7 @@
          sodipodi:role="line"
          id="tspan18407"
          x="995.71008"
-         y="191.35846">()</tspan></text>
+         y="191.35846">{(1)}</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:1.51083243;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1.51083241, 1.51083241;stroke-dashoffset:0"
        d="M 917.88536,201.16964 883.4403,242.0797"
@@ -1832,7 +1832,7 @@
          sodipodi:role="line"
          id="tspan18709"
          x="1104.3094"
-         y="-51.459015">()</tspan></text>
+         y="-51.459015">{(1)}</tspan></text>
     <path
        inkscape:connector-curvature="0"
        id="path18711"
