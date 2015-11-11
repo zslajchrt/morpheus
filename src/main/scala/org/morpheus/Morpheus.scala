@@ -1067,6 +1067,7 @@ object Morpheus {
 
     composeOrGlean_impl[M](c)(CopyProvider(ciRef, placeholderFactoriesTree, confLev._1, confLev._2, delegation = false, noHiddenFragments),
       checkDeps = false, None, defStrategy, Some(placeholderMapFn), None)
+
   }
 
   private def compareFragmentDeclarations(c: whitebox.Context)(fd1: c.Type, fd2: c.Type): Boolean = {
@@ -3424,10 +3425,10 @@ object Morpheus {
         defStrat.tree
     }
 
-    val proxyImplicitsTree: Tree = {
-      val implVals: List[Tree] = fragmentNodes.map(fn => fragmentProxyImplicit(fn))
-      ModuleDef(Modifiers(), TermName("proxyImplicits"), Template(List(Select(Ident(TermName("scala")), TypeName("AnyRef"))), noSelfType, defConstr :: implVals))
-    }
+//    val proxyImplicitsTree: Tree = {
+//      val implVals: List[Tree] = fragmentNodes.map(fn => fragmentProxyImplicit(fn))
+//      ModuleDef(Modifiers(), TermName("proxyImplicits"), Template(List(Select(Ident(TermName("scala")), TypeName("AnyRef"))), noSelfType, defConstr :: implVals))
+//    }
 
     val compositeInstanceTree = q"""
         {
@@ -3452,19 +3453,12 @@ object Morpheus {
 
               val fragments = fragmentDescriptors.map(MyConfigImplicits)
 
-              $proxyImplicitsTree
-              import proxyImplicits._
-
-              val proxies = proxyImplicits
-
               val fragmentList = $fragmentList
 
               val defaultStrategy = $defaultStrategy
               val altComposer = $altComposer
               val model = compositeModel
-
-              lazy val tupled = fragments.tupled
-            }
+ }
         }
     """
 
