@@ -207,11 +207,21 @@ object Morpheus {
 
   def mask[M](sw: () => Option[Int]): Any = macro mask_implOneArg[M]
 
-  def mask[S](delegate: MorphingStrategy[_], sw: () => Option[Int]): Any = macro unmask_implTwoArgs[S]
+  def mask_+[M](sw: () => Option[Int]): Any = macro mask_implOneArgCumulative[M]
 
-  def unmask[M](sw: () => Option[Int]): Any = macro mask_implOneArg[M]
+  def mask[S](delegate: MorphingStrategy[_], sw: () => Option[Int]): Any = macro mask_implTwoArgs[S]
+
+  def mask_+[S](delegate: MorphingStrategy[_], sw: () => Option[Int]): Any = macro mask_implTwoArgsCumulative[S]
+
+  def unmask[M](sw: () => Option[Int]): Any = macro unmask_implOneArg[M]
+
+  def unmask_+[M](sw: () => Option[Int]): Any = macro unmask_implOneArgCumulative[M]
 
   def unmask[S](delegate: MorphingStrategy[_], sw: () => Option[Int]): Any = macro unmask_implTwoArgs[S]
+
+  def unmask_+[S](delegate: MorphingStrategy[_], sw: () => Option[Int]): Any = macro unmask_implTwoArgsCumulative[S]
+
+  def strict[M](delegate: MorphingStrategy[M]): Any = macro strict_impl[M]
 
   def assertFailure(code: Any): Unit = macro assertFailure_impl
 
@@ -725,12 +735,26 @@ object Morpheus {
     val modelTag: WeakTypeTag[M] = implicitly[WeakTypeTag[M]]
     val modelTpe = modelTag.tpe.dealias
     val delegate = c.Expr[MorphingStrategy[_]](c.typecheck(q"org.morpheus.RootStrategy[$modelTpe]()"))
-    mask_impl(c)(delegate, sw, false)(modelTag)
+    mask_impl(c)(delegate, sw, false, false)(modelTag)
+  }
+
+  def mask_implOneArgCumulative[M: c.WeakTypeTag](c: whitebox.Context)(sw: c.Expr[() => Option[Int]]): c.Expr[Any] = {
+    import c.universe._
+
+    val modelTag: WeakTypeTag[M] = implicitly[WeakTypeTag[M]]
+    val modelTpe = modelTag.tpe.dealias
+    val delegate = c.Expr[MorphingStrategy[_]](c.typecheck(q"org.morpheus.RootStrategy[$modelTpe]()"))
+    mask_impl(c)(delegate, sw, false, true)(modelTag)
   }
 
   def mask_implTwoArgs[S: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorphingStrategy[_]], sw: c.Expr[() => Option[Int]]): c.Expr[Any] = {
     import c.universe._
-    mask_impl(c)(delegate, sw, false)(implicitly[WeakTypeTag[S]])
+    mask_impl(c)(delegate, sw, false, false)(implicitly[WeakTypeTag[S]])
+  }
+
+  def mask_implTwoArgsCumulative[S: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorphingStrategy[_]], sw: c.Expr[() => Option[Int]]): c.Expr[Any] = {
+    import c.universe._
+    mask_impl(c)(delegate, sw, false, true)(implicitly[WeakTypeTag[S]])
   }
 
   def unmask_implOneArg[M: c.WeakTypeTag](c: whitebox.Context)(sw: c.Expr[() => Option[Int]]): c.Expr[Any] = {
@@ -739,15 +763,29 @@ object Morpheus {
     val modelTag: WeakTypeTag[M] = implicitly[WeakTypeTag[M]]
     val modelTpe = modelTag.tpe.dealias
     val delegate = c.Expr[MorphingStrategy[_]](c.typecheck(q"org.morpheus.RootStrategy[$modelTpe]()"))
-    mask_impl(c)(delegate, sw, true)(modelTag)
+    mask_impl(c)(delegate, sw, true, false)(modelTag)
+  }
+
+  def unmask_implOneArgCumulative[M: c.WeakTypeTag](c: whitebox.Context)(sw: c.Expr[() => Option[Int]]): c.Expr[Any] = {
+    import c.universe._
+
+    val modelTag: WeakTypeTag[M] = implicitly[WeakTypeTag[M]]
+    val modelTpe = modelTag.tpe.dealias
+    val delegate = c.Expr[MorphingStrategy[_]](c.typecheck(q"org.morpheus.RootStrategy[$modelTpe]()"))
+    mask_impl(c)(delegate, sw, true, true)(modelTag)
   }
 
   def unmask_implTwoArgs[S: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorphingStrategy[_]], sw: c.Expr[() => Option[Int]]): c.Expr[Any] = {
     import c.universe._
-    mask_impl(c)(delegate, sw, true)(implicitly[WeakTypeTag[S]])
+    mask_impl(c)(delegate, sw, true, false)(implicitly[WeakTypeTag[S]])
   }
 
-  def mask_impl[S: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorphingStrategy[_]], sw: c.Expr[() => Option[Int]], negative: Boolean): c.Expr[Any] = {
+  def unmask_implTwoArgsCumulative[S: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorphingStrategy[_]], sw: c.Expr[() => Option[Int]]): c.Expr[Any] = {
+    import c.universe._
+    mask_impl(c)(delegate, sw, true, true)(implicitly[WeakTypeTag[S]])
+  }
+
+  def mask_impl[S: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorphingStrategy[_]], sw: c.Expr[() => Option[Int]], negative: Boolean, cumulative: Boolean): c.Expr[Any] = {
     import c.universe._
 
     val modelTpe = delegate.actualType.typeArgs.head.dealias
@@ -758,7 +796,7 @@ object Morpheus {
 
     val result = q"""
          {
-            def createStrategy() = org.morpheus.MaskingStrategy($delegate, $switchModelTree, $altMapTree, $sw, $negative)
+            def createStrategy() = org.morpheus.MaskingStrategy($delegate, $switchModelTree, $altMapTree, $sw, $negative, $cumulative)
             createStrategy
          }
        """
@@ -784,6 +822,19 @@ object Morpheus {
     val result = q"""
          {
             def createStrategy() = org.morpheus.MaskAllStrategy[${implicitly[WeakTypeTag[M]]}]($delegate, $negative)
+            createStrategy
+         }
+       """
+
+    c.Expr(result)
+  }
+
+  def strict_impl[M: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorphingStrategy[M]]): c.Expr[Any] = {
+    import c.universe._
+
+    val result = q"""
+         {
+            def createStrategy() = org.morpheus.StrictStrategy[${implicitly[WeakTypeTag[M]]}]($delegate)
             createStrategy
          }
        """
@@ -919,29 +970,37 @@ object Morpheus {
   def deref_impl[M: c.WeakTypeTag](c: whitebox.Context)(ciRef: c.Expr[MorphKernelRef[M, _]], placeholders: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
-    val res = q"""
-        import org.morpheus.Morpheus._
-        val x = $ciRef
-        derefHelper(x, ..$placeholders)
+    val resTree = q"""
+        {
+           import org.morpheus.Morpheus._
+           val x = $ciRef
+           derefHelper(x, ..$placeholders)
+        }
     """
-    c.Expr[Any](res)
+    c.Expr[Any](resTree)
   }
 
   def derefHelper_impl[M: c.WeakTypeTag](c: whitebox.Context)(ciRef: c.Expr[MorphKernelRef[M, _]], placeholders: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
-    derefHelperWithStrategy_impl[M](c)(ciRef, null, placeholders: _*)
+    val res = derefHelperWithStrategy_impl[M](c)(ciRef, null, placeholders: _*)
+    c.info(c.enclosingPosition, s"Deref:\n${show(res)}", true)
+    res
   }
 
   def derefWithStrategy_impl[M: c.WeakTypeTag](c: whitebox.Context)(ciRef: c.Expr[MorphKernelRef[M, _]], strategy: c.Expr[MorphingStrategy[_]], placeholders: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
-    val res = q"""
-        import org.morpheus.Morpheus._
-        val x = $ciRef
-        derefHelperWithStrategy(x, $strategy, ..$placeholders)
+    val resTree = q"""
+        {
+           import org.morpheus.Morpheus._
+           val x = $ciRef
+           derefHelperWithStrategy(x, $strategy, ..$placeholders)
+        }
     """
-    c.Expr[Any](res)
+    val res = c.Expr[Any](resTree)
+    //c.info(c.enclosingPosition, s"Deref:\n${show(res)}", true)
+    res
   }
 
   def derefHelperWithStrategy_impl[M: c.WeakTypeTag](c: whitebox.Context)(ciRef: c.Expr[MorphKernelRef[M, _]], strategy: c.Expr[MorphingStrategy[_]], placeholders: c.Expr[Any]*): c.Expr[Any] = {
@@ -983,9 +1042,12 @@ object Morpheus {
     val tgtTpe = implicitly[WeakTypeTag[M]].tpe
     // transform the composite type so as not to contain placeholders
     val (_, modelRoot, _, _, _, typesMap) = buildModel(c)(tgtTpe, None)
+    val fragHelper = new FragmentsHelper[(c.Type, Option[c.Type]), c.Type](typesMap, _._1)
 
     // verify that the placeholders arguments contain all necessary placeholder factories
-    val placeholderFrags = modelRoot.fragments.filter(_.placeholder).map(phf => (phf, typesMap(phf.id)._1))
+    val fragments = fragHelper.removeDuplicateFragments(modelRoot.fragments)
+    val placeholderFrags = fragments.filter(_.placeholder).map(phf => (phf, typesMap(phf.id)._1))
+
     val fragFactFnTpe: Type = c.universe.rootMirror.typeOf[(Frag[_, _] => _)]
     val fragFactFnCls = fragFactFnTpe.typeSymbol.asClass
     val fragFactFnArg0 = fragFactFnCls.typeParams.head.asType.toType
@@ -1070,7 +1132,6 @@ object Morpheus {
 
     composeOrGlean_impl[M](c)(CopyProvider(ciRef, placeholderFactoriesTree, confLev._1, confLev._2, delegation = false, noHiddenFragments),
       checkDeps = false, None, defStrategy, Some(placeholderMapFn), None)
-
   }
 
   private def compareFragmentDeclarations(c: whitebox.Context)(fd1: c.Type, fd2: c.Type): Boolean = {
@@ -1866,7 +1927,6 @@ object Morpheus {
       //c.info(c.enclosingPosition, s"tgtAltLUB: $tgtAltLUB\nsrcAltLUB: $srcAltLUB\nexpandedSrcAltSubAltLUBs: $expandedSrcAltSubAltLUBs", true)
 
       val ret = if (srcAltLUB <:< tgtAltLUB) {
-
         //if (!checkTypeAnnotations(tgtAlt._1.map(f => tgtFragmentTypesMap(f.id)._1), srcAlt._2)) {
         if (!checkTypeAnnotations(tgtAlt._2, srcAlt._2)) {
           Right(s"Some target annotations not found in the source alt $srcAltLUB")
@@ -2007,8 +2067,13 @@ object Morpheus {
     var skippedCombinationsCounter = 0
 
     val ts1 = System.currentTimeMillis()
+    if (ctxMsg.startsWith("Checking compatibility of kernel reference")) {
+      c.info(c.enclosingPosition, s"AltMapping started at $ts1", true)
+    }
     while (tgtAltIter.hasNext) {
       val tgtAlt = tgtAltIter.next()
+      //c.info(c.enclosingPosition, s"TargetAlt: $tgtAlt", true)
+
       // Transform fragment nodes to fragment types
       val tgtAltFragTypes = tgtAlt._1.map(tgtFrag => tgtFragmentTypesMap(tgtFrag.id)._1)
       // Used for reporting only now.
@@ -2027,6 +2092,10 @@ object Morpheus {
       while (srcAltIter.hasNext) {
         allCombinationsCounter += 1
 
+        if (allCombinationsCounter % 300 == 0 && ctxMsg.startsWith("Checking compatibility of kernel reference")) {
+          c.info(c.enclosingPosition, s"Processed $allCombinationsCounter combinations", true)
+        }
+
         val srcAlt = srcAltIter.next()
 
         sourceAltCounter += 1
@@ -2039,6 +2108,7 @@ object Morpheus {
             skippedCombinationsCounter += 1
             Right(s"Incompatible source alt ${srcAlt._2} with target alt ${tgtAlt._2}. Common fragments: $tgtAltMappedToSrcFrags, newFragToOrigFrag: $newFragToOrigFrag")
           } else {
+            //c.info(c.enclosingPosition, s"TargetAlt: $tgtAlt, SrcAlt: $srcAlt", true)
             isTargetAltCompatibleWithSourceAlt(tgtAlt, srcAlt, containsHiddenFragments)
           }
         }
@@ -2084,7 +2154,9 @@ object Morpheus {
 
     val ts2 = System.currentTimeMillis()
 
-    //c.info(c.enclosingPosition, s"Processed $allCombinationsCounter alt combinations and skipped $skippedCombinationsCounter in ${ts2 - ts1}ms\nCtx: $ctxMsg", true)
+    if (ctxMsg.startsWith("Checking compatibility of kernel reference")) {
+      c.info(c.enclosingPosition, s"Processed $allCombinationsCounter alt combinations and skipped $skippedCombinationsCounter in ${ts2 - ts1}ms\nCtx: $ctxMsg", true)
+    }
 
     val isCompatible = (tgtConfLev, srcConfLev) match {
       case (Partial, Partial) => independentTargetAltCounter > 0 || altRelation.map(_._2).size == sourceAltCounter // right-total relation, all source alts must have found their target alts
@@ -3203,7 +3275,9 @@ object Morpheus {
     // TODO: even if there are some. It seems that such a type is not fully initialized.
     buildModel(c)(compTpe, None)
 
-    val (compModelTpe, modelRoot, fragmentNodes, lub, lubComponentTypes, fragmentTypesMap) = buildModel(c)(compTpe, placeholderTpeTransf)
+    val (compModelTpe, modelRoot, fragmentNodesRedundant, lub, lubComponentTypes, fragmentTypesMap) = buildModel(c)(compTpe, placeholderTpeTransf)
+    val fragHelper = new FragmentsHelper[(c.Type, Option[c.Type]), c.Type](fragmentTypesMap, _._1)
+    val fragmentNodes = fragHelper.removeDuplicateFragments(fragmentNodesRedundant)
 
     val (appliedCompModelTpe, actualModelTpe) = if (removePlaceholders) {
       val transformedModel = transformToNoPlaceholders(c)(modelRoot, fragmentTypesMap.map(e => (e._1, (e._2._1, e._2._2))), placeholderTpeTransf)
@@ -3264,8 +3338,8 @@ object Morpheus {
 
     def fragmentAltMapTree(fn: FragmentNode): Tree = {
       fragToDepsMaps.get(fn.id) match {
-        case None => q"None"
-        case Some(depsMaps) => q"Some($depsMaps)"
+        case None => q"${fn.id} -> None"
+        case Some(depsMaps) => q"${fn.id} -> Some($depsMaps)"
       }
     }
 
@@ -3297,7 +3371,7 @@ object Morpheus {
 
 
     val fragAltMapTrees: List[Tree] = fragmentNodes.map(fragmentAltMapTree(_))
-    val fragAltMapTreeList: Tree = q"List(..$fragAltMapTrees)"
+    val fragAltMapTreeList: Tree = q"Map(..$fragAltMapTrees)"
 
     val fragDescs: List[Tree] = fragmentNodes.map(fragmentTree(_)).reverse
     val fragDescListTree: Tree = q"List(..$fragDescs)"
@@ -3329,6 +3403,7 @@ object Morpheus {
 
             val fragmentDescriptors = $hlistTree
             val fragmentDescriptorsList = $fragDescListTree
+            val sec2prim: Map[Int, Int] = ${fragHelper.sec2prim}
           }
         }
       """

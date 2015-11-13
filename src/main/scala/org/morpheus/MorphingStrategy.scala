@@ -224,17 +224,18 @@ class PromotingStrategyWithModel[M, S, MutableLUB](val morphModel: MorphModel[M]
 }
 
 
-case class MaskExplicitStrategy[M](delegate: MorphingStrategy[M], negative: Boolean, fragments: () => Option[Set[Int]]) extends MorphingStrategy[M] {
+case class MaskExplicitStrategy[M](delegate: MorphingStrategy[M], negative: Boolean, fragments: () => Option[Set[Int]], isStrict: Boolean = false) extends MorphingStrategy[M] {
   override def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = {
     val origAlts = delegate.chooseAlternatives(instance)(owningMutableProxy)
 
     fragments() match {
       case None => origAlts
       case Some(ff) =>
-        if (negative)
+        val newAlts = if (negative)
           origAlts.unmask(ff)
         else
-          origAlts.unmaskAll().mask(ff)
+          origAlts.mask(ff)
+        if (isStrict) newAlts.strict() else newAlts.nonStrict()
     }
 
   }
@@ -307,7 +308,16 @@ case class MaskAllStrategy[M](delegate: MorphingStrategy[M], negative: Boolean) 
 
 }
 
-case class MaskingStrategy[M, S](delegate: MorphingStrategy[M], switchModel: MorphModel[S], altMap: AltMappings, switchFn: () => Option[Int], negative: Boolean) extends MorphingStrategy[M] {
+case class StrictStrategy[M](delegate: MorphingStrategy[M]) extends MorphingStrategy[M] {
+
+  override def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = {
+    val origAlts = delegate.chooseAlternatives(instance)(owningMutableProxy)
+    origAlts.strict()
+  }
+
+}
+
+case class MaskingStrategy[M, S](delegate: MorphingStrategy[M], switchModel: MorphModel[S], altMap: AltMappings, switchFn: () => Option[Int], negative: Boolean, cumulative: Boolean) extends MorphingStrategy[M] {
 
   val switchAlts: List[List[Int]] = switchModel.altIterator().toList.map(_.map(_.id))
   val altMapReduced = altMap.preserveDynamics()
@@ -324,25 +334,35 @@ case class MaskingStrategy[M, S](delegate: MorphingStrategy[M], switchModel: Mor
       case Some(altIdx) =>
         val activeAltIndex = altIdx % altsCount
 
-        var updatedAlts = origAlts
-        for (altId <- 0 until altsCount) {
-          val swAlt: List[Int] = switchAlts(altId)
+        if (cumulative) {
+          val swAlt: List[Int] = switchAlts(activeAltIndex)
           val maskedFragments: List[Int] = swAlt.map(altMapReduced.newFragToOrigFrag)
-
-          updatedAlts = if (altId == activeAltIndex) {
-            if (negative)
-              updatedAlts.unmask(maskedFragments.toSet)
-            else
-              updatedAlts.mask(maskedFragments.toSet)
+          if (negative) {
+            origAlts.unmask(maskedFragments.toSet)
           } else {
-            if (negative)
-              updatedAlts.mask(maskedFragments.toSet)
-            else
-              updatedAlts.unmask(maskedFragments.toSet)
+            origAlts.mask(maskedFragments.toSet)
           }
-        }
 
-        updatedAlts
+        } else {
+          var updatedAlts = origAlts
+          for (altId <- 0 until altsCount) {
+            val swAlt: List[Int] = switchAlts(altId)
+            val maskedFragments: List[Int] = swAlt.map(altMapReduced.newFragToOrigFrag)
+
+            updatedAlts = if (altId == activeAltIndex) {
+              if (negative)
+                updatedAlts.unmask(maskedFragments.toSet)
+              else
+                updatedAlts.mask(maskedFragments.toSet)
+            } else {
+              if (negative)
+                updatedAlts.mask(maskedFragments.toSet)
+              else
+                updatedAlts.unmask(maskedFragments.toSet)
+            }
+          }
+          updatedAlts
+        }
     }
 
   }

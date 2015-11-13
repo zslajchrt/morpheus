@@ -9,14 +9,23 @@ import scala.collection.BitSet
 
 case class AltRating(rating: Double)
 
-class Alternatives[M] private (private [morpheus] val rootNode: MorphModelNode,
-                               private [morpheus] val ratedAlts: Map[List[FragmentNode], AltRating],
-                               private [morpheus] val fragmentMask: BitSet,
-                               private [morpheus] val duplicateFragsRemover: List[FragmentNode] => List[FragmentNode]) {
+class Alternatives[M] private(private[morpheus] val rootNode: MorphModelNode,
+                              private[morpheus] val ratedAlts: Map[List[FragmentNode], AltRating],
+                              private[morpheus] val fragmentMask: BitSet,
+                              val isStrict: Boolean,
+                              private[morpheus] val duplicateFragsRemover: List[FragmentNode] => List[FragmentNode]) {
 
-  private [morpheus] def filter(f: (List[FragmentNode], Double) => Boolean): Alternatives[M] = {
+  private[morpheus] def filter(f: (List[FragmentNode], Double) => Boolean): Alternatives[M] = {
     val newRatedAlts = ratedAlts.filter(e => f(e._1, e._2.rating))
-    new Alternatives[M](rootNode, newRatedAlts, fragmentMask, duplicateFragsRemover)
+    new Alternatives[M](rootNode, newRatedAlts, fragmentMask, isStrict, duplicateFragsRemover)
+  }
+
+  def strict(): Alternatives[M] = {
+    if (isStrict) this else new Alternatives[M](rootNode, ratedAlts, fragmentMask, isStrict = true, duplicateFragsRemover)
+  }
+
+  def nonStrict(): Alternatives[M] = {
+    if (isStrict) new Alternatives[M](rootNode, ratedAlts, fragmentMask, isStrict = false, duplicateFragsRemover) else this
   }
 
   def rate(ratingFn: (List[FragmentNode], Double) => Double): Alternatives[M] = {
@@ -31,23 +40,23 @@ class Alternatives[M] private (private [morpheus] val rootNode: MorphModelNode,
       }
     }
 
-    new Alternatives[M](rootNode, newRatedAlts, fragmentMask, duplicateFragsRemover)
+    new Alternatives[M](rootNode, newRatedAlts, fragmentMask, isStrict, duplicateFragsRemover)
   }
 
   def maskAll(): Alternatives[M] = {
-    new Alternatives[M](rootNode, ratedAlts, BitSet.empty | rootNode.fragments.map(_.id).toSet, duplicateFragsRemover)
+    new Alternatives[M](rootNode, ratedAlts, BitSet.empty | rootNode.fragments.map(_.id).toSet, isStrict, duplicateFragsRemover)
   }
 
   def unmaskAll(): Alternatives[M] = {
-    new Alternatives[M](rootNode, ratedAlts, BitSet.empty, duplicateFragsRemover)
+    new Alternatives[M](rootNode, ratedAlts, BitSet.empty, isStrict, duplicateFragsRemover)
   }
 
   def mask(mask: Set[Int]): Alternatives[M] = {
-    new Alternatives[M](rootNode, ratedAlts, fragmentMask.`|`(mask), duplicateFragsRemover)
+    new Alternatives[M](rootNode, ratedAlts, fragmentMask.`|`(mask), isStrict, duplicateFragsRemover)
   }
 
   def unmask(mask: Set[Int]): Alternatives[M] = {
-    new Alternatives[M](rootNode, ratedAlts, fragmentMask.--(mask), duplicateFragsRemover)
+    new Alternatives[M](rootNode, ratedAlts, fragmentMask.--(mask), isStrict, duplicateFragsRemover)
   }
 
   def promote(promotedAlts: Set[List[Int]]): Alternatives[M] = {
@@ -72,7 +81,7 @@ class Alternatives[M] private (private [morpheus] val rootNode: MorphModelNode,
       if (promotedAlts.contains(alt)) {
         // The alt found. Reorder the model so that the iterator produces this alt as the first one.
         val newModelRoot: MorphModelNode = reorderModel(altIter.rootAltNode)
-        newAlternatives = Some(new Alternatives[M](newModelRoot, ratedAlts, fragmentMask, duplicateFragsRemover))
+        newAlternatives = Some(new Alternatives[M](newModelRoot, ratedAlts, fragmentMask, isStrict, duplicateFragsRemover))
       } else {
         altIter.next()
       }
@@ -91,7 +100,7 @@ class Alternatives[M] private (private [morpheus] val rootNode: MorphModelNode,
     for (alt <- alts;
          r <- ratedAlts.get(alt);
          altBits = BitSet.empty ++ alt.map(_.id)
-         if altBits.&(fragmentMask) == altBits) yield (alt, r.rating)
+         if (!isStrict && altBits.&(fragmentMask) == altBits) || (isStrict && altBits.&(fragmentMask) == fragmentMask)) yield (alt, r.rating)
   }
 
   lazy val toList: List[(List[FragmentNode], Double)] = {
@@ -110,10 +119,10 @@ class DeDuplicatingAltIter(root: MorphModelNode, duplicateFragsRemover: List[Fra
 object Alternatives {
 
 
-  private [morpheus] def apply[M](root: MorphModelNode, duplicateFragsRemover: List[FragmentNode] => List[FragmentNode] = a => a): Alternatives[M] = {
+  private[morpheus] def apply[M](root: MorphModelNode, duplicateFragsRemover: List[FragmentNode] => List[FragmentNode] = a => a): Alternatives[M] = {
     val altIter = new DeDuplicatingAltIter(root, duplicateFragsRemover)
     val defaultRatedAlts: Map[List[FragmentNode], AltRating] = altIter.toList.map(alt => (alt, AltRating(0d))).toMap
-    new Alternatives[M](root, defaultRatedAlts, BitSet.empty, duplicateFragsRemover).maskAll()
+    new Alternatives[M](root, defaultRatedAlts, BitSet.empty, isStrict = false, duplicateFragsRemover).maskAll()
   }
 
   def moveChildToHead(children: List[MorphModelNode], index: Int): List[MorphModelNode] = {

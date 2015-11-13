@@ -22,11 +22,21 @@ trait MorphingTools[M] {
 abstract class MorphModelBase[M](val rootNode: MorphModelNode) extends MorphingTools[M] {
   val fragmentDescriptorsList: List[Frag[_, _]]
   val lubComponents: Array[Class[_]]
+  /**
+   * Maps the secondary fragments to the primary ones
+   */
+  val sec2prim: Map[Int, Int]
 
   private lazy val frag2Desc: Map[Int, Frag[_, _]] = {
-    fragmentDescriptorsList.map(fd => {
-      (fd.index, fd)
+    sec2prim.map(e => {
+      val secFragId = e._1
+      val primFragId = e._2
+      val fragDesc: Frag[_, _] = fragmentDescriptorsList.find(_.index == primFragId).get
+      (secFragId, fragDesc)
     }).toMap
+//    fragmentDescriptorsList.map(fd => {
+//      (fd.index, fd)
+//    }).toMap
   }
 
   def altIterator(): AltIterator[FragmentNode, List[FragmentNode]] =

@@ -112,7 +112,7 @@ case object UnitNode extends MorphModelNode {
 
 class FragmentsHelper[T, K](fragmentTypesMap: Map[Int, T], keyExtractor: T => K) extends (List[FragmentNode] => List[FragmentNode]) {
 
-  private val sec2prim: Map[Int, Int] = mapSecondaryToPrimary()
+  val sec2prim: Map[Int, Int] = mapSecondaryToPrimary()
   val filteredTypesMap = fragmentTypesMap.filterNot(e => sec2prim(e._1) != e._1)
 
   def mapSecondaryToPrimary(): Map[Int, Int] = {
