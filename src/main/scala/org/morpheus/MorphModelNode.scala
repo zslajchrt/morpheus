@@ -2,6 +2,8 @@ package org.morpheus
 
 import java.util.concurrent.atomic.AtomicInteger
 
+import scala.collection.SortedSet
+
 /**
  * Created by zslajchrt on 29/04/15.
  */
@@ -45,6 +47,7 @@ sealed trait MorphModelNode {
 
   def toAltNode: AltNode[FragmentNode]
 
+  @deprecated("Use FragmentHelper.createAntagonistsMatrix")
   def createAntagonistsMatrix(nodeEquivalence: ((FragmentNode, FragmentNode) => Boolean) = _ == _): Set[(FragmentNode, FragmentNode)] = {
     val equivPairs = for (frag1 <- fragments;
                           frag2 <- fragments if nodeEquivalence(frag1, frag2)) yield (frag1, frag2)
@@ -104,4 +107,48 @@ case object UnitNode extends MorphModelNode {
   def toAltNode: AltNode[FragmentNode] = NoneAltNode
 
   override val fragments: List[FragmentNode] = Nil
+}
+
+
+class FragmentsHelper[T, K](fragmentTypesMap: Map[Int, T], keyExtractor: T => K) extends (List[FragmentNode] => List[FragmentNode]) {
+
+  private val sec2prim: Map[Int, Int] = mapSecondaryToPrimary()
+  val filteredTypesMap = fragmentTypesMap.filterNot(e => sec2prim(e._1) != e._1)
+
+  def mapSecondaryToPrimary(): Map[Int, Int] = {
+    val invFragMap: Map[K, SortedSet[Int]] = fragmentTypesMap.groupBy(e => keyExtractor(e._2)).map(e => (e._1, SortedSet(e._2.keys.toList: _*)))
+    val secondaryFragsToPrimary: Iterable[SortedSet[(Int, Int)]] = invFragMap.map(e => {
+      val primary = e._2.head
+      e._2.map(f => (f, primary))
+    })
+
+    secondaryFragsToPrimary.flatMap(p => p).toMap
+  }
+
+  def removeDuplicateFragments(alt: List[FragmentNode]): List[FragmentNode] = {
+    // replace secondary fragments by primary
+    alt.map(fn => fn.copy(id = sec2prim(fn.id))).distinct
+  }
+
+  override def apply(alt: List[FragmentNode]): List[FragmentNode] = removeDuplicateFragments(alt)
+
+  def createAntagonistsMatrix(rootNode: MorphModelNode): Set[(FragmentNode, FragmentNode)] = {
+    val fragments = rootNode.fragments
+
+    val altIter = new DeDuplicatingAltIter(rootNode, this)
+    val alts = altIter.toList
+
+    // Create a set of 'friends'. Two fragments are friends if they appear in the same alternative.
+    val friends = (for (alt <- alts;
+                        i <- alt.indices;
+                        j <- alt.indices)
+      yield (alt(i), alt(j))).toSet
+
+    // the antagonist set is complementary to the friends
+    val uniqueFragments = fragments.map(fn => fn.copy(id = sec2prim(fn.id)))
+    (for (frag1 <- uniqueFragments;
+          frag2 <- uniqueFragments if !friends.contains((frag1, frag2))
+    ) yield (frag1, frag2)).toSet
+  }
+
 }

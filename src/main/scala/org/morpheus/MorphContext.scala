@@ -277,11 +277,10 @@ abstract class MutableMorphContext[M, L, ConformLev <: ConformanceLevelMarker](
   }
 
   val (entCls, allInterfaces) = {
-    val firstDim = lubComponents(0)
-    if (firstDim.isInterface) {
+    if (lubComponents.isEmpty || lubComponents(0).isInterface) {
       (classOf[AnyRef], lubComponents ++ Array(classOf[MutableMorphMirror[M]]))
     } else {
-      (firstDim, lubComponents.tail ++ Array(classOf[MutableMorphMirror[M]]))
+      (lubComponents(0), lubComponents.tail ++ Array(classOf[MutableMorphMirror[M]]))
     }
   }
 

@@ -46,7 +46,7 @@ abstract class MorphModelBase[M](val rootNode: MorphModelNode) extends MorphingT
     fragmentDescriptorsList.mkString("{", ",", "}")
   }
 
-  val alternatives: Alternatives[M] = Alternatives.apply[M](rootNode)
+  lazy val alternatives: Alternatives[M] = Alternatives.apply[M](rootNode, new FragmentsHelper[Frag[_, _], RuntimeClass](frag2Desc, f => f.fragmentClass))
 
 }
 

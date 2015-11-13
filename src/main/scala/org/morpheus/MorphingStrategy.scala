@@ -328,7 +328,6 @@ case class MaskingStrategy[M, S](delegate: MorphingStrategy[M], switchModel: Mor
         for (altId <- 0 until altsCount) {
           val swAlt: List[Int] = switchAlts(altId)
           val maskedFragments: List[Int] = swAlt.map(altMapReduced.newFragToOrigFrag)
-          val origAltSet: Set[List[Int]] = altMapReduced.newAltToOrigAlt(swAlt).map(_.fragments).toSet
 
           updatedAlts = if (altId == activeAltIndex) {
             if (negative)

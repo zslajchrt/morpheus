@@ -34,3 +34,4 @@ abstract class AltIterator[T, R](val rootAltNode: AltNode[T]) extends Resettable
 class IdentAltIterator[T](root: AltNode[T]) extends AltIterator[T, List[T]](root) {
   override protected def mapAlt(alt: List[T]): List[T] = alt
 }
+

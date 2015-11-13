@@ -14,6 +14,7 @@ class MorpheusPlugin(val global: Global) extends Plugin {
   val components = List[PluginComponent](
     new MorpheusPreTyper(global)
     , new SuperProxyGenerator(global)
+    , new AltMapDumper(global)
 //    , new MorpheusPostTyper(global)
   )
 

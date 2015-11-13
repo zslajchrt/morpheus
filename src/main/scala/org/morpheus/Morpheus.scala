@@ -1,7 +1,10 @@
 package org.morpheus
 
+import java.io.{FileWriter, File}
 import java.util.concurrent.atomic.AtomicInteger
-import scala.collection.{immutable, GenTraversableOnce}
+import org.morpheus.codegen.AltMapDumper
+
+import scala.collection.{immutable, SortedSet, GenTraversableOnce}
 import scala.language.experimental.macros
 import scala.reflect.internal.Symbols
 import scala.reflect.macros.{Universe, whitebox}
@@ -432,8 +435,8 @@ object Morpheus {
     import c.universe._
 
     val (_, modelRoot, _, _, _, fragmentTypesMap) = buildModel(c)(tpe, None)
-    val antagMatrix: Set[(FragmentNode, FragmentNode)] = modelRoot.createAntagonistsMatrix(
-      (fn1, fn2) => fragmentTypesMap(fn1.id)._1 =:= fragmentTypesMap(fn2.id)._1)
+    val fragHelper = new FragmentsHelper[(c.Type, Option[c.Type]), c.Type](fragmentTypesMap, _._1)
+    val antagMatrix: Set[(FragmentNode, FragmentNode)] = fragHelper.createAntagonistsMatrix(modelRoot)
 
     antagMatrix.map(antagPair => {
       conjunctionOfTypes(c)(List(fragmentTypesMap(antagPair._1.id)._1, fragmentTypesMap(antagPair._2.id)._1))
@@ -1175,9 +1178,11 @@ object Morpheus {
     val ts1 = System.currentTimeMillis()
     val altMappingsExpr = checkMorphKernelAssignmentUsingTypeArgs[M1, M2](c)(ci, checkDepsInSrcModel = !isDereferenced, refConfLevel = Total, noHiddenFragments = false)
     val ts2 = System.currentTimeMillis()
-    c.info(c.enclosingPosition, s"checkMorphKernelAssignmentUsingTypeArgs time: ${ts2 - ts1}ms", true)
+    //c.info(c.enclosingPosition, s"checkMorphKernelAssignmentUsingTypeArgs time: ${ts2 - ts1}ms", true)
 
     val res = q"new &[$tgtTpe]($ci.asInstanceOf[org.morpheus.MorphKernel[Any]], $altMappingsExpr)"
+
+    //c.info(c.enclosingPosition, s"${show(res)}", true)
 
     c.Expr[&[M2]](res)
   }
@@ -1352,7 +1357,21 @@ object Morpheus {
 
       //q"org.morpheus.AltMappings(Map(..$newFragToOrigFragTree), Map(..$newAltToOrigAltTree))"
       val serialized = altMap.serialize
-      q"org.morpheus.AltMappings.apply($serialized)"
+      if (serialized.length < 10000) {
+        q"org.morpheus.AltMappings.apply($serialized)"
+      } else {
+        val f = File.createTempFile(c.freshName("altmap"), "")
+        val fw = new FileWriter(f)
+        fw.write(serialized)
+        fw.close()
+        val serFileRef = s"file:${f.getAbsolutePath}"
+        q"org.morpheus.AltMappings.apply($serFileRef)"
+      }
+//      c.info(c.enclosingPosition, s"AltMap Serialized into: ${f.getAbsolutePath}", true)
+      //c.info(c.enclosingPosition, s"Path: ${c.macroApplication.}", true)
+      //c.info(c.enclosingPosition, s"System props: ${System.getProperties}", true)
+      //c.info(c.enclosingPosition, s"AltMaps: ts: ${System.currentTimeMillis()}", true)
+
     }
 
     def updatePseudoCodeAST(tgtAlt: (List[FragmentNode], List[c.Type], c.Type), srcAlt: (List[FragmentNode], List[c.Type], c.Type), altTemplate: List[FragInstSource]): Unit = {
@@ -1377,8 +1396,10 @@ object Morpheus {
 
     // todo: UNCOMMENT!
     //val (srcRoot, srcFragmentTypesMap, srcAltIter) = alternativesIterator(c)(srcTpe, checkDepsInSrcModel, excludePlaceholders = true /*irrelevant, there are no placeholder in src*/, srcConfLev)
-    val (srcRoot, srcFragmentTypesMap, srcAltIter) = alternativesIterator(c)(srcTpe, checkDeps = false, excludePlaceholders = true /*irrelevant, there are no placeholder in src*/ , srcConfLev)
-    val (tgtRoot, tgtFragmentTypesMap, tgtAltIter) = alternativesIterator(c)(tgtTpe, checkDeps = false, excludePlaceholders = true, tgtConfLev)
+    val (srcRoot, srcFragmentTypesMap, srcAltIter, srcFragHelper) = alternativesIterator(c)(srcTpe, checkDeps = false, excludePlaceholders = true /*irrelevant, there are no placeholder in src*/ , srcConfLev)
+    val (tgtRoot, tgtFragmentTypesMap, tgtAltIter, tgtFragHelper) = alternativesIterator(c)(tgtTpe, checkDeps = false, excludePlaceholders = true, tgtConfLev)
+
+    //c.info(c.enclosingPosition, s"srcFragmentTypesMap: $srcFragmentTypesMap, tgtFragmentTypesMap: $tgtFragmentTypesMap", true)
 
     // find and associate corresponding fragments in both models
     var newFragToOrigFrags = List.empty[(Int, Int)]
@@ -1420,7 +1441,8 @@ object Morpheus {
     }
 
     // Take only such antagonists where both sides have their counterparts in the source model
-    val tgtAnts = tgtRoot.createAntagonistsMatrix((fn1, fn2) => tgtFragmentTypesMap(fn1.id)._1 =:= tgtFragmentTypesMap(fn2.id)._1)
+    //val tgtAnts = tgtRoot.createAntagonistsMatrix((fn1, fn2) => tgtFragmentTypesMap(fn1.id)._1 =:= tgtFragmentTypesMap(fn2.id)._1)
+    val tgtAnts = tgtFragHelper.createAntagonistsMatrix(tgtRoot)
     val antagonists: Set[(FragInstSource, FragInstSource)] =
       for ((ant1, ant2) <- tgtAnts; fs1 <- toFragSrc(ant1); fs2 <- toFragSrc(ant2))
         yield (fs1, fs2)
@@ -2124,22 +2146,24 @@ object Morpheus {
   }
 
   private def alternativesIterator(c: whitebox.Context)(compositeModelTpe: c.Type, checkDeps: Boolean, excludePlaceholders: Boolean, conformanceLevel: ConformanceLevel):
-  (MorphModelNode, Map[Int, (c.Type, Option[c.universe.Type])], ResettableIterator[(List[FragmentNode], List[c.Type], c.Type)]) = {
+  (MorphModelNode, Map[Int, (c.Type, Option[c.universe.Type])], ResettableIterator[(List[FragmentNode], List[c.Type], c.Type)], FragmentsHelper[(c.Type, Option[c.Type]), c.Type]) = {
 
     val (_, modelRoot, _, _, _, fragmentTypesMap) = buildModel(c)(compositeModelTpe, None)
-    val altIter = alternativesIterator_(c)(modelRoot, fragmentTypesMap, excludePlaceholders)
+    val fragHelper = new FragmentsHelper[(c.Type, Option[c.Type]), c.Type](fragmentTypesMap, _._1)
+    val altIter = alternativesIterator_(c)(modelRoot, fragmentTypesMap, excludePlaceholders, fragHelper)
 
     if (checkDeps) {
       checkDependenciesInCompositeType(c)(compositeModelTpe, conformanceLevel)
       altIter.reset()
     }
 
-    (modelRoot, fragmentTypesMap, altIter)
+    (modelRoot, fragHelper.filteredTypesMap, altIter, fragHelper)
   }
 
 
   private def alternativesIterator_(c: whitebox.Context)(modelRoot: MorphModelNode,
-                                                         fragmentTypesMap: Map[Int, (c.Type, Option[c.universe.Type])], excludePlaceholders: Boolean):
+                                                         fragmentTypesMap: Map[Int, (c.Type, Option[c.universe.Type])],
+                                                         excludePlaceholders: Boolean, fragHelper: FragmentsHelper[(c.Type, Option[c.Type]), c.Type]):
   ResettableIterator[(List[FragmentNode], List[c.Type], c.Type)] = {
 
     import c.universe._
@@ -2151,16 +2175,15 @@ object Morpheus {
 
     // Scan all alternatives and try to find one matching the fragment type
     val rootAltNode = modelRoot.toAltNode
-    //val coupledCounters = new CoupledCounters(rootAltNode.collectCounters)
 
     new AltIterator[FragmentNode, (List[FragmentNode], List[c.Type], c.Type)](rootAltNode) {
-      override protected def mapAlt(alt: List[FragmentNode]): (List[FragmentNode], List[c.Type], c.Type) = {
+      override protected def mapAlt(altOrig: List[FragmentNode]): (List[FragmentNode], List[c.Type], c.Type) = {
+        val alt = fragHelper.removeDuplicateFragments(altOrig)
         val tpeAlt: List[c.Type] = alt.filter(!excludePlaceholders || !_.placeholder).map(fragmentType(_))
         val conj = conjunctionOfTypes(c)(tpeAlt)
         (alt, decomposeType(c)(conj), conj)
       }
     }
-
   }
 
   //def mirror_impl[S: c.WeakTypeTag](c: whitebox.Context)(self: c.Expr[Any]): c.Expr[Option[S with MorphMirror[\?[S]]]] = {

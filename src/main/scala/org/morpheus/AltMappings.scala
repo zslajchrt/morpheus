@@ -1,5 +1,6 @@
 package org.morpheus
 
+import scala.io.Source
 import scala.reflect.macros.whitebox
 import scala.util.parsing.combinator.JavaTokenParsers
 
@@ -8,9 +9,34 @@ import scala.util.parsing.combinator.JavaTokenParsers
  * Created by zslajchrt on 13/04/15.
  */
 object AltMappings {
-  def apply(altMapSerialized: String): AltMappings = {
-    val parser = new AltMappingsParser
-    parser.parseAltMap(altMapSerialized).get
+
+  private [this] var altMapCache = Map.empty[String, AltMappings]
+
+  def apply(altMapSerializedOrPath: String): AltMappings = {
+
+    if (altMapSerializedOrPath.startsWith("file:")) {
+      this.synchronized {
+        altMapCache.get(altMapSerializedOrPath) match {
+          case Some(am) => am
+          case None =>
+            val altMapResourcePath = altMapSerializedOrPath.drop("file:".length)
+            val altMapIS = Thread.currentThread().getContextClassLoader.getResourceAsStream(altMapResourcePath)
+            val altMapSource = Source.fromInputStream(altMapIS)
+            val altMapContent = try altMapSource.mkString finally altMapSource.close()
+
+            val parser = new AltMappingsParser
+            val am = parser.parseAltMap(altMapContent).get
+            altMapCache += (altMapSerializedOrPath -> am)
+
+            am
+        }
+     }
+    } else {
+      val parser = new AltMappingsParser
+      parser.parseAltMap(altMapSerializedOrPath).get
+    }
+
+
   }
 }
 

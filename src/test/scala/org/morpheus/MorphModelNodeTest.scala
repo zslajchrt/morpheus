@@ -47,30 +47,4 @@ class MorphModelNodeTest {
 
   }
 
-  @Test
-  def testCreateAntagonistsMatrix(): Unit = {
-    val root1 = DisjNode(List(FragmentNode(0), FragmentNode(1), FragmentNode(2)))
-    val matrix1: Set[(FragmentNode, FragmentNode)] = root1.createAntagonistsMatrix()
-    assertEquals(Set(
-      (FragmentNode(0,false),FragmentNode(1,false)),
-      (FragmentNode(0,false),FragmentNode(2,false)),
-      (FragmentNode(1,false),FragmentNode(0,false)),
-      (FragmentNode(1,false),FragmentNode(2,false)),
-      (FragmentNode(2,false),FragmentNode(0,false)),
-      (FragmentNode(2,false),FragmentNode(1,false))), matrix1)
-
-    val root2 = ConjNode(List(DisjNode(List(FragmentNode(0), FragmentNode(1))), FragmentNode(2)))
-    val matrix2: Set[(FragmentNode, FragmentNode)] = root2.createAntagonistsMatrix()
-    assertEquals(Set(
-      (FragmentNode(0,false),FragmentNode(1,false)),
-      (FragmentNode(1,false),FragmentNode(0,false))), matrix2)
-  }
-
-  @Test
-  def testCreateAntagonistsMatrix2(): Unit = {
-    val root1 = DisjNode(List(FragmentNode(0), ConjNode(List(FragmentNode(1), FragmentNode(2)))))
-    val matrix1: Set[(FragmentNode, FragmentNode)] = root1.createAntagonistsMatrix((f1, f2) => f1 == f2 || f1.id == 0 && f2.id == 1 || f1.id == 1 && f2.id == 0)
-    assertTrue(matrix1.isEmpty)
-  }
-
 }
