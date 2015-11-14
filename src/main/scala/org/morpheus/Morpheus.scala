@@ -1435,7 +1435,7 @@ object Morpheus {
 
     }
 
-    def updatePseudoCodeAST(tgtAlt: (List[FragmentNode], List[c.Type], c.Type), srcAlt: (List[FragmentNode], List[c.Type], c.Type), altTemplate: List[FragInstSource]): Unit = {
+    def updatePseudoCodeAST(tgtAlt: (List[FragmentNode], List[c.Type], c.Type), srcAlt: (List[FragmentNode], List[c.Type], c.Type, c.Type), altTemplate: List[FragInstSource]): Unit = {
 
       var newAltToOrigAlt = altMap.newAltToOrigAlt
       val tgtAltIds = tgtAlt._1.map(_.id)
@@ -1841,69 +1841,87 @@ object Morpheus {
 
     }
 
-    def checkDepsOfPlaceholders(altTemplate: List[FragInstSource]): Unit = {
+    var knownDepStatuses = Map.empty[(FragInstSource, List[FragInstSource]), Boolean]
 
+    def checkDepsOfPlaceholders(altTemplate: List[FragInstSource], expandedSrcLUB: c.Type): Unit = {
+
+      val srcAltNodes: List[FragInstSource] = altTemplate.filter(_.isOriginal)
       // Retrieve the source fragments, which will be expanded to reveal their dependencies. These source dependencies
       // are treated as if they were normal fragments, i.e. implicit ones
-      val srcFragTypes = altTemplate.filter(_.isOriginal).map(toFragType(_))
-      val plhdFragTypes = altTemplate.filter(_.isPlaceholder).map(toFragType(_))
-      // Create the conjunction of the source explicit fragment types
-      val altTemplateSrcOnlyFragsTpe = conjunctionOfTypes(c)(srcFragTypes)
-      // Expand the conjunction to reveal the implicit fragments from source fragment dependencies
-      val expandedSrcLUBs = expandAlternatives(c)(altTemplateSrcOnlyFragsTpe)._2.map(_._3)
-      val expandedSrcLUB = lub(expandedSrcLUBs)
+      val srcFragTypes: List[c.Type] = srcAltNodes.map(toFragType(_))
+      val plhAltNodes: List[FragInstSource] = altTemplate.filter(_.isPlaceholder)
+      val plhdFragTypes = plhAltNodes.map(toFragType(_))
+
+//      // Create the conjunction of the source explicit fragment types
+//      val altTemplateSrcOnlyFragsTpe = conjunctionOfTypes(c)(srcFragTypes)
+//      // Expand the conjunction to reveal the implicit fragments from source fragment dependencies
+//      val expandedSrcLUBs = expandAlternatives(c)(altTemplateSrcOnlyFragsTpe)._2.map(_._3)
+//      val expandedSrcLUB = lub(expandedSrcLUBs)
 
       for (altFragSrc <- altTemplate) {
 
         altFragSrc match {
           case OriginalInstanceSource(_) =>
-          case PlaceholderSource(fn) =>
-            val plhTpe = toFragType(altFragSrc)
-
-            if (!plhdValidationCtx.exists(_._1 =:= plhTpe)) {
-              // the placeholder has not been checked yet
-              try {
-                val plhConfLevelMode: ConformanceLevel = getConfLevelFromAnnotation(c)(plhTpe)
-                plhTpe.typeSymbol.asClass.selfType match {
-                  case RefinedType(parents, scope) =>
-                    val newPlhdValCtx = (plhTpe, plhdFragTypes) :: plhdValidationCtx
-
-                    val allContextPlaceholders: Set[c.Type] = newPlhdValCtx.map(_._2).flatMap(l => l).toSet
-                    val depsRawTpe = internal.refinedType(parents.tail, scope)
-                    val depsTpe = transformToPlaceholders(c)(depsRawTpe, allContextPlaceholders)
-
-                    // Create conjunction of the placeholder type. This conjunction is not expanded, however, since these dependencies will be examined if they are satisfied
-                    // by expandedSrcFragsType.
-                    //                    val altTemplatePlhdOnlyFragsTpe = conjunctionOfTypes(c)(altTemplate.filterNot(_ == altFragSrc).filter(_.isInstanceOf[PlaceholderSource]).map(toFragType(_)))
-                    //                    val expandedAltTemplateTpe = conjunctionOfTypes(c)(List(altTemplatePlhdOnlyFragsTpe, expandedSrcLUB))
-                    val expandedAltTemplateTpe = expandedSrcLUB
-
-                    if (expandedAltTemplateTpe =:= anyTpe && !(depsTpe =:= anyTpe)) {
-                      // This situation can occur if there is no source fragment and a single placeholder depending on something
-                      throw new DependencyCheckException(s"Unsatisfied placeholder $plhTpe dependencies")
-                    }
-
-                    //c.info(c.enclosingPosition, s"Alt: ${altTemplate.map(toFragType(_))}\nPlaceholder $plhTpe\ndeps raw type: $depsRawTpe\ndeps type: $depsTpe\nExpanded type: $expandedAltTemplateTpe\naltTemplateSrcOnlyFragsTpe:$altTemplateSrcOnlyFragsTpe\nexpandedSrcFragsType: $expandedSrcLUB\nallContextPlaceholders: $allContextPlaceholders", true)
-                    checkMorphKernelAssignmentWithPlhdCtx(c, s"Checking placeholder $plhTpe dependencies against alt template type $expandedSrcLUB")(
-                      expandedSrcLUB, depsTpe, false, Partial, Partial, false, noHiddenFragments = false, newPlhdValCtx)._1
-
-                  //                    val problem = try {
-                  //                      checkMorphKernelAssignmentWithPlhdCtx(c, s"Checking placeholder $plhTpe dependencies against alt template type $expandedAltTemplateTpe")(
-                  //                        expandedAltTemplateTpe, depsTpe, false, Partial, Partial, false, noHiddenFragments = false, newPlhdValCtx)._1
-                  //                      None
-                  //                    } catch {
-                  //                      case t: Throwable =>
-                  //                        Some(t)
-                  //                        throw t
-                  //                    }
-                  //                    c.info(c.enclosingPosition, s"Alt: ${altTemplate.map(toFragType(_))}\nPlaceholder $plhTpe\ndeps type: $depsTpe\nExpanded type: $expandedAltTemplateTpe\naltTemplateSrcOnlyFragsTpe:$altTemplateSrcOnlyFragsTpe\nexpandedSrcFragsType: $expandedSrcLUB\nProblem: $problem", true)
-                  case _ => // no placeholder's dependencies
+          case plhSrc@PlaceholderSource(fn) =>
+            knownDepStatuses.get((plhSrc, srcAltNodes)) match {
+              case Some(isSatisfied) =>
+                if (!isSatisfied) {
+                  throw new DependencyCheckException(s"Unsatisfied placeholder ${toFragType(altFragSrc)} dependencies")
                 }
-              }
-              catch {
-                case dchck: DependencyCheckException =>
-                  throw new DependencyCheckException(s"Unsatisfied placeholder $plhTpe dependencies", dchck)
-              }
+
+              case None =>
+
+                val plhTpe = toFragType(altFragSrc)
+
+                if (!plhdValidationCtx.exists(_._1 =:= plhTpe)) {
+                  // the placeholder has not been checked yet
+                  try {
+                    val plhConfLevelMode: ConformanceLevel = getConfLevelFromAnnotation(c)(plhTpe)
+                    plhTpe.typeSymbol.asClass.selfType match {
+                      case RefinedType(parents, scope) =>
+                        val newPlhdValCtx = (plhTpe, plhdFragTypes) :: plhdValidationCtx
+
+                        val allContextPlaceholders: Set[c.Type] = newPlhdValCtx.map(_._2).flatMap(l => l).toSet
+                        val depsRawTpe = internal.refinedType(parents.tail, scope)
+                        val depsTpe = transformToPlaceholders(c)(depsRawTpe, allContextPlaceholders)
+
+                        // Create conjunction of the placeholder type. This conjunction is not expanded, however, since these dependencies will be examined if they are satisfied
+                        // by expandedSrcFragsType.
+                        //                    val altTemplatePlhdOnlyFragsTpe = conjunctionOfTypes(c)(altTemplate.filterNot(_ == altFragSrc).filter(_.isInstanceOf[PlaceholderSource]).map(toFragType(_)))
+                        //                    val expandedAltTemplateTpe = conjunctionOfTypes(c)(List(altTemplatePlhdOnlyFragsTpe, expandedSrcLUB))
+                        val expandedAltTemplateTpe = expandedSrcLUB
+
+                        if (expandedAltTemplateTpe =:= anyTpe && !(depsTpe =:= anyTpe)) {
+                          // This situation can occur if there is no source fragment and a single placeholder depending on something
+                          knownDepStatuses += (altFragSrc, srcAltNodes) -> false
+                          throw new DependencyCheckException(s"Unsatisfied placeholder $plhTpe dependencies")
+                        }
+
+                        //c.info(c.enclosingPosition, s"Alt: ${altTemplate.map(toFragType(_))}\nPlaceholder $plhTpe\ndeps raw type: $depsRawTpe\ndeps type: $depsTpe\nExpanded type: $expandedAltTemplateTpe\naltTemplateSrcOnlyFragsTpe:$altTemplateSrcOnlyFragsTpe\nexpandedSrcFragsType: $expandedSrcLUB\nallContextPlaceholders: $allContextPlaceholders", true)
+                        checkMorphKernelAssignmentWithPlhdCtx(c, s"Checking placeholder $plhTpe dependencies against alt template type $expandedSrcLUB")(
+                          expandedSrcLUB, depsTpe, false, Partial, Partial, false, noHiddenFragments = false, newPlhdValCtx)._1
+
+                        knownDepStatuses += (altFragSrc, srcAltNodes) -> true
+
+                      //                    val problem = try {
+                      //                      checkMorphKernelAssignmentWithPlhdCtx(c, s"Checking placeholder $plhTpe dependencies against alt template type $expandedAltTemplateTpe")(
+                      //                        expandedAltTemplateTpe, depsTpe, false, Partial, Partial, false, noHiddenFragments = false, newPlhdValCtx)._1
+                      //                      None
+                      //                    } catch {
+                      //                      case t: Throwable =>
+                      //                        Some(t)
+                      //                        throw t
+                      //                    }
+                      //                    c.info(c.enclosingPosition, s"Alt: ${altTemplate.map(toFragType(_))}\nPlaceholder $plhTpe\ndeps type: $depsTpe\nExpanded type: $expandedAltTemplateTpe\naltTemplateSrcOnlyFragsTpe:$altTemplateSrcOnlyFragsTpe\nexpandedSrcFragsType: $expandedSrcLUB\nProblem: $problem", true)
+                      case _ => // no placeholder's dependencies
+                    }
+                }
+                catch {
+                  case dchck: DependencyCheckException =>
+                    knownDepStatuses += (altFragSrc, srcAltNodes) -> false
+                    throw new DependencyCheckException(s"Unsatisfied placeholder $plhTpe dependencies", dchck)
+                  }
+                }
             }
         }
       }
@@ -1913,19 +1931,19 @@ object Morpheus {
     /*
      * @return the alternative template
      */
-    def isTargetAltCompatibleWithSourceAlt(tgtAlt: (List[FragmentNode], List[c.Type], c.Type), srcAlt: (List[FragmentNode], List[c.Type], c.Type), maybeHiddenFragmentsInSrcAlt: Boolean): Either[List[FragInstSource], String] = {
+    def isTargetAltCompatibleWithSourceAlt(tgtAlt: (List[FragmentNode], List[c.Type], c.Type), srcAlt: (List[FragmentNode], List[c.Type], c.Type, c.Type), maybeHiddenFragmentsInSrcAlt: Boolean): Either[List[FragInstSource], String] = {
 
       val tgtAltLUB = tgtAlt._3
-
-      val expandedSrcAltSubAltLUBs: List[c.Type] = expandAlternatives(c)(srcAlt._3)._2.map(_._3)
-      val srcAltLUB = if (expandedSrcAltSubAltLUBs.isEmpty)
-        anyTpe
-      else
-        lub(expandedSrcAltSubAltLUBs)
+      val srcAltLUB = srcAlt._4
+//      val expandedSrcAltSubAltLUBs: List[c.Type] = expandAlternatives(c)(srcAlt._3)._2.map(_._3)
+//      val srcAltLUB = if (expandedSrcAltSubAltLUBs.isEmpty)
+//        anyTpe
+//      else
+//        lub(expandedSrcAltSubAltLUBs)
 
       //c.info(c.enclosingPosition, s"tgtAltLUB: $tgtAltLUB\nsrcAltLUB: $srcAltLUB\nexpandedSrcAltSubAltLUBs: $expandedSrcAltSubAltLUBs", true)
 
-      val ret = if (srcAltLUB <:< tgtAltLUB) {
+      val ret: Either[List[FragInstSource], String] = if (srcAltLUB <:< tgtAltLUB) {
       //val ret = if (false) {
         //if (!checkTypeAnnotations(tgtAlt._1.map(f => tgtFragmentTypesMap(f.id)._1), srcAlt._2)) {
         if (!checkTypeAnnotations(tgtAlt._2, srcAlt._2)) {
@@ -2015,7 +2033,7 @@ object Morpheus {
           try {
 
             //c.info(c.enclosingPosition, s"Checking placeholders for altTemplate $altTemplate", true)
-            checkDepsOfPlaceholders(altTemplate)
+            checkDepsOfPlaceholders(altTemplate, srcAltLUB)
 
             if (noHiddenFragments) {
 
@@ -2059,7 +2077,7 @@ object Morpheus {
     var unsatisfiedTargetAlts = Set.empty[(List[c.Type] /*tgt alt*/ , List[c.Type] /*src alt*/ , String /*reason*/ )]
     var independentTargetAltCounter = 0
 
-    val emptySrcAlt: (Nil.type, Nil.type, Type) = (Nil, Nil, anyTpe)
+    val emptySrcAlt: (Nil.type, Nil.type, Type, Type) = (Nil, Nil, anyTpe, anyTpe)
 
     var altRelation = Set.empty[(List[FragmentNode], List[FragmentNode])]
 
@@ -2067,11 +2085,24 @@ object Morpheus {
     var skippedCombinationsCounter = 0
 
     val ts1 = System.currentTimeMillis()
-//    if (ctxMsg.startsWith("Checking compatibility of kernel reference")) {
-//      c.info(c.enclosingPosition, s"AltMapping started at $ts1", true)
-//    }
-    while (tgtAltIter.hasNext) {
-      val tgtAlt = tgtAltIter.next()
+
+    if (ctxMsg.startsWith("Checking compatibility of kernel reference")) {
+      c.info(c.enclosingPosition, s"AltMapping started at $ts1", true)
+    }
+
+    val tgtAlts = tgtAltIter.toList
+    val srcAlts = srcAltIter.toList.map(srcAlt => {
+        val expandedSrcAltSubAltLUBs: List[c.Type] = expandAlternatives(c)(srcAlt._3)._2.map(_._3)
+        val expSrcAltLUB = if (expandedSrcAltSubAltLUBs.isEmpty)
+          anyTpe
+        else
+          lub(expandedSrcAltSubAltLUBs)
+      (srcAlt._1, srcAlt._2, srcAlt._3, expSrcAltLUB)
+    })
+
+    val tgtAltIter2 = tgtAlts.iterator
+    while (tgtAltIter2.hasNext) {
+      val tgtAlt = tgtAltIter2.next()
       //c.info(c.enclosingPosition, s"TargetAlt: $tgtAlt", true)
 
       // Transform fragment nodes to fragment types
@@ -2089,14 +2120,15 @@ object Morpheus {
                                                          y = (for (x <- newFragToOrigFrags if x._1 == f.id) yield x._2) if y.nonEmpty) yield y
 
       sourceAltCounter = 0
-      while (srcAltIter.hasNext) {
+      val srcAltIter2 = srcAlts.iterator
+      while (srcAltIter2.hasNext) {
         allCombinationsCounter += 1
 
         if (allCombinationsCounter % 300 == 0 && ctxMsg.startsWith("Checking compatibility of kernel reference")) {
           c.info(c.enclosingPosition, s"Processed $allCombinationsCounter combinations", true)
         }
 
-        val srcAlt = srcAltIter.next()
+        val srcAlt = srcAltIter2.next()
 
         sourceAltCounter += 1
 
