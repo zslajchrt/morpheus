@@ -22,6 +22,7 @@ object Morpheus {
   trait or[F0, F1]
 
   trait $[F]
+  trait ^[F]
 
   type \?[F] = or[Unit, F]
   type /?[F] = or[F, Unit]
@@ -1530,7 +1531,7 @@ object Morpheus {
       // We can use the placeholder only if such a fragment exists.
 
       if (dependees.exists(_.virtual)) {
-        // The existence of any virtual dependee to the placehodler rules out the possibility of finding a source fragment
+        // The existence of any virtual dependee to the placeholder rules out the possibility of finding a source fragment
         // with the same dependencies as that of the placeholder.
         return None
       }
@@ -2186,9 +2187,9 @@ object Morpheus {
 
     val ts2 = System.currentTimeMillis()
 
-    if (ctxMsg.startsWith("Checking compatibility of kernel reference")) {
-      c.info(c.enclosingPosition, s"Processed $allCombinationsCounter alt combinations and skipped $skippedCombinationsCounter in ${ts2 - ts1}ms\nCtx: $ctxMsg", true)
-    }
+//    if (ctxMsg.startsWith("Checking compatibility of kernel reference")) {
+//      c.info(c.enclosingPosition, s"Processed $allCombinationsCounter alt combinations and skipped $skippedCombinationsCounter in ${ts2 - ts1}ms\nCtx: $ctxMsg", true)
+//    }
 
     val isCompatible = (tgtConfLev, srcConfLev) match {
       case (Partial, Partial) => independentTargetAltCounter > 0 || altRelation.map(_._2).size == sourceAltCounter // right-total relation, all source alts must have found their target alts
@@ -2224,7 +2225,7 @@ object Morpheus {
            Unsatisfied alternatives:${unsatisfiedTargetAlts.toList.map(printUnsatisfiedAltsPair).mkString("---")}
            Source root: $srcRoot
            Target root: $tgtRoot
-           Antagonists: ${antagonists.map(tpl => (fragSrcPretty(tpl._1), fragSrcPretty(tpl._2))).mkString(", ")}
+           Antagonists: ${antagonists.map(tpl => (fragSrcPretty(tpl._1), fragSrcPretty(tpl._2), tpl)).mkString(", ")}
            NewFragToOrigFrag: $newFragToOrigFrag
            Target alternatives:\n\t${allTargetAlts.map(toShortNames(c)(_)).mkString("\n\t")}
          """)
@@ -2232,6 +2233,18 @@ object Morpheus {
     } else {
 
       //      c.info(c.enclosingPosition, s"AltMapping $altMap", true)
+
+//      val report = s"""
+//           *** $ctxMsg ***
+//
+//           Reference of $tgtTpe:$tgtConfLev does not conform $srcTpe:$srcConfLev.
+//           Source root: $srcRoot
+//           Target root: $tgtRoot
+//           Antagonists: ${antagonists.map(tpl => (fragSrcPretty(tpl._1), fragSrcPretty(tpl._2), tpl)).mkString(", ")}
+//           NewFragToOrigFrag: $newFragToOrigFrag
+//           Target alternatives:\n\t${allTargetAlts.map(toShortNames(c)(_)).mkString("\n\t")}
+//         """
+//      c.info(c.enclosingPosition, s"AltMapping Report: $report", true)
 
       (resultTree(), altMap)
 
@@ -2895,16 +2908,6 @@ object Morpheus {
     val unitTpe = implicitly[WeakTypeTag[Unit]].tpe
     val anyTpe = implicitly[WeakTypeTag[Any]].tpe
 
-    def normalizeModelType(tpe: Type): Type = {
-      tpe match {
-        case RefinedType(parents, decls) => internal.refinedType(parents.map(t => normalizeModelType(t)), decls)
-        case t: Type if t == anyTpe => unitTpe
-        case t: Type => t
-      }
-    }
-
-    val compModelTp: Type = normalizeModelType(compRawTp.dealias)
-
     type FragDesc = (Type, Option[Type])
 
     val anyRefTpe = c.universe.rootMirror.typeOf[AnyRef]
@@ -2935,6 +2938,15 @@ object Morpheus {
       } else None
     }
 
+    object expanderNodeType {
+      val expanderTp = implicitly[WeakTypeTag[^[_]]].tpe.typeConstructor
+
+      def unapply(tp: Type): Option[Type] = if (tp.typeConstructor =:= expanderTp) {
+        val tpRef: TypeRef = tp.asInstanceOf[TypeRef]
+        Some(tpRef.args.head)
+      } else None
+    }
+
     // UnitNode extractor
     object unitNodeType {
       val unitTp = implicitly[WeakTypeTag[Unit]].tpe
@@ -2943,6 +2955,17 @@ object Morpheus {
         Some(UnitNode)
       } else None
     }
+
+    def normalizeModelType(tpe: Type): Type = {
+      tpe match {
+        case RefinedType(parents, decls) => internal.refinedType(parents.map(t => normalizeModelType(t)), decls)
+        case t: Type if t == anyTpe => unitTpe
+        //case t: Type if t.typeConstructor =:= expanderNodeType.expanderTp => t.asInstanceOf[TypeRef].args.head
+        case t: Type => t
+      }
+    }
+
+    val compModelTp: Type = normalizeModelType(compRawTp.dealias)
 
     def checkEntity(node: FragmentNode, previousFragments: List[FragmentNode]) {
       val (fragTpe, cfgTpeOpt) = fragmentTypes(node.id)
@@ -3012,8 +3035,11 @@ object Morpheus {
       case disjNodeType(lhs, rhs) =>
         DisjNode(List(traverseCompTp(lhs, plHldMode), traverseCompTp(rhs, plHldMode)))
       case unitNodeType(u) => u
-      case plHld@placeHolderNodeType(plHldTpe) =>
+      case placeHolderNodeType(plHldTpe) =>
         traverseCompTp(plHldTpe, !plHldMode)
+      case expanderNodeType(expandingTpe) =>
+        val expandedTpe = expandingTpe.typeSymbol.asClass.selfType
+        traverseCompTp(expandedTpe, plHldMode)
       case tr@TypeRef(_, sym, _) =>
 
         val symCls: Symbols#ClassSymbol = sym.asClass.asInstanceOf[Symbols#ClassSymbol]
@@ -3098,7 +3124,7 @@ object Morpheus {
     val fragmentNodes = collectFragmentNodes(modelRoot)
     val res = (compModelTp, modelRoot, fragmentNodes, modelLUB, modelLUBComponents, fragmentTypes)
 
-    //c.info(c.enclosingPosition, s"Fragment types for model $compRawTp:\n $fragmentTypes", true)
+    //c.info(c.enclosingPosition, s"Fragment types for model ${compModelTp =:= compRawTp}:\n $fragmentTypes", true)
 
     res
   } catch {
@@ -3316,7 +3342,7 @@ object Morpheus {
       val transformedModelTpe = c.typecheck(transformedModel, mode = c.TYPEmode).tpe
       (tq"org.morpheus.MorphModel[$transformedModel]", transformedModelTpe)
     } else
-      (tq"org.morpheus.MorphModel[$compTpe]", compTpe)
+      (tq"org.morpheus.MorphModel[$compModelTpe]", compModelTpe)
 
     val fragToDepsMaps: Map[Int, c.Expr[String]] = if (checkDeps) {
       //checkDependenciesInCompositeType(c)(compTpe, conformanceLevel)
@@ -3456,7 +3482,7 @@ object Morpheus {
   }
 
 
-  def createMorphKernel(c: whitebox.Context)(compTpe: c.Type, fragmentProvider: FragmentProvider, checkDeps: Boolean,
+  def createMorphKernel(c: whitebox.Context)(compTpeOrig: c.Type, fragmentProvider: FragmentProvider, checkDeps: Boolean,
                                              compositeModelExprOpt: Option[c.Expr[MorphModel[_]]],
                                              defaultStrategyOpt: Option[c.Expr[MorphingStrategy[_]]],
                                              placeholderTpeTransf: Option[PartialFunction[c.Type, c.Type]],
@@ -3483,13 +3509,13 @@ object Morpheus {
     }
 
 
-    val (_, _, fragmentNodes, _, _, fragmentTypesMap) = buildModel(c)(compTpe, placeholderTpeTransf)
+    val (compTpe, _, fragmentNodes, _, _, fragmentTypesMap) = buildModel(c)(compTpeOrig, placeholderTpeTransf)
 
-    def fragmentProxyImplicit(fn: FragmentNode): Tree = {
-      val fragTpe = fragmentTypesMap(fn.id)._1
-      val proxyImplValName = TermName(c.freshName("proxy"))
-      q"implicit def $proxyImplValName = fragments.select[FragmentHolder[$fragTpe]].proxy"
-    }
+//    def fragmentProxyImplicit(fn: FragmentNode): Tree = {
+//      val fragTpe = fragmentTypesMap(fn.id)._1
+//      val proxyImplValName = TermName(c.freshName("proxy"))
+//      q"implicit def $proxyImplValName = fragments.select[FragmentHolder[$fragTpe]].proxy"
+//    }
 
     def fragmentSymbol(fn: FragmentNode): Tree = {
       val fragTpe = fragmentTypesMap(fn.id)._1
