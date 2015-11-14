@@ -984,7 +984,7 @@ object Morpheus {
     import c.universe._
 
     val res = derefHelperWithStrategy_impl[M](c)(ciRef, null, placeholders: _*)
-    c.info(c.enclosingPosition, s"Deref:\n${show(res)}", true)
+    //c.info(c.enclosingPosition, s"Deref:\n${show(res)}", true)
     res
   }
 
@@ -1839,7 +1839,6 @@ object Morpheus {
 
       res
 
-
     }
 
     def checkDepsOfPlaceholders(altTemplate: List[FragInstSource]): Unit = {
@@ -1875,8 +1874,8 @@ object Morpheus {
 
                     // Create conjunction of the placeholder type. This conjunction is not expanded, however, since these dependencies will be examined if they are satisfied
                     // by expandedSrcFragsType.
-//                    val altTemplatePlhdOnlyFragsTpe = conjunctionOfTypes(c)(altTemplate.filterNot(_ == altFragSrc).filter(_.isInstanceOf[PlaceholderSource]).map(toFragType(_)))
-//                    val expandedAltTemplateTpe = conjunctionOfTypes(c)(List(altTemplatePlhdOnlyFragsTpe, expandedSrcLUB))
+                    //                    val altTemplatePlhdOnlyFragsTpe = conjunctionOfTypes(c)(altTemplate.filterNot(_ == altFragSrc).filter(_.isInstanceOf[PlaceholderSource]).map(toFragType(_)))
+                    //                    val expandedAltTemplateTpe = conjunctionOfTypes(c)(List(altTemplatePlhdOnlyFragsTpe, expandedSrcLUB))
                     val expandedAltTemplateTpe = expandedSrcLUB
 
                     if (expandedAltTemplateTpe =:= anyTpe && !(depsTpe =:= anyTpe)) {
@@ -1886,18 +1885,18 @@ object Morpheus {
 
                     //c.info(c.enclosingPosition, s"Alt: ${altTemplate.map(toFragType(_))}\nPlaceholder $plhTpe\ndeps raw type: $depsRawTpe\ndeps type: $depsTpe\nExpanded type: $expandedAltTemplateTpe\naltTemplateSrcOnlyFragsTpe:$altTemplateSrcOnlyFragsTpe\nexpandedSrcFragsType: $expandedSrcLUB\nallContextPlaceholders: $allContextPlaceholders", true)
                     checkMorphKernelAssignmentWithPlhdCtx(c, s"Checking placeholder $plhTpe dependencies against alt template type $expandedSrcLUB")(
-                                        expandedSrcLUB, depsTpe, false, Partial, Partial, false, noHiddenFragments = false, newPlhdValCtx)._1
+                      expandedSrcLUB, depsTpe, false, Partial, Partial, false, noHiddenFragments = false, newPlhdValCtx)._1
 
-//                    val problem = try {
-//                      checkMorphKernelAssignmentWithPlhdCtx(c, s"Checking placeholder $plhTpe dependencies against alt template type $expandedAltTemplateTpe")(
-//                        expandedAltTemplateTpe, depsTpe, false, Partial, Partial, false, noHiddenFragments = false, newPlhdValCtx)._1
-//                      None
-//                    } catch {
-//                      case t: Throwable =>
-//                        Some(t)
-//                        throw t
-//                    }
-//                    c.info(c.enclosingPosition, s"Alt: ${altTemplate.map(toFragType(_))}\nPlaceholder $plhTpe\ndeps type: $depsTpe\nExpanded type: $expandedAltTemplateTpe\naltTemplateSrcOnlyFragsTpe:$altTemplateSrcOnlyFragsTpe\nexpandedSrcFragsType: $expandedSrcLUB\nProblem: $problem", true)
+                  //                    val problem = try {
+                  //                      checkMorphKernelAssignmentWithPlhdCtx(c, s"Checking placeholder $plhTpe dependencies against alt template type $expandedAltTemplateTpe")(
+                  //                        expandedAltTemplateTpe, depsTpe, false, Partial, Partial, false, noHiddenFragments = false, newPlhdValCtx)._1
+                  //                      None
+                  //                    } catch {
+                  //                      case t: Throwable =>
+                  //                        Some(t)
+                  //                        throw t
+                  //                    }
+                  //                    c.info(c.enclosingPosition, s"Alt: ${altTemplate.map(toFragType(_))}\nPlaceholder $plhTpe\ndeps type: $depsTpe\nExpanded type: $expandedAltTemplateTpe\naltTemplateSrcOnlyFragsTpe:$altTemplateSrcOnlyFragsTpe\nexpandedSrcFragsType: $expandedSrcLUB\nProblem: $problem", true)
                   case _ => // no placeholder's dependencies
                 }
               }
@@ -1927,6 +1926,7 @@ object Morpheus {
       //c.info(c.enclosingPosition, s"tgtAltLUB: $tgtAltLUB\nsrcAltLUB: $srcAltLUB\nexpandedSrcAltSubAltLUBs: $expandedSrcAltSubAltLUBs", true)
 
       val ret = if (srcAltLUB <:< tgtAltLUB) {
+      //val ret = if (false) {
         //if (!checkTypeAnnotations(tgtAlt._1.map(f => tgtFragmentTypesMap(f.id)._1), srcAlt._2)) {
         if (!checkTypeAnnotations(tgtAlt._2, srcAlt._2)) {
           Right(s"Some target annotations not found in the source alt $srcAltLUB")
@@ -2067,9 +2067,9 @@ object Morpheus {
     var skippedCombinationsCounter = 0
 
     val ts1 = System.currentTimeMillis()
-    if (ctxMsg.startsWith("Checking compatibility of kernel reference")) {
-      c.info(c.enclosingPosition, s"AltMapping started at $ts1", true)
-    }
+//    if (ctxMsg.startsWith("Checking compatibility of kernel reference")) {
+//      c.info(c.enclosingPosition, s"AltMapping started at $ts1", true)
+//    }
     while (tgtAltIter.hasNext) {
       val tgtAlt = tgtAltIter.next()
       //c.info(c.enclosingPosition, s"TargetAlt: $tgtAlt", true)
@@ -3038,7 +3038,7 @@ object Morpheus {
       }
 
       val lub = determineLUB_(node)
-      val lubComponents = decomposeType(c)(lub)
+      val lubComponents = decomposeType(c)(lub).distinct
 
       //c.info(c.enclosingPosition, s"LUB $lub, components: $lubComponents", true)
 
