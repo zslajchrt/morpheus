@@ -169,18 +169,43 @@ case class AltMapRatingStrategy[M, S](delegate: MorphingStrategy[M], switchModel
 }
 
 
-case class PromotingStrategy[M, S](delegate: MorphingStrategy[M], switchModel: MorphModel[S], altMap: AltMappings, switchFn: () => Option[Int]) extends MorphingStrategy[M] {
+//case class PromotingStrategy[M, S](delegate: MorphingStrategy[M], switchModel: MorphModel[S], altMap: AltMappings, switchFn: () => Option[Int]) extends MorphingStrategy[M] {
+//
+//  val switchAlts: List[List[Int]] = switchModel.altIterator().toList.map(_.map(_.id))
+//  val altMapReduced = altMap.preserveDynamics()
+//
+//  val altsCount = altMap.newAltToOrigAlt.size
+//
+//  def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = {
+//
+//    val origAlts = delegate.chooseAlternatives(instance)(owningMutableProxy)
+//
+//    switchFn() match {
+//      case None => origAlts
+//
+//      case Some(altIdx) =>
+//        val activeAltIndex = altIdx % altsCount
+//        val activeAlt: List[Int] = switchAlts(activeAltIndex)
+//        val activeOrigAlts: Set[List[Int]] = altMapReduced.newAltToOrigAlt(activeAlt).map(_.fragments).toSet
+//
+//        origAlts.promote(activeOrigAlts)
+//    }
+//
+//  }
+//}
+
+abstract class PromotingStrategyCommon[M, S](delegate: MorphingStrategy[M], switchModel: MorphModel[S], altMap: AltMappings) extends MorphingStrategy[M] {
 
   val switchAlts: List[List[Int]] = switchModel.altIterator().toList.map(_.map(_.id))
   val altMapReduced = altMap.preserveDynamics()
 
   val altsCount = altMap.newAltToOrigAlt.size
 
-  def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = {
+  override def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = {
 
     val origAlts = delegate.chooseAlternatives(instance)(owningMutableProxy)
 
-    switchFn() match {
+    switch(instance)(owningMutableProxy) match {
       case None => origAlts
 
       case Some(altIdx) =>
@@ -192,36 +217,58 @@ case class PromotingStrategy[M, S](delegate: MorphingStrategy[M], switchModel: M
     }
 
   }
+
+  protected def switch(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Option[Int]
+
+}
+
+case class PromotingStrategy[M, S](delegate: MorphingStrategy[M], switchModel: MorphModel[S], altMap: AltMappings, switchFn: () => Option[Int])
+  extends PromotingStrategyCommon[M, S](delegate, switchModel, altMap) {
+
+  override protected def switch(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Option[Int] = switchFn()
 }
 
 class PromotingStrategyWithModel[M, S, MutableLUB](val morphModel: MorphModel[M]) {
 
-  class Strat(delegate: MorphingStrategy[morphModel.Model], switchModel: MorphModel[S], altMap: AltMappings, switchFn: (Option[MutableLUB]) => Option[Int]) extends MorphingStrategy[morphModel.Model] {
+  class Strat(delegate: MorphingStrategy[morphModel.Model], switchModel: MorphModel[S], altMap: AltMappings, switchFn: (Option[MutableLUB]) => Option[Int])
+    extends PromotingStrategyCommon[M, S](delegate, switchModel, altMap) {
 
-    val switchAlts: List[List[Int]] = switchModel.altIterator().toList.map(_.map(_.id))
-    val altMapReduced = altMap.preserveDynamics()
-
-    val altsCount = altMap.newAltToOrigAlt.size
-
-    override def chooseAlternatives(instance: MorphKernel[morphModel.Model])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[morphModel.Model] = {
-
-      val origAlts = delegate.chooseAlternatives(instance)(owningMutableProxy)
-
-      switchFn(owningMutableProxy.asInstanceOf[Option[MutableLUB]]) match {
-        case None => origAlts
-
-        case Some(altIdx) =>
-          val activeAltIndex = altIdx % altsCount
-          val activeAlt: List[Int] = switchAlts(activeAltIndex)
-          val activeOrigAlts: Set[List[Int]] = altMapReduced.newAltToOrigAlt(activeAlt).map(_.fragments).toSet
-
-          origAlts.promote(activeOrigAlts)
-      }
-
+    override protected def switch(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Option[Int] = {
+      switchFn(owningMutableProxy.asInstanceOf[Option[MutableLUB]])
     }
+
   }
 
 }
+
+//class PromotingStrategyWithModel[M, S, MutableLUB](val morphModel: MorphModel[M]) {
+//
+//  class Strat(delegate: MorphingStrategy[morphModel.Model], switchModel: MorphModel[S], altMap: AltMappings, switchFn: (Option[MutableLUB]) => Option[Int]) extends MorphingStrategy[morphModel.Model] {
+//
+//    val switchAlts: List[List[Int]] = switchModel.altIterator().toList.map(_.map(_.id))
+//    val altMapReduced = altMap.preserveDynamics()
+//
+//    val altsCount = altMap.newAltToOrigAlt.size
+//
+//    override def chooseAlternatives(instance: MorphKernel[morphModel.Model])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[morphModel.Model] = {
+//
+//      val origAlts = delegate.chooseAlternatives(instance)(owningMutableProxy)
+//
+//      switchFn(owningMutableProxy.asInstanceOf[Option[MutableLUB]]) match {
+//        case None => origAlts
+//
+//        case Some(altIdx) =>
+//          val activeAltIndex = altIdx % altsCount
+//          val activeAlt: List[Int] = switchAlts(activeAltIndex)
+//          val activeOrigAlts: Set[List[Int]] = altMapReduced.newAltToOrigAlt(activeAlt).map(_.fragments).toSet
+//
+//          origAlts.promote(activeOrigAlts)
+//      }
+//
+//    }
+//  }
+//
+//}
 
 
 case class MaskExplicitStrategy[M](delegate: MorphingStrategy[M], negative: Boolean, fragments: () => Option[Set[Int]], isStrict: Boolean = false) extends MorphingStrategy[M] {
@@ -317,7 +364,7 @@ case class StrictStrategy[M](delegate: MorphingStrategy[M]) extends MorphingStra
 
 }
 
-case class MaskingStrategy[M, S](delegate: MorphingStrategy[M], switchModel: MorphModel[S], altMap: AltMappings, switchFn: () => Option[Int], negative: Boolean, cumulative: Boolean) extends MorphingStrategy[M] {
+abstract class MaskingStrategyCommon[M, S](delegate: MorphingStrategy[M], switchModel: MorphModel[S], altMap: AltMappings, negative: Boolean, cumulative: Boolean) extends MorphingStrategy[M] {
 
   val switchAlts: List[List[Int]] = switchModel.altIterator().toList.map(_.map(_.id))
   val altMapReduced = altMap.preserveDynamics()
@@ -328,7 +375,7 @@ case class MaskingStrategy[M, S](delegate: MorphingStrategy[M], switchModel: Mor
 
     val origAlts = delegate.chooseAlternatives(instance)(owningMutableProxy)
 
-    switchFn() match {
+    switch(instance)(owningMutableProxy) match {
       case None => origAlts
 
       case Some(altIdx) =>
@@ -366,6 +413,29 @@ case class MaskingStrategy[M, S](delegate: MorphingStrategy[M], switchModel: Mor
     }
 
   }
+
+  protected def switch(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Option[Int]
+
+}
+
+case class MaskingStrategy[M, S](delegate: MorphingStrategy[M], switchModel: MorphModel[S], altMap: AltMappings, switchFn: () => Option[Int], negative: Boolean, cumulative: Boolean)
+  extends MaskingStrategyCommon[M, S](delegate, switchModel, altMap, negative, cumulative) {
+
+  override protected def switch(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Option[Int] = switchFn()
+
+}
+
+class MaskingStrategyWithModel[M, S, MutableLUB](val morphModel: MorphModel[M]) {
+
+  class Strat(delegate: MorphingStrategy[morphModel.Model], switchModel: MorphModel[S], altMap: AltMappings, switchFn: (Option[MutableLUB]) => Option[Int], negative: Boolean, cumulative: Boolean)
+    extends MaskingStrategyCommon[M, S](delegate, switchModel, altMap, negative, cumulative) {
+
+    override protected def switch(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Option[Int] = {
+      switchFn(owningMutableProxy.asInstanceOf[Option[MutableLUB]])
+    }
+
+  }
+
 }
 
 /**
@@ -391,7 +461,7 @@ case class BridgeStrategy[MT, MS](srcInstanceRef: MorphKernelRef[MT, MS]) extend
   }
 
   def chooseAlternatives(instance: MorphKernel[MT])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[MT] = {
-    val sourceAlts: Alternatives[MS] = actualStrategy.chooseAlternatives(srcInstanceRef.instance)(None)
+    val sourceAlts: Alternatives[MS] = actualStrategy.chooseAlternatives(srcInstanceRef.instance)(Some(srcInstanceRef.instance.~))
     val suggestedOrigAlternatives: List[(List[Int], Double)] = sourceAlts.toMaskedList
       .map(origAlt => (origAlt._1.map(_.id), origAlt._2)) // maps FragmentNode -> Int
 
@@ -525,7 +595,7 @@ case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: MorphKernelRef[MT, 
     val origAltForNewAltFrags = origAltsForNewAlt.map(origAlt => origAlt.fragments)
     // consult the original strategy to choose the best orig alt
 
-    val suggestedOrigAlternatives = actualStrategy.chooseAlternatives(srcInstanceRef.instance)(None)
+    val suggestedOrigAlternatives = actualStrategy.chooseAlternatives(srcInstanceRef.instance)(Some(srcInstanceRef.instance.~))
     // First, try to get the candidate original alts from the masked list
     val chosenAltsFirstAttempt = restrictRatedAltsToSpecifiedAlts(origAltForNewAltFrags, suggestedOrigAlternatives.toMaskedList, rating)
     val chosenAlts = if (chosenAltsFirstAttempt == Nil) {

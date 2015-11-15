@@ -20,6 +20,7 @@ import scala.reflect.runtime.universe._
 object Morpheus {
 
   trait or[F0, F1]
+  trait and[F0, F1]
 
   trait $[F]
   trait ^[F]
@@ -221,6 +222,14 @@ object Morpheus {
   def unmask[S](delegate: MorphingStrategy[_], sw: () => Option[Int]): Any = macro unmask_implTwoArgs[S]
 
   def unmask_+[S](delegate: MorphingStrategy[_], sw: () => Option[Int]): Any = macro unmask_implTwoArgsCumulative[S]
+
+  def maskFull[S](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], sw: (Option[morphModel.MutableLUB]) => Option[Int]): Any = macro maskWithExplicitModel_impl[S]
+
+  def maskFull_+[S](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], sw: (Option[morphModel.MutableLUB]) => Option[Int]): Any = macro maskWithExplicitModel_implCumulative[S]
+
+  def unmaskFull[S](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], sw: (Option[morphModel.MutableLUB]) => Option[Int]): Any = macro unmaskWithExplicitModel_impl[S]
+
+  def umaskFull_+[S](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], sw: (Option[morphModel.MutableLUB]) => Option[Int]): Any = macro unmaskWithExplicitModel_implCumulative[S]
 
   def strict[M](delegate: MorphingStrategy[M]): Any = macro strict_impl[M]
 
@@ -730,6 +739,54 @@ object Morpheus {
     c.Expr(result)
   }
 
+  def maskWithExplicitModel_impl[S: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(delegate: c.Expr[MorphingStrategy[morphModel.value.Model]], sw: c.Expr[(Option[morphModel.value.MutableLUB]) => Option[Int]]): c.Expr[Any] = {
+    import c.universe._
+
+    createMaskingStratWithExplicitModel_impl(c)(morphModel)(delegate, sw, false, false)(implicitly[WeakTypeTag[S]])
+  }
+
+  def maskWithExplicitModel_implCumulative[S: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(delegate: c.Expr[MorphingStrategy[morphModel.value.Model]], sw: c.Expr[(Option[morphModel.value.MutableLUB]) => Option[Int]]): c.Expr[Any] = {
+    import c.universe._
+
+    createMaskingStratWithExplicitModel_impl(c)(morphModel)(delegate, sw, false, true)(implicitly[WeakTypeTag[S]])
+  }
+
+  def unmaskWithExplicitModel_impl[S: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(delegate: c.Expr[MorphingStrategy[morphModel.value.Model]], sw: c.Expr[(Option[morphModel.value.MutableLUB]) => Option[Int]]): c.Expr[Any] = {
+    import c.universe._
+
+    createMaskingStratWithExplicitModel_impl(c)(morphModel)(delegate, sw, true, false)(implicitly[WeakTypeTag[S]])
+  }
+
+  def unmaskWithExplicitModel_implCumulative[S: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(delegate: c.Expr[MorphingStrategy[morphModel.value.Model]], sw: c.Expr[(Option[morphModel.value.MutableLUB]) => Option[Int]]): c.Expr[Any] = {
+    import c.universe._
+
+    createMaskingStratWithExplicitModel_impl(c)(morphModel)(delegate, sw, true, true)(implicitly[WeakTypeTag[S]])
+  }
+
+  def createMaskingStratWithExplicitModel_impl[S: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(delegate: c.Expr[MorphingStrategy[morphModel.value.Model]], sw: c.Expr[(Option[morphModel.value.MutableLUB]) => Option[Int]], negative: Boolean, cumulative: Boolean): c.Expr[Any] = {
+    import c.universe._
+
+    //val modelTpe = delegate.actualType.typeArgs.head.dealias
+    val modelTpe = c.typecheck(tq"$morphModel.Model", mode = c.TYPEmode).tpe
+    val mutableLUBTpe = c.typecheck(tq"$morphModel.MutableLUB", mode = c.TYPEmode).tpe
+    val switchTpe = implicitly[WeakTypeTag[S]].tpe.dealias
+
+    val switchModelTree = parseMorphModelFromType(c)(switchTpe, false, false, None, Total)._1
+    val altMapTree = checkMorphKernelAssignment(c, s"Checking compatibility of switch model $switchTpe with $modelTpe")(modelTpe, switchTpe, false, Total, Total, false, noHiddenFragments = false)._1
+    val result = q"""
+         {
+            def createStrategy() = {
+              val wrapper = new org.morpheus.MaskingStrategyWithModel[$modelTpe, $switchTpe, $mutableLUBTpe]($morphModel)
+              new wrapper.Strat($delegate, $switchModelTree, $altMapTree, $sw, $negative, $cumulative)
+            }
+            createStrategy
+         }
+       """
+
+    c.Expr(result)
+    //c.Expr(q"null")
+  }
+
   def mask_implOneArg[M: c.WeakTypeTag](c: whitebox.Context)(sw: c.Expr[() => Option[Int]]): c.Expr[Any] = {
     import c.universe._
 
@@ -1157,6 +1214,9 @@ object Morpheus {
 
     val tgtTpe = implicitly[WeakTypeTag[M2]].tpe.dealias
     val srcTpe = implicitly[WeakTypeTag[M1]]
+
+    c.info(c.enclosingPosition, s"convertMorphToPartialRef model: ${srcTpe.tpe.dealias}", true)
+
     val res = q"""
       {
         import org.morpheus._
@@ -2087,9 +2147,6 @@ object Morpheus {
 
     val ts1 = System.currentTimeMillis()
 
-    if (ctxMsg.startsWith("Checking compatibility of kernel reference")) {
-      c.info(c.enclosingPosition, s"AltMapping started at $ts1", true)
-    }
 
     val tgtAlts = tgtAltIter.toList
     val srcAlts = srcAltIter.toList.map(srcAlt => {
@@ -2100,6 +2157,10 @@ object Morpheus {
           lub(expandedSrcAltSubAltLUBs)
       (srcAlt._1, srcAlt._2, srcAlt._3, expSrcAltLUB)
     })
+
+    if (ctxMsg.startsWith("Checking compatibility of kernel reference")) {
+      c.info(c.enclosingPosition, s"AltMapping started at $ts1. SourceAltCnt: ${srcAlts.size}, TargetAltCnt: ${tgtAlts.size}, # of Combinations: ${srcAlts.size * tgtAlts.size} ", true)
+    }
 
     val tgtAltIter2 = tgtAlts.iterator
     while (tgtAltIter2.hasNext) {
@@ -2192,7 +2253,7 @@ object Morpheus {
 //    }
 
     val isCompatible = (tgtConfLev, srcConfLev) match {
-      case (Partial, Partial) => independentTargetAltCounter > 0 || altRelation.map(_._2).size == sourceAltCounter // right-total relation, all source alts must have found their target alts
+      case (Partial, Partial) => independentTargetAltCounter > 0 || altRelation.map(_._2).size == sourceAltCounter // right-total relation, all source alts must find their target alts
       case (Partial, Total) => matchingNonTrivialTargetAltCounter > 0 // non-empty relation
       case (Total, Partial) => altRelation.size == targetAltCounter * sourceAltCounter // cartesian product
       case (Total, Total) => matchingTargetAltCounter == targetAltCounter // left-total relation
@@ -2929,6 +2990,19 @@ object Morpheus {
       } else None
     }
 
+    object conjNodeType {
+      val conjTp = implicitly[WeakTypeTag[and[_, _]]].tpe.typeConstructor
+
+      def unapply(tp: Type): Option[(Type, Type)] = if (tp.typeConstructor =:= conjTp) {
+        tp match {
+          case tpRef: TypeRef =>
+            Some((tpRef.args.head, tpRef.args(1)))
+          case _ =>
+            c.abort(c.enclosingPosition, s"Unsupported type in conjunction: $tp:${tp.getClass}")
+        }
+      } else None
+    }
+
     object placeHolderNodeType {
       val plHldTp = implicitly[WeakTypeTag[$[_]]].tpe.typeConstructor
 
@@ -3034,6 +3108,8 @@ object Morpheus {
         ConjNode(fragNodes)
       case disjNodeType(lhs, rhs) =>
         DisjNode(List(traverseCompTp(lhs, plHldMode), traverseCompTp(rhs, plHldMode)))
+      case conjNodeType(lhs, rhs) =>
+        ConjNode(List(traverseCompTp(lhs, plHldMode), traverseCompTp(rhs, plHldMode)))
       case unitNodeType(u) => u
       case placeHolderNodeType(plHldTpe) =>
         traverseCompTp(plHldTpe, !plHldMode)
@@ -3467,6 +3543,7 @@ object Morpheus {
       """
 
     //c.info(c.enclosingPosition, s"Composite model: ${show(compositeModelTree)}", true)
+    //c.info(c.enclosingPosition, s"Composite model: ${show(appliedCompModelTpe)}", true)
     (c.Expr[MorphModel[_]](compositeModelTree), actualModelTpe)
   }
 
@@ -3619,6 +3696,7 @@ object Morpheus {
     """
 
     //c.info(c.enclosingPosition, s"Composite instance: ${show(compositeInstanceTree)}", true)
+    //c.info(c.enclosingPosition, s"Composite instance model type: ${show(compTpe)}", true)
 
     c.Expr(compositeInstanceTree)
   }
