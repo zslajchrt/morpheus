@@ -94,23 +94,44 @@ object AltMappingModel {
 
   def apply(template: List[FragInstSource], newFragToOrigFragMap: Map[Int, Int], model1Holders: (FragmentNode) => FragmentHolder[_], model2Holders: (FragmentNode) => FragmentHolder[_]): List[Node] = {
 
-    // The prefix of the template consists of fragment insertions.
-    val fragInsertions = template.takeWhile({
+//    // The prefix of the template consists of fragment insertions.
+//    val fragInsertions = template.takeWhile({
+//      case PlaceholderSource(fn) =>
+//        newFragToOrigFragMap.find(_._1 == fn.id) match {
+//          case None => // no counterpart
+//            true
+//          case Some(_) =>
+//            false
+//        }
+//      case _ => false
+//    }).map(plh => {
+//      // Def: An element from model1 indicates a fragment insertion if it has no counterpart in model2 and all previous elements are also fragment insertions.
+//      FragmentInsertion(() => model1Holders(plh.fragment))
+//    })
+//    val remaining = template.drop(fragInsertions.size)
+
+    // Separate the non-wrapping and non-replacing fragment placeholders and place them in the front of the result template
+    val (newNonWrapperPlhd, others) = template.partition({
       case PlaceholderSource(fn) =>
-        newFragToOrigFragMap.find(_._1 == fn.id) match {
-          case None => // no counterpart
-            true
-          case Some(_) =>
-            false
-        }
-      case _ => false
-    }).map(plh => {
-      // Def: An element from model1 indicates a fragment insertion if it has no counterpart in model2 and all previous elements are also fragment insertions.
-      FragmentInsertion(() => model1Holders(plh.fragment))
+        val frgHolder: FragmentHolder[_] = model1Holders(fn)
+        // A non-replacing fragment has no counterpart in model2
+        !newFragToOrigFragMap.exists(_._1 == fn.id) && frgHolder.fragment.wrapperAnnotation.isEmpty
+
+      case OriginalInstanceSource(_) => false
     })
 
-    val remaining = template.drop(fragInsertions.size)
-    val remainingNodes = remaining.map({
+    val (otherNonWrappers, wrappers) = others.partition(frgSrc => {
+      val frgHolder = frgSrc match {
+        case PlaceholderSource(fn) => model1Holders(fn)
+        case OriginalInstanceSource(fn) => model2Holders(fn)
+      }
+      frgHolder.fragment.wrapperAnnotation.isEmpty
+    })
+
+    val fragInsertions = newNonWrapperPlhd.map(plh => FragmentInsertion(() => model1Holders(plh.fragment)))
+    val nonInsertions = otherNonWrappers ::: wrappers
+
+    val nonInsertionsNodes = nonInsertions.map({
       case OriginalInstanceSource(fn) =>
         newFragToOrigFragMap.find(_._2 == fn.id) match {
           case None =>
@@ -132,7 +153,7 @@ object AltMappingModel {
         }
     })
 
-    fragInsertions ::: remainingNodes
+    fragInsertions ::: nonInsertionsNodes
   }
 
 }

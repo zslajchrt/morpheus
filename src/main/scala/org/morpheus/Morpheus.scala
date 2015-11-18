@@ -1936,6 +1936,8 @@ object Morpheus {
 
                 if (!plhdValidationCtx.exists(_._1 =:= plhTpe)) {
                   // the placeholder has not been checked yet
+                  var depsRawTpe: c.Type = null
+                  var depsTpe: c.Type = null
                   try {
                     val plhConfLevelMode: ConformanceLevel = getConfLevelFromAnnotation(c)(plhTpe)
                     plhTpe.typeSymbol.asClass.selfType match {
@@ -1943,8 +1945,8 @@ object Morpheus {
                         val newPlhdValCtx = (plhTpe, plhdFragTypes) :: plhdValidationCtx
 
                         val allContextPlaceholders: Set[c.Type] = newPlhdValCtx.map(_._2).flatMap(l => l).toSet
-                        val depsRawTpe = internal.refinedType(parents.tail, scope)
-                        val depsTpe = transformToPlaceholders(c)(depsRawTpe, allContextPlaceholders)
+                        depsRawTpe = internal.refinedType(parents.tail, scope)
+                        depsTpe = transformToPlaceholders(c)(depsRawTpe, allContextPlaceholders)
 
                         // Create conjunction of the placeholder type. This conjunction is not expanded, however, since these dependencies will be examined if they are satisfied
                         // by expandedSrcFragsType.
@@ -1958,7 +1960,7 @@ object Morpheus {
                           throw new DependencyCheckException(s"Unsatisfied placeholder $plhTpe dependencies")
                         }
 
-                        //c.info(c.enclosingPosition, s"Alt: ${altTemplate.map(toFragType(_))}\nPlaceholder $plhTpe\ndeps raw type: $depsRawTpe\ndeps type: $depsTpe\nExpanded type: $expandedAltTemplateTpe\naltTemplateSrcOnlyFragsTpe:$altTemplateSrcOnlyFragsTpe\nexpandedSrcFragsType: $expandedSrcLUB\nallContextPlaceholders: $allContextPlaceholders", true)
+                        //c.info(c.enclosingPosition, s"PlhdCheck: Alt:${altTemplate.map(toFragType(_))}\nPlaceholder $plhTpe\ndeps raw type: $depsRawTpe\ndeps type: $depsTpe\nExpanded type: $expandedAltTemplateTpe\nsrcFragTypes:$srcFragTypes\nexpandedSrcFragsType: $expandedSrcLUB\nallContextPlaceholders: $allContextPlaceholders", true)
                         checkMorphKernelAssignmentWithPlhdCtx(c, s"Checking placeholder $plhTpe dependencies against alt template type $expandedSrcLUB")(
                           expandedSrcLUB, depsTpe, false, Partial, Partial, false, noHiddenFragments = false, newPlhdValCtx)._1
 
@@ -1979,6 +1981,7 @@ object Morpheus {
                 }
                 catch {
                   case dchck: DependencyCheckException =>
+                    //c.info(c.enclosingPosition, s"PlhdCheck: Alt:${altTemplate.map(toFragType(_))}\nPlaceholder $plhTpe\ndeps raw type: $depsRawTpe\ndeps type: $depsTpe\nExpanded type: $expandedSrcLUB\nsrcFragTypes:$srcFragTypes", true)
                     knownDepStatuses += (altFragSrc, srcAltNodes) -> false
                     throw new DependencyCheckException(s"Unsatisfied placeholder $plhTpe dependencies", dchck)
                   }

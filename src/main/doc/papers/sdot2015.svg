@@ -155,7 +155,7 @@ CCMQRiCMQBiBMAJhBAL+ADLh0KqosgVqAAAAAElFTkSuQmCC
        width="59.835018"
        style="fill-opacity:1;fill:url(#radialGradient10894);stroke:#000000;stroke-opacity:1" />
     <rect
-       style="fill:url(#radialGradient10918);fill-opacity:1;stroke:#000000;stroke-width:9.11692913000000082;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       style="fill:url(#radialGradient10918);fill-opacity:1;stroke:#4b4b4b;stroke-width:9.11692905;stroke-miterlimit:4;stroke-opacity:0.81777775;stroke-dasharray:none;stroke-dashoffset:0"
        id="rect8891"
        width="66.097221"
        height="119.09667"
@@ -356,28 +356,6 @@ CCMQRiCMQBiBMAJhBAL+ADLh0KqosgVqAAAAAElFTkSuQmCC
        d="m 812.19465,420.61868 54.07955,-47.06923 59.08691,47.06923"
        id="path11285"
        inkscape:connector-curvature="0" />
-    <text
-       xml:space="preserve"
-       style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
-       x="474.69824"
-       y="151.22243"
-       id="text11287"
-       sodipodi:linespacing="125%"><tspan
-         sodipodi:role="line"
-         id="tspan11289"
-         x="474.69824"
-         y="151.22243">Compile-time:</tspan></text>
-    <text
-       sodipodi:linespacing="125%"
-       id="text11303"
-       y="273.22241"
-       x="474.69824"
-       style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
-       xml:space="preserve"><tspan
-         y="273.22241"
-         x="474.69824"
-         id="tspan11305"
-         sodipodi:role="line">Run-time:</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:2.12598419;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#TriangleOutL)"
        d="m 703.03409,213.31082 0,35.05155"
