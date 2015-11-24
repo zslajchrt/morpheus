@@ -72,8 +72,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.0697566"
-     inkscape:cx="376.61435"
-     inkscape:cy="742.98033"
+     inkscape:cx="713.1395"
+     inkscape:cy="556.02191"
      inkscape:current-layer="layer1"
      id="namedview15830"
      showgrid="false"
@@ -1611,7 +1611,7 @@
          sodipodi:role="line"
          id="tspan18407"
          x="995.71008"
-         y="191.35846">{(1)}</tspan></text>
+         y="191.35846">1</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:1.51083243;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1.51083241, 1.51083241;stroke-dashoffset:0"
        d="M 917.88536,201.16964 883.4403,242.0797"
@@ -1832,7 +1832,7 @@
          sodipodi:role="line"
          id="tspan18709"
          x="1104.3094"
-         y="-51.459015">{(1)}</tspan></text>
+         y="-51.459015">1</tspan></text>
     <path
        inkscape:connector-curvature="0"
        id="path18711"
@@ -1872,18 +1872,6 @@
          x="789.35577"
          id="tspan18815"
          sodipodi:role="line">0</tspan></text>
-    <text
-       transform="scale(0.93275734,1.0720902)"
-       sodipodi:linespacing="125%"
-       id="text18833"
-       y="104.24535"
-       x="953.31482"
-       style="font-size:18.12998962px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
-       xml:space="preserve"><tspan
-         y="104.24535"
-         x="953.31482"
-         id="tspan18835"
-         sodipodi:role="line">Nothing</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:18.12998962px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
@@ -2264,18 +2252,6 @@
          x="856.5304"
          id="tspan19502"
          sodipodi:role="line">When R reacts</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:18.12998962px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
-       x="991.90979"
-       y="274.00677"
-       id="text19548"
-       sodipodi:linespacing="125%"
-       transform="scale(0.93275734,1.0720902)"><tspan
-         sodipodi:role="line"
-         id="tspan19550"
-         x="991.90979"
-         y="274.00677">Nothing</tspan></text>
     <rect
        y="1535.0043"
        x="38.479259"
@@ -2544,5 +2520,29 @@
        d="m 583.59209,1648.0384 47.67439,0 -0.93479,120.5882 -46.7396,-0.9348"
        style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1, 1;stroke-dashoffset:0;marker-start:url(#Arrow1Lstart);marker-end:url(#Arrow1Lend)"
        sodipodi:nodetypes="cccc" />
+    <text
+       transform="scale(0.93275734,1.0720902)"
+       sodipodi:linespacing="125%"
+       id="text3499"
+       y="277.17188"
+       x="995.71008"
+       style="font-size:24.17331886px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       xml:space="preserve"><tspan
+         y="277.17188"
+         x="995.71008"
+         id="tspan3501"
+         sodipodi:role="line">0</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:24.17331886px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="952.61627"
+       y="108.40404"
+       id="text3503"
+       sodipodi:linespacing="125%"
+       transform="scale(0.93275734,1.0720902)"><tspan
+         sodipodi:role="line"
+         id="tspan3505"
+         x="952.61627"
+         y="108.40404">0</tspan></text>
   </g>
 </svg>
