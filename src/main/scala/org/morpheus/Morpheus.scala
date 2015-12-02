@@ -20,7 +20,9 @@ import scala.reflect.runtime.universe._
 object Morpheus {
 
   trait or[F0, F1]
+  type |[F0, F1] = or[F0, F1]
   trait and[F0, F1]
+  type *[F0, F1] = and[F0, F1]
 
   trait $[F]
   trait ^[F]
