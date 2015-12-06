@@ -548,7 +548,7 @@
       <w>70</w>
       <h>56</h>
     </coordinates>
-    <panel_attributes>Universe
+    <panel_attributes>Unit
 &lt;&lt;dimension&gt;&gt;</panel_attributes>
     <additional_attributes/>
   </element>
@@ -571,7 +571,7 @@
       <w>70</w>
       <h>56</h>
     </coordinates>
-    <panel_attributes>Universe
+    <panel_attributes>Unit
 &lt;&lt;category&gt;&gt;</panel_attributes>
     <additional_attributes/>
   </element>
@@ -594,7 +594,7 @@
       <w>70</w>
       <h>56</h>
     </coordinates>
-    <panel_attributes>Universe
+    <panel_attributes>Unit
 &lt;&lt;category&gt;&gt;</panel_attributes>
     <additional_attributes/>
   </element>
@@ -628,7 +628,7 @@
       <w>70</w>
       <h>56</h>
     </coordinates>
-    <panel_attributes>Universe
+    <panel_attributes>Unit
 &lt;&lt;category&gt;&gt;</panel_attributes>
     <additional_attributes/>
   </element>
@@ -926,7 +926,7 @@
       <w>63</w>
       <h>56</h>
     </coordinates>
-    <panel_attributes>Universe
+    <panel_attributes>Unit
 &lt;&lt;category&gt;&gt;</panel_attributes>
     <additional_attributes/>
   </element>
