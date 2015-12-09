@@ -8526,7 +8526,7 @@ elementCode: Int</panel_attributes>
       <w>90</w>
       <h>90</h>
     </coordinates>
-    <panel_attributes>X2
+    <panel_attributes>Y2
 &lt;&lt;category&gt;&gt;
 </panel_attributes>
     <additional_attributes/>
@@ -8657,7 +8657,7 @@ elementCode: Int</panel_attributes>
       <w>90</w>
       <h>90</h>
     </coordinates>
-    <panel_attributes>X1
+    <panel_attributes>Y1
 &lt;&lt;category&gt;&gt;
 </panel_attributes>
     <additional_attributes/>
@@ -8705,5 +8705,40 @@ elementCode: Int</panel_attributes>
     </coordinates>
     <panel_attributes>b)</panel_attributes>
     <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLInterface</id>
+    <coordinates>
+      <x>3360</x>
+      <y>1790</y>
+      <w>110</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>X
+&lt;&lt;dimension&gt;&gt;
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>3410</x>
+      <y>1850</y>
+      <w>70</w>
+      <h>60</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;50.0;40.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>3360</x>
+      <y>1850</y>
+      <w>70</w>
+      <h>60</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>50.0;10.0;10.0;40.0</additional_attributes>
   </element>
 </diagram>
