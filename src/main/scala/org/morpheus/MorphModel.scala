@@ -7,6 +7,7 @@ import scala.reflect.runtime.universe._
 /**
  * Created by zslajchrt on 29/04/15.
  */
+@deprecated
 trait MorphingTools[M] {
 
   def activator(activator: PartialFunction[Frag[_, _], Boolean]) = new FragmentSelector[M](activator)
