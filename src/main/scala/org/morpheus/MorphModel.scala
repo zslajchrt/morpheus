@@ -69,6 +69,7 @@ abstract class MorphModel[M](rn: MorphModelNode) extends MorphModelBase[M](rn) w
   type MutableLUB = LUB with MutableMorphMirror[M] { type ConfLev = ConformLevel }
   type ImmutableLUB = LUB with MorphMirror[M] { type ConfLev = ConformLevel }
   type Kernel = MorphKernel[Model] { type LUB = outer.LUB; type ConformLevel = TotalConformance }
+  type Recognizer = Kernel // Just an alias for Kernel
 
   val fragmentDescriptors: HList
 

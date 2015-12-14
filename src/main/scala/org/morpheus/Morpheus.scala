@@ -32,6 +32,8 @@ object Morpheus {
 
   type ~[M] = MutableMorphMirror[M]
 
+  type Recognizer[M] = MorphKernel[M]
+
   /**
    * Using the identity type constructor help preserve type annotations in morph model types. See CompositeMappingsTest.
    * @tparam T
@@ -379,7 +381,6 @@ object Morpheus {
 
   def selectProxy_impl[F: c.WeakTypeTag](c: whitebox.Context)(ci: c.Expr[MorphKernel[_]]): c.Expr[Any] = {
     import c.universe._
-
     c.Expr(q"$ci.fragments.select[org.morpheus.FragmentHolder[${implicitly[WeakTypeTag[F]]}]].proxy")
   }
 
