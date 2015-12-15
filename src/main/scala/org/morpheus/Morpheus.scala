@@ -195,9 +195,9 @@ object Morpheus {
 
   def promote[S](delegate: MorphingStrategy[_], sw: () => Option[Int]): Any = macro promote_impl[S]
 
-  def promote[S](morphModel: MorphModel[_])(sw: (Option[morphModel.MutableLUB]) => Option[Int]): Any = macro promoteWithExplicitModelSimpler_impl[S]
+  def promote[S](morphModel: MorphModel[_])(sw: (Option[morphModel.ImmutableLUB]) => Option[Int]): Any = macro promoteWithExplicitModelSimpler_impl[S]
 
-  def promoteFull[S](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], sw: (Option[morphModel.MutableLUB]) => Option[Int]): Any = macro promoteWithExplicitModel_impl[S]
+  def promoteFull[S](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], sw: (Option[morphModel.ImmutableLUB]) => Option[Int]): Any = macro promoteWithExplicitModel_impl[S]
 
   def rate[M](sw: () => Set[(Int, Int)]): Any = macro rate_implOneArgPos[M]
 
@@ -227,13 +227,13 @@ object Morpheus {
 
   def unmask_+[S](delegate: MorphingStrategy[_], sw: () => Option[Int]): Any = macro unmask_implTwoArgsCumulative[S]
 
-  def maskFull[S](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], sw: (Option[morphModel.MutableLUB]) => Option[Int]): Any = macro maskWithExplicitModel_impl[S]
+  def maskFull[S](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], sw: (Option[morphModel.ImmutableLUB]) => Option[Int]): Any = macro maskWithExplicitModel_impl[S]
 
-  def maskFull_+[S](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], sw: (Option[morphModel.MutableLUB]) => Option[Int]): Any = macro maskWithExplicitModel_implCumulative[S]
+  def maskFull_+[S](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], sw: (Option[morphModel.ImmutableLUB]) => Option[Int]): Any = macro maskWithExplicitModel_implCumulative[S]
 
-  def unmaskFull[S](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], sw: (Option[morphModel.MutableLUB]) => Option[Int]): Any = macro unmaskWithExplicitModel_impl[S]
+  def unmaskFull[S](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], sw: (Option[morphModel.ImmutableLUB]) => Option[Int]): Any = macro unmaskWithExplicitModel_impl[S]
 
-  def umaskFull_+[S](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], sw: (Option[morphModel.MutableLUB]) => Option[Int]): Any = macro unmaskWithExplicitModel_implCumulative[S]
+  def umaskFull_+[S](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], sw: (Option[morphModel.ImmutableLUB]) => Option[Int]): Any = macro unmaskWithExplicitModel_implCumulative[S]
 
   def strict[M](delegate: MorphingStrategy[M]): Any = macro strict_impl[M]
 
@@ -693,7 +693,7 @@ object Morpheus {
   }
 
   // (morphModel: MorphModel[M])(delegate: MorphingStrategy[morphModel.Model], sw: sw: (Option[morphModel.MutableLUB]) => Option[Int]
-  def promoteWithExplicitModelSimpler_impl[S: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(sw: c.Expr[(Option[morphModel.value.MutableLUB]) => Option[Int]]): c.Expr[Any] = {
+  def promoteWithExplicitModelSimpler_impl[S: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(sw: c.Expr[(Option[morphModel.value.ImmutableLUB]) => Option[Int]]): c.Expr[Any] = {
     import c.universe._
 
     val delegate: c.Expr[MorphingStrategy[morphModel.value.Model]] =
@@ -701,11 +701,11 @@ object Morpheus {
     promoteWithExplicitModel_impl(c)(morphModel)(delegate, sw)(implicitly[WeakTypeTag[S]])
   }
 
-  def promoteWithExplicitModel_impl[S: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(delegate: c.Expr[MorphingStrategy[morphModel.value.Model]], sw: c.Expr[(Option[morphModel.value.MutableLUB]) => Option[Int]]): c.Expr[Any] = {
+  def promoteWithExplicitModel_impl[S: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(delegate: c.Expr[MorphingStrategy[morphModel.value.Model]], sw: c.Expr[(Option[morphModel.value.ImmutableLUB]) => Option[Int]]): c.Expr[Any] = {
     import c.universe._
 
     val modelTpe = delegate.actualType.typeArgs.head.dealias
-    val mutableLUBTpe = c.typecheck(tq"$morphModel.MutableLUB", mode = c.TYPEmode).tpe
+    val immutableLUBTpe = c.typecheck(tq"$morphModel.ImmutableLUB", mode = c.TYPEmode).tpe
     val switchTpe = implicitly[WeakTypeTag[S]].tpe.dealias
 
     val switchModelTree = parseMorphModelFromType(c)(switchTpe, false, false, None, Total)._1
@@ -713,7 +713,7 @@ object Morpheus {
     val result = q"""
          {
             def createStrategy() = {
-              val wrapper = new org.morpheus.PromotingStrategyWithModel[$modelTpe, $switchTpe, $mutableLUBTpe]($morphModel)
+              val wrapper = new org.morpheus.PromotingStrategyWithModel[$modelTpe, $switchTpe, $immutableLUBTpe]($morphModel)
               new wrapper.Strat($delegate, $switchModelTree, $altMapTree, $sw)
             }
             createStrategy
@@ -742,36 +742,36 @@ object Morpheus {
     c.Expr(result)
   }
 
-  def maskWithExplicitModel_impl[S: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(delegate: c.Expr[MorphingStrategy[morphModel.value.Model]], sw: c.Expr[(Option[morphModel.value.MutableLUB]) => Option[Int]]): c.Expr[Any] = {
+  def maskWithExplicitModel_impl[S: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(delegate: c.Expr[MorphingStrategy[morphModel.value.Model]], sw: c.Expr[(Option[morphModel.value.ImmutableLUB]) => Option[Int]]): c.Expr[Any] = {
     import c.universe._
 
     createMaskingStratWithExplicitModel_impl(c)(morphModel)(delegate, sw, false, false)(implicitly[WeakTypeTag[S]])
   }
 
-  def maskWithExplicitModel_implCumulative[S: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(delegate: c.Expr[MorphingStrategy[morphModel.value.Model]], sw: c.Expr[(Option[morphModel.value.MutableLUB]) => Option[Int]]): c.Expr[Any] = {
+  def maskWithExplicitModel_implCumulative[S: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(delegate: c.Expr[MorphingStrategy[morphModel.value.Model]], sw: c.Expr[(Option[morphModel.value.ImmutableLUB]) => Option[Int]]): c.Expr[Any] = {
     import c.universe._
 
     createMaskingStratWithExplicitModel_impl(c)(morphModel)(delegate, sw, false, true)(implicitly[WeakTypeTag[S]])
   }
 
-  def unmaskWithExplicitModel_impl[S: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(delegate: c.Expr[MorphingStrategy[morphModel.value.Model]], sw: c.Expr[(Option[morphModel.value.MutableLUB]) => Option[Int]]): c.Expr[Any] = {
+  def unmaskWithExplicitModel_impl[S: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(delegate: c.Expr[MorphingStrategy[morphModel.value.Model]], sw: c.Expr[(Option[morphModel.value.ImmutableLUB]) => Option[Int]]): c.Expr[Any] = {
     import c.universe._
 
     createMaskingStratWithExplicitModel_impl(c)(morphModel)(delegate, sw, true, false)(implicitly[WeakTypeTag[S]])
   }
 
-  def unmaskWithExplicitModel_implCumulative[S: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(delegate: c.Expr[MorphingStrategy[morphModel.value.Model]], sw: c.Expr[(Option[morphModel.value.MutableLUB]) => Option[Int]]): c.Expr[Any] = {
+  def unmaskWithExplicitModel_implCumulative[S: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(delegate: c.Expr[MorphingStrategy[morphModel.value.Model]], sw: c.Expr[(Option[morphModel.value.ImmutableLUB]) => Option[Int]]): c.Expr[Any] = {
     import c.universe._
 
     createMaskingStratWithExplicitModel_impl(c)(morphModel)(delegate, sw, true, true)(implicitly[WeakTypeTag[S]])
   }
 
-  def createMaskingStratWithExplicitModel_impl[S: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(delegate: c.Expr[MorphingStrategy[morphModel.value.Model]], sw: c.Expr[(Option[morphModel.value.MutableLUB]) => Option[Int]], negative: Boolean, cumulative: Boolean): c.Expr[Any] = {
+  def createMaskingStratWithExplicitModel_impl[S: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(delegate: c.Expr[MorphingStrategy[morphModel.value.Model]], sw: c.Expr[(Option[morphModel.value.ImmutableLUB]) => Option[Int]], negative: Boolean, cumulative: Boolean): c.Expr[Any] = {
     import c.universe._
 
     //val modelTpe = delegate.actualType.typeArgs.head.dealias
     val modelTpe = c.typecheck(tq"$morphModel.Model", mode = c.TYPEmode).tpe
-    val mutableLUBTpe = c.typecheck(tq"$morphModel.MutableLUB", mode = c.TYPEmode).tpe
+    val immutableLUBTpe = c.typecheck(tq"$morphModel.ImmutableLUB", mode = c.TYPEmode).tpe
     val switchTpe = implicitly[WeakTypeTag[S]].tpe.dealias
 
     val switchModelTree = parseMorphModelFromType(c)(switchTpe, false, false, None, Total)._1
@@ -779,7 +779,7 @@ object Morpheus {
     val result = q"""
          {
             def createStrategy() = {
-              val wrapper = new org.morpheus.MaskingStrategyWithModel[$modelTpe, $switchTpe, $mutableLUBTpe]($morphModel)
+              val wrapper = new org.morpheus.MaskingStrategyWithModel[$modelTpe, $switchTpe, $immutableLUBTpe]($morphModel)
               new wrapper.Strat($delegate, $switchModelTree, $altMapTree, $sw, $negative, $cumulative)
             }
             createStrategy

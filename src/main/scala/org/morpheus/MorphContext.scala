@@ -75,11 +75,11 @@ abstract class CompleteMorphContext[M, L, ConformLev <: ConformanceLevelMarker](
     override type LUB = compositeInstance.LUB
 
     override def remorph() = {
-      Morpher.morph[compositeInstance.Model](compositeInstance, usedStrategy)(owningProxy)
+      Morpher.morph[compositeInstance.Model](compositeInstance, usedStrategy)(owningProxy, Some(proxy.asInstanceOf[compositeInstance.ImmutableLUB]))
     }
 
     override def remorph(altStrategy: MorphingStrategy[compositeInstance.Model]) = {
-      Morpher.morph[compositeInstance.Model](kernel, altStrategy)(owningProxy)
+      Morpher.morph[compositeInstance.Model](kernel, altStrategy)(owningProxy, Some(proxy.asInstanceOf[compositeInstance.ImmutableLUB]))
     }
 
     override val kernel = compositeInstance
@@ -226,7 +226,7 @@ abstract class MutableMorphContext[M, L, ConformLev <: ConformanceLevelMarker](
 
   @volatile private[this] var delegate: owningKernel.ImmutableLUB = _
 
-  def morph(proxyOpt: Option[owningKernel.MutableLUB], strategy: MorphingStrategy[M]): owningKernel.ImmutableLUB
+  def morph(owningMutableProxyOpt: Option[owningKernel.MutableLUB], proxyOpt: Option[owningKernel.ImmutableLUB], strategy: MorphingStrategy[M]): owningKernel.ImmutableLUB
 
   val compositeMirror = new MutableMorphMirror[owningKernel.Model] {
 
@@ -234,12 +234,12 @@ abstract class MutableMorphContext[M, L, ConformLev <: ConformanceLevelMarker](
     override type LUB = L
 
     override def remorph() = {
-      MutableMorphContext.this.delegate = morph(Some(proxy), MutableMorphContext.this.delegate.strategy)
+      MutableMorphContext.this.delegate = morph(Some(proxy), Some(MutableMorphContext.this.delegate), MutableMorphContext.this.delegate.strategy)
       MutableMorphContext.this.delegate
     }
 
     override def remorph(altStrategy: MorphingStrategy[M]) = {
-      MutableMorphContext.this.delegate = morph(Some(proxy), altStrategy)
+      MutableMorphContext.this.delegate = morph(Some(proxy), Some(MutableMorphContext.this.delegate), altStrategy)
       MutableMorphContext.this.delegate
     }
 
@@ -293,7 +293,7 @@ abstract class MutableMorphContext[M, L, ConformLev <: ConformanceLevelMarker](
     enhancer.setCallbacks(helper.getCallbacks)
     val px = enhancer.create().asInstanceOf[owningKernel.MutableLUB]
 
-    delegate = morph(Some(px), initialStrategy)
+    delegate = morph(Some(px), None, initialStrategy)
 
     px
   }

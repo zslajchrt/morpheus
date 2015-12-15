@@ -85,11 +85,11 @@ abstract class MorphKernel[M](val root: MorphModelNode) extends MorphKernelBase[
   lazy val ~ = make_~
 
   def morph(implicit strategy: MorphingStrategy[M]): ImmutableLUB = {
-    Morpher.morph[M](this, Some(strategy))(None)
+    Morpher.morph[M](this, Some(strategy))(None, None)
   }
 
   def make: ImmutableLUB = {
-    Morpher.morph[M](this, None)(None)
+    Morpher.morph[M](this, None)(None, None)
   }
 
   def morph_~(implicit strategy: MorphingStrategy[M]): MutableLUB = mutableProxy
@@ -131,8 +131,8 @@ abstract class MorphKernel[M](val root: MorphModelNode) extends MorphKernelBase[
     val mp = new MutableMorphContext[M, LUB, ConformLevel](this, lubComponents, initialStrategy) {
 
       //override def morph(proxy: MutableLUB, actualStrategy: MorphingStrategy[M]): owningKernel.ImmutableLUB = {
-      override def morph(proxyOpt: Option[owningKernel.MutableLUB], actualStrategy: MorphingStrategy[M]): owningKernel.ImmutableLUB = {
-        Morpher.morph[M](owningKernel, actualStrategy)(proxyOpt)
+      override def morph(owningMutableProxyOpt: Option[owningKernel.MutableLUB], proxyOpt: Option[owningKernel.ImmutableLUB], actualStrategy: MorphingStrategy[M]): owningKernel.ImmutableLUB = {
+        Morpher.morph[M](owningKernel, actualStrategy)(owningMutableProxyOpt, proxyOpt)
       }
     }
 
@@ -173,11 +173,11 @@ abstract class MorphKernel[M](val root: MorphModelNode) extends MorphKernelBase[
 
       scala.util.Try {
         val strat = new MorphingStrategy[M] {
-          override def chooseAlternatives(instance: MorphKernel[M])(owningMutableProxy: Option[instance.MutableLUB]): Alternatives[M] = {
+          override def chooseAlternatives(instance: MorphKernel[M])(morphProxy: Option[instance.ImmutableLUB]): Alternatives[M] = {
             model.alternatives.promote(Set(promotedAlt))
           }
         }
-        new Morpher[M]().morph(MorphKernel.this, strat, altFailover = false)(None)
+        new Morpher[M]().morph(MorphKernel.this, strat, altFailover = false)(None, None)
       }
 
     }

@@ -11,10 +11,11 @@ import scala.language.experimental.macros
 
 class Morpher[M]() {
 
-  def morph(instance: MorphKernel[M], strategy: MorphingStrategy[M], altFailover: Boolean = true)(owningMutableProxy: Option[instance.MutableLUB]): instance.ImmutableLUB = {
+  def morph(instance: MorphKernel[M], strategy: MorphingStrategy[M], altFailover: Boolean = true)(owningMutableProxy: Option[instance.MutableLUB], morphProxy: Option[instance.ImmutableLUB]): instance.ImmutableLUB = {
 
-    val alternatives: Alternatives[M] = owningMutableProxy match {
-      case Some(proxy) if proxy.delegate != null => strategy.chooseAlternatives(instance)(Some(proxy))
+    val alternatives: Alternatives[M] = morphProxy match {
+      //case Some(proxy) if proxy.delegate != null => strategy.chooseAlternatives(instance)(Some(proxy))
+      case Some(proxy) => strategy.chooseAlternatives(instance)(Some(proxy))
       case _ => strategy.chooseAlternatives(instance)(None)
     }
 
@@ -46,7 +47,7 @@ class Morpher[M]() {
     val altCandidates: List[(List[FragmentNode], Double)] = alternatives.toMaskedList
     val altFragHolders = makeFragHolders(altCandidates)
 
-    owningMutableProxy match {
+    morphProxy match {
 //      case Some(proxy) if proxy.delegate != null && proxy.myAlternative == altFragHolders && proxy.strategy == strategy =>
 //        // There is no need to instantiate a new proxy's delegate, provided that the delegate composition is same as the current one.
 //        proxy.delegate
@@ -117,16 +118,16 @@ object Morpher {
 
   def right[M] = new RightAltsMorphingStrategy[M]()
 
-  def morph[M](instance: MorphKernel[M], customStrategy: Option[MorphingStrategy[M]])(owningMutableProxy: Option[instance.MutableLUB]): instance.ImmutableLUB = {
+  def morph[M](instance: MorphKernel[M], customStrategy: Option[MorphingStrategy[M]])(owningMutableProxy: Option[instance.MutableLUB], morphProxy: Option[instance.ImmutableLUB]): instance.ImmutableLUB = {
     val strategy = customStrategy match {
       case None => instance.defaultStrategy
       case Some(custStrat) => custStrat
     }
-    morph(instance, strategy)(owningMutableProxy)
+    morph(instance, strategy)(owningMutableProxy, morphProxy)
   }
 
-  def morph[M](instance: MorphKernel[M], strategy: MorphingStrategy[M])(owningMutableProxy: Option[instance.MutableLUB]): instance.ImmutableLUB = {
-    new Morpher[M]().morph(instance, strategy, altFailover = true)(owningMutableProxy)
+  def morph[M](instance: MorphKernel[M], strategy: MorphingStrategy[M])(owningMutableProxy: Option[instance.MutableLUB], morphProxy: Option[instance.ImmutableLUB]): instance.ImmutableLUB = {
+    new Morpher[M]().morph(instance, strategy, altFailover = true)(owningMutableProxy, morphProxy)
   }
 
   def ?[F: WeakTypeTag](activator: Frag[_, _] => Boolean): PartialFunction[Frag[_, _], Boolean] = FragmentSelector.?[F](activator)
