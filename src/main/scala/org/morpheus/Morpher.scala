@@ -47,9 +47,9 @@ class Morpher[M]() {
     val altFragHolders = makeFragHolders(altCandidates)
 
     owningMutableProxy match {
-      case Some(proxy) if proxy.delegate != null && proxy.myAlternative == altFragHolders && proxy.strategy == strategy =>
-        // There is no need to instantiate a new proxy's delegate, provided that the delegate composition is same as the current one.
-        proxy.delegate
+//      case Some(proxy) if proxy.delegate != null && proxy.myAlternative == altFragHolders && proxy.strategy == strategy =>
+//        // There is no need to instantiate a new proxy's delegate, provided that the delegate composition is same as the current one.
+//        proxy.delegate
 
       case _ =>
 

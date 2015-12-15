@@ -54,11 +54,11 @@ object Morpheus {
 
   def frag[F]: FragmentFactory[F, Unit] = macro fragNoConf[F]
 
-  def frag[F, C](cfg: C): FragmentFactory[F, C] = macro fragWithConf[F, C]
+  def frag[F, C](cfg: => C): FragmentFactory[F, C] = macro fragWithConf[F, C]
 
   def single[F]: FragmentFactory[F, Unit] = macro singleNoConf[F]
 
-  def single[F, C](cfg: C): FragmentFactory[F, C] = macro singleWithConf[F, C]
+  def single[F, C](cfg: => C): FragmentFactory[F, C] = macro singleWithConf[F, C]
 
   def mutableFragment(lst: MutableFragmentListener*): Frag[MutableFragment, MutableFragmentConfig] => MutableFragment = macro mutableFragment_impl
 
@@ -256,7 +256,7 @@ object Morpheus {
 
     val fragTpe = implicitly[WeakTypeTag[F]].tpe
     if (!isFragment(c)(fragTpe) && !isWrapper(c)(fragTpe)) {
-      c.abort(c.enclosingPosition, s"Type $fragTpe is neither fragment or wrapper")
+      c.abort(c.enclosingPosition, s"Type $fragTpe is neither fragment nor wrapper")
     }
 
     c.Expr[FragmentFactory[F, Unit]](q"new org.morpheus.FragmentFactory[$fragTpe, Unit](None)")
@@ -267,7 +267,7 @@ object Morpheus {
 
     val fragTpe = implicitly[WeakTypeTag[F]].tpe
     if (!isFragment(c)(fragTpe) && !isWrapper(c)(fragTpe)) {
-      c.abort(c.enclosingPosition, s"Type $fragTpe is neither fragment or wrapper")
+      c.abort(c.enclosingPosition, s"Type $fragTpe is neither fragment nor wrapper")
     }
 
     val cfgTpe = implicitly[WeakTypeTag[C]].tpe
@@ -280,7 +280,7 @@ object Morpheus {
 
     val fragTpe = implicitly[WeakTypeTag[F]].tpe
     if (!isFragment(c)(fragTpe) && !isWrapper(c)(fragTpe)) {
-      c.abort(c.enclosingPosition, s"Type $fragTpe is neither fragment or wrapper")
+      c.abort(c.enclosingPosition, s"Type $fragTpe is neither fragment nor wrapper")
     }
 
     c.Expr[FragmentFactory[F, Unit]](q"new org.morpheus.FragmentFactory[$fragTpe, Unit](None) with org.morpheus.SingletonFragmentFactory[$fragTpe, Unit]")
@@ -291,7 +291,7 @@ object Morpheus {
 
     val fragTpe = implicitly[WeakTypeTag[F]].tpe
     if (!isFragment(c)(fragTpe) && !isWrapper(c)(fragTpe)) {
-      c.abort(c.enclosingPosition, s"Type $fragTpe is neither fragment or wrapper")
+      c.abort(c.enclosingPosition, s"Type $fragTpe is neither fragment nor wrapper")
     }
 
     val cfgTpe = implicitly[WeakTypeTag[C]].tpe
