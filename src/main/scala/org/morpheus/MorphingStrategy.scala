@@ -394,18 +394,18 @@ abstract class MaskingStrategyCommon[M, S](delegate: MorphingStrategy[M], switch
           var updatedAlts = origAlts
           for (altId <- 0 until altsCount) {
             val swAlt: List[Int] = switchAlts(altId)
-            val maskedFragments: List[Int] = swAlt.map(altMapReduced.newFragToOrigFrag)
+            val selectedFragments: List[Int] = swAlt.map(altMapReduced.newFragToOrigFrag)
 
             updatedAlts = if (altId == activeAltIndex) {
               if (negative)
-                updatedAlts.unmask(maskedFragments.toSet)
+                updatedAlts.unmask(selectedFragments.toSet)
               else
-                updatedAlts.mask(maskedFragments.toSet)
+                updatedAlts.mask(selectedFragments.toSet)
             } else {
               if (negative)
-                updatedAlts.mask(maskedFragments.toSet)
+                updatedAlts.mask(selectedFragments.toSet)
               else
-                updatedAlts.unmask(maskedFragments.toSet)
+                updatedAlts.unmask(selectedFragments.toSet)
             }
           }
           updatedAlts
