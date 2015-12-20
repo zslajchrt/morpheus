@@ -4,7 +4,7 @@ import java.io.{FileWriter, File}
 import java.util.concurrent.atomic.AtomicInteger
 import org.morpheus.codegen.AltMapDumper
 
-import scala.collection.{immutable, SortedSet, GenTraversableOnce}
+import scala.collection.{mutable, immutable, SortedSet, GenTraversableOnce}
 import scala.language.experimental.macros
 import scala.reflect.internal.Symbols
 import scala.reflect.macros.{Universe, whitebox}
@@ -2136,11 +2136,18 @@ object Morpheus {
 
     }
 
-    var targetAltCounter = 0
-    var allTargetAlts = List.empty[List[c.Type]]
+    def removeDupAlts(alts: List[(List[FragmentNode], List[Type], Type)], typesMap: Map[Int, (Type, Option[Type])]) = {
+      var seenLubs = mutable.HashSet[Set[Type]]()
+      alts.filter(alt => {
+        val fragTps: Set[Type] = alt._1.map(fn => typesMap(fn.id)._1).toSet
+        val res = !seenLubs(fragTps)
+        seenLubs += fragTps
+        res
+      })
+    }
+
     var matchingTargetAltCounter = 0
     var matchingNonTrivialTargetAltCounter = 0
-    var sourceAltCounter = 0
     var unsatisfiedTargetAlts = Set.empty[(List[c.Type] /*tgt alt*/ , List[c.Type] /*src alt*/ , String /*reason*/ )]
     var independentTargetAltCounter = 0
 
@@ -2153,9 +2160,10 @@ object Morpheus {
 
     val ts1 = System.currentTimeMillis()
 
-
-    val tgtAlts = tgtAltIter.toList
-    val srcAlts = srcAltIter.toList.map(srcAlt => {
+    val tgtAlts = removeDupAlts(tgtAltIter.toList, tgtFragmentTypesMap)
+    //val tgtAlts = tgtAltIter.toList
+    val srcAltsOrig = srcAltIter.toList
+    val srcAlts = removeDupAlts(srcAltsOrig.toList, srcFragmentTypesMap).map(srcAlt => {
         val expandedSrcAltSubAltLUBs: List[c.Type] = expandAlternatives(c)(srcAlt._3)._2.map(_._3)
         val expSrcAltLUB = if (expandedSrcAltSubAltLUBs.isEmpty)
           anyTpe
@@ -2164,8 +2172,16 @@ object Morpheus {
       (srcAlt._1, srcAlt._2, srcAlt._3, expSrcAltLUB)
     })
 
+    val targetAltCnt = tgtAlts.size
+    val sourceAltCnt = srcAlts.size
+
+    // Used for reporting only now.
+    var allTargetAlts = tgtAlts.map(tgtAlt => tgtAlt._1.map(tgtFrag => tgtFragmentTypesMap(tgtFrag.id)._1))
+    var allSourceAltsOrig = srcAltsOrig.map(srcAlt => srcAlt._1.map(srcFrag => srcFragmentTypesMap(srcFrag.id)._1))
+    var allSourceAlts = srcAlts.map(srcAlt => srcAlt._1.map(srcFrag => srcFragmentTypesMap(srcFrag.id)._1))
+
     if (ctxMsg.startsWith("Checking compatibility of kernel reference")) {
-      c.info(c.enclosingPosition, s"AltMapping started at $ts1. SourceAltCnt: ${srcAlts.size}, TargetAltCnt: ${tgtAlts.size}, # of Combinations: ${srcAlts.size * tgtAlts.size} ", true)
+      c.info(c.enclosingPosition, s"AltMapping started at $ts1. SourceAltCnt: ${sourceAltCnt}, TargetAltCnt: ${targetAltCnt}, # of Combinations: ${sourceAltCnt * targetAltCnt} ", true)
     }
 
     val tgtAltIter2 = tgtAlts.iterator
@@ -2175,8 +2191,6 @@ object Morpheus {
 
       // Transform fragment nodes to fragment types
       val tgtAltFragTypes = tgtAlt._1.map(tgtFrag => tgtFragmentTypesMap(tgtFrag.id)._1)
-      // Used for reporting only now.
-      allTargetAlts ::= tgtAltFragTypes
 
       srcAltIter.reset()
       var matches = false
@@ -2187,7 +2201,6 @@ object Morpheus {
       val tgtAltMappedToSrcFrags: List[List[Int]] = for (f <- tgtAlt._1 if !f.placeholder;
                                                          y = (for (x <- newFragToOrigFrags if x._1 == f.id) yield x._2) if y.nonEmpty) yield y
 
-      sourceAltCounter = 0
       val srcAltIter2 = srcAlts.iterator
       while (srcAltIter2.hasNext) {
         allCombinationsCounter += 1
@@ -2197,8 +2210,6 @@ object Morpheus {
         }
 
         val srcAlt = srcAltIter2.next()
-
-        sourceAltCounter += 1
 
         def checkAltCombination(): Either[List[FragInstSource], String] = {
           val srcAltIds = srcAlt._1.map(_.id)
@@ -2249,7 +2260,6 @@ object Morpheus {
         if (tgtAlt._1.nonEmpty)
           matchingNonTrivialTargetAltCounter += 1
       }
-      targetAltCounter += 1
     }
 
     val ts2 = System.currentTimeMillis()
@@ -2258,11 +2268,13 @@ object Morpheus {
 //      c.info(c.enclosingPosition, s"Processed $allCombinationsCounter alt combinations and skipped $skippedCombinationsCounter in ${ts2 - ts1}ms\nCtx: $ctxMsg", true)
 //    }
 
+    val altRelationsCnt = altRelation.map(_._2).size
+
     val isCompatible = (tgtConfLev, srcConfLev) match {
-      case (Partial, Partial) => independentTargetAltCounter > 0 || altRelation.map(_._2).size == sourceAltCounter // right-total relation, all source alts must find their target alts
+      case (Partial, Partial) => independentTargetAltCounter > 0 || altRelationsCnt == sourceAltCnt // right-total relation, all source alts must find their target alts
       case (Partial, Total) => matchingNonTrivialTargetAltCounter > 0 // non-empty relation
-      case (Total, Partial) => altRelation.size == targetAltCounter * sourceAltCounter // cartesian product
-      case (Total, Total) => matchingTargetAltCounter == targetAltCounter // left-total relation
+      case (Total, Partial) => altRelation.size == targetAltCnt * sourceAltCnt // cartesian product
+      case (Total, Total) => matchingTargetAltCounter == targetAltCnt // left-total relation
     }
 
     def resultTree() = {
@@ -2294,7 +2306,12 @@ object Morpheus {
            Target root: $tgtRoot
            Antagonists: ${antagonists.map(tpl => (fragSrcPretty(tpl._1), fragSrcPretty(tpl._2), tpl)).mkString(", ")}
            NewFragToOrigFrag: $newFragToOrigFrag
+           Source alternatives:\n\t${allSourceAltsOrig.map(toShortNames(c)(_)).mkString("\n\t")}
+           Exp. Source alternatives:\n\t${allSourceAlts.map(toShortNames(c)(_)).mkString("\n\t")}
            Target alternatives:\n\t${allTargetAlts.map(toShortNames(c)(_)).mkString("\n\t")}
+           Source Alt Cnt: ${sourceAltCnt}
+           Alt Relations Cnt: ${altRelationsCnt}
+           Independent Alt Cnt: $independentTargetAltCounter
          """)
 
     } else {
