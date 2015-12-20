@@ -235,6 +235,10 @@ object Morpheus {
 
   def umaskFull_+[S](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], sw: (Option[morphModel.ImmutableLUB]) => Option[Int]): Any = macro unmaskWithExplicitModel_implCumulative[S]
 
+  def maskFragment[F](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], sw: (Option[morphModel.ImmutableLUB]) => Boolean): Any = macro maskFragment_impl[F]
+
+  def unmaskFragment[F](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], sw: (Option[morphModel.ImmutableLUB]) => Boolean): Any = macro unmaskFragment_impl[F]
+
   def strict[M](delegate: MorphingStrategy[M]): Any = macro strict_impl[M]
 
   def assertFailure(code: Any): Unit = macro assertFailure_impl
@@ -890,6 +894,39 @@ object Morpheus {
     c.Expr(result)
   }
 
+  def maskFragment_impl[F: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(delegate: c.Expr[MorphingStrategy[morphModel.value.Model]], sw: c.Expr[(Option[morphModel.value.ImmutableLUB]) => Boolean]): c.Expr[Any] = {
+    import c.universe._
+    createFragmentMaskingStrat_impl(c)(morphModel)(delegate, sw, false)(implicitly[WeakTypeTag[F]])
+  }
+
+  def unmaskFragment_impl[F: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(delegate: c.Expr[MorphingStrategy[morphModel.value.Model]], sw: c.Expr[(Option[morphModel.value.ImmutableLUB]) => Boolean]): c.Expr[Any] = {
+    import c.universe._
+    createFragmentMaskingStrat_impl(c)(morphModel)(delegate, sw, true)(implicitly[WeakTypeTag[F]])
+  }
+
+  def createFragmentMaskingStrat_impl[F: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(delegate: c.Expr[MorphingStrategy[morphModel.value.Model]], sw: c.Expr[(Option[morphModel.value.ImmutableLUB]) => Boolean], negative: Boolean): c.Expr[Any] = {
+    import c.universe._
+
+    val modelTpe = c.typecheck(tq"$morphModel.Model", mode = c.TYPEmode).tpe
+    val immutableLUBTpe = c.typecheck(tq"$morphModel.ImmutableLUB", mode = c.TYPEmode).tpe
+    val fragTpe = implicitly[WeakTypeTag[F]].tpe.dealias
+
+    val result = q"""
+         {
+            def createStrategy() = {
+              val wrapper = new org.morpheus.FragmentMaskingStrategyWithModel[$modelTpe, $fragTpe, $immutableLUBTpe]($morphModel)
+              val fragDesc = $morphModel.fragmentDescriptor[$fragTpe]
+              require(fragDesc.isDefined, "Fragment " + ${fragTpe.toString} + " not found")
+              new wrapper.Strat($delegate, fragDesc.get, $sw, $negative)
+            }
+            createStrategy
+         }
+       """
+
+    c.Expr(result)
+    //c.Expr(q"null")
+  }
+
   def strict_impl[M: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorphingStrategy[M]]): c.Expr[Any] = {
     import c.universe._
 
@@ -1172,24 +1209,36 @@ object Morpheus {
       }
     }).toList
 
-    val placeholderFactoriesTree = q"Map(..$placeholderFactMapEntries)"
-
-    //c.info(c.enclosingPosition, s"Placeholder fragments: ${show(placeholderFactoriesTree)}", true)
-
-    val missingPlaceholders = placeholderFrags.filter(phFragWithTpe => {
+    val missingPlaceholders: List[Tree] = placeholderFrags.filter(phFragWithTpe => {
       // the declared type
       val phFragTpe = phFragWithTpe._2
       !getFragTypeForDeclType(phFragTpe).isDefined
+    }).map(phFragWithTpe => {
+      // create the default fragment factories for the missing placeholder factories
+      val phFragTpe = phFragWithTpe._2
+      val defaultPlhdFact = q"org.morpheus.Morpheus.single[$phFragTpe]"
+      q"${phFragWithTpe._1.id} -> $defaultPlhdFact.asInstanceOf[org.morpheus.Frag[_, _] => _]"
     })
 
-    if (missingPlaceholders.nonEmpty) {
-      c.abort(c.enclosingPosition, s"Some placeholder arguments missing: ${missingPlaceholders.map(_._2).mkString(",")}. Placeholder mapping: $placeholderArgTypes")
-    }
+//    val missingPlaceholders: List[Tree] = placeholderFrags.map(phFragWithTpe => {
+//      // the declared type
+//      val phFragTpe = phFragWithTpe._2
+//      //!getFragTypeForDeclType(phFragTpe).isDefined
+//      val defaultPlhdFact = q"org.morpheus.Morpheus.single[$phFragTpe]"
+//      q"${phFragWithTpe._1.id} -> $defaultPlhdFact.asInstanceOf[org.morpheus.Frag[_, _] => _]"
+//    })
+
+//    if (missingPlaceholders.nonEmpty) {
+//      c.abort(c.enclosingPosition, s"Some placeholder arguments missing: ${missingPlaceholders.map(_._2).mkString(",")}. Placeholder mapping: $placeholderArgTypes")
+//    }
 
     val defStrategy = if (strategy == null)
       None
     else
       Some(strategy)
+
+    val placeholderFactoriesTree = q"Map(..${placeholderFactMapEntries ::: missingPlaceholders})"
+    //c.info(c.enclosingPosition, s"Placeholder fragments: ${show(placeholderFactoriesTree)}", true)
 
     composeOrGlean_impl[M](c)(CopyProvider(ciRef, placeholderFactoriesTree, confLev._1, confLev._2, delegation = false, noHiddenFragments),
       checkDeps = false, None, defStrategy, Some(placeholderMapFn), None)
@@ -2310,6 +2359,8 @@ object Morpheus {
            Exp. Source alternatives:\n\t${allSourceAlts.map(toShortNames(c)(_)).mkString("\n\t")}
            Target alternatives:\n\t${allTargetAlts.map(toShortNames(c)(_)).mkString("\n\t")}
            Source Alt Cnt: ${sourceAltCnt}
+           Target Alt Cnt: ${targetAltCnt}
+           Matching Target Alt Cnt: ${matchingTargetAltCounter}
            Alt Relations Cnt: ${altRelationsCnt}
            Independent Alt Cnt: $independentTargetAltCounter
          """)

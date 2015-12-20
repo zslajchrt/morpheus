@@ -40,13 +40,26 @@ abstract class MorphModelBase[M](val rootNode: MorphModelNode) extends MorphingT
 //    }).toMap
   }
 
+  def fragmentBitMask(fragmentId: Int): Set[Int] = {
+    sec2prim.filter(p => p._2 == fragmentId).keySet
+  }
+
   def altIterator(): AltIterator[FragmentNode, List[FragmentNode]] =
     new AltIterator[FragmentNode, List[FragmentNode]](rootNode.toAltNode) {
       override protected def mapAlt(alt: List[FragmentNode]): List[FragmentNode] = alt
     }
 
+  def fragmentDescriptor(fragmentId: Int): Option[Frag[_, _]] = {
+    frag2Desc.get(fragmentId)
+  }
+
   def fragmentDescriptor(fragment: FragmentNode): Option[Frag[_, _]] = {
     frag2Desc.get(fragment.id)
+  }
+
+  def fragmentDescriptor[F: WeakTypeTag]: Option[Frag[F, _]] = {
+    val fragTpe: WeakTypeTag[F] = implicitly[WeakTypeTag[F]]
+    fragmentDescriptorsList.find(fd => fragTpe.tpe =:= fd.fragTag.tpe).asInstanceOf[Option[Frag[F, _]]]
   }
 
   def toString(alternative: List[FragmentNode]): String = {

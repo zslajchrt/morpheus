@@ -438,6 +438,50 @@ class MaskingStrategyWithModel[M, S, ImmutableLUB](val morphModel: MorphModel[M]
 
 }
 
+abstract class FragmentMaskingStrategyCommon[M, F](delegate: MorphingStrategy[M], fragmentDesc: Frag[F, _], negative: Boolean) extends MorphingStrategy[M] {
+
+  val fragMask: Set[Int] = Set(fragmentDesc.index)
+
+  def chooseAlternatives(instance: MorphKernel[M])(morphProxy: Option[instance.ImmutableLUB]): Alternatives[M] = {
+
+    val origAlts = delegate.chooseAlternatives(instance)(morphProxy)
+
+    if (switch(instance)(morphProxy)) {
+      if (negative) {
+        origAlts.unmask(fragMask)
+      } else {
+        origAlts.mask(fragMask)
+      }
+    } else {
+      origAlts
+    }
+
+  }
+
+  protected def switch(instance: MorphKernel[M])(morphProxy: Option[instance.ImmutableLUB]): Boolean
+
+}
+
+case class FragmentMaskingStrategy[M, F](delegate: MorphingStrategy[M], fragmentDesc: Frag[F, _], switchFn: () => Boolean, negative: Boolean)
+  extends FragmentMaskingStrategyCommon[M, F](delegate, fragmentDesc, negative) {
+
+  override protected def switch(instance: MorphKernel[M])(morphProxy: Option[instance.ImmutableLUB]): Boolean = switchFn()
+}
+
+class FragmentMaskingStrategyWithModel[M, F, ImmutableLUB](val morphModel: MorphModel[M]) {
+
+  class Strat(delegate: MorphingStrategy[morphModel.Model], fragmentDesc: Frag[F, _], switchFn: (Option[ImmutableLUB]) => Boolean, negative: Boolean)
+    extends FragmentMaskingStrategyCommon[M, F](delegate, fragmentDesc, negative) {
+
+    override protected def switch(instance: MorphKernel[M])(morphProxy: Option[instance.ImmutableLUB]): Boolean = {
+      switchFn(morphProxy.asInstanceOf[Option[ImmutableLUB]])
+    }
+
+  }
+
+}
+
+
 /**
  * This is the default strategy in composite instances. It assigns rate 0 to all alternatives in the composite model given by
  * the type `M`.
