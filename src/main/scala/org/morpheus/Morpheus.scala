@@ -1986,7 +1986,9 @@ object Morpheus {
 
                 val plhTpe = toFragType(altFragSrc)
 
-                if (!plhdValidationCtx.exists(_._1 =:= plhTpe)) {
+                val doDepCheck = checkDepsFlagFromAnnotation(c)(plhTpe)
+
+                if (doDepCheck && !plhdValidationCtx.exists(_._1 =:= plhTpe)) {
                   // the placeholder has not been checked yet
                   var depsRawTpe: c.Type = null
                   var depsTpe: c.Type = null
@@ -2886,68 +2888,71 @@ object Morpheus {
     for (fragNode <- fragmentNodes;
          fragTpe = fragmentTypesMap(fragNode.id)._1) {
 
-      fragTpe.typeSymbol.asClass.selfType match {
-        case RefinedType(parents, scope) =>
-          // 2.1.
-          val depsTpe = fragTpe.typeSymbol.asClass.selfType
-          val depsWithoutFragTpe = internal.refinedType(parents.tail, scope)
+      if (checkDepsFlagFromAnnotation(c)(fragTpe)) {
 
-          val altIter = alternativesIterator(c)(compTpe, false, false, Partial)._3
-          val refConfLevel: ConformanceLevel = getConfLevelFromAnnotation(c)(fragTpe)
-          // 2.2.
-          var fragAltLUBs = List.empty[c.Type]
-          while (altIter.hasNext) {
-            val alt = altIter.next()
-            //2.3.
-            if (alt._2.contains(fragTpe)) {
-              // 2.3.1.
-              val submodelAltType = conjunctionOfTypes(c)(alt._2.filterNot(_ == fragTpe))
+        fragTpe.typeSymbol.asClass.selfType match {
+          case RefinedType(parents, scope) =>
+            // 2.1.
+            val depsTpe = fragTpe.typeSymbol.asClass.selfType
+            val depsWithoutFragTpe = internal.refinedType(parents.tail, scope)
 
-              fragAltLUBs ::= submodelAltType
+            val altIter = alternativesIterator(c)(compTpe, false, false, Partial)._3
+            val refConfLevel: ConformanceLevel = getConfLevelFromAnnotation(c)(fragTpe)
+            // 2.2.
+            var fragAltLUBs = List.empty[c.Type]
+            while (altIter.hasNext) {
+              val alt = altIter.next()
+              //2.3.
+              if (alt._2.contains(fragTpe)) {
+                // 2.3.1.
+                val submodelAltType = conjunctionOfTypes(c)(alt._2.filterNot(_ == fragTpe))
+
+                fragAltLUBs ::= submodelAltType
+              }
             }
-          }
 
-          if (fragAltLUBs.nonEmpty) {
-            val disjunctionOfFragAltLUBs = disjunctionOfTypes(c)(fragAltLUBs) // it does not contain fragTpe
-            // 2.4.
-            val visibleCompModelTpeForFrag = conjunctionOfTypes(c)(List(fragTpe, disjunctionOfFragAltLUBs))
-            //c.info(c.enclosingPosition, s"Checking fragment $fragTpe dependencies $depsTpe against submodel $visibleCompModelTpeForFrag", true)
-            //c.info(c.enclosingPosition, s"Checking fragment $fragTpe dependencies $depsWithoutFragTpe against submodel $disjunctionOfFragAltLUBs", true)
+            if (fragAltLUBs.nonEmpty) {
+              val disjunctionOfFragAltLUBs = disjunctionOfTypes(c)(fragAltLUBs) // it does not contain fragTpe
+              // 2.4.
+              val visibleCompModelTpeForFrag = conjunctionOfTypes(c)(List(fragTpe, disjunctionOfFragAltLUBs))
+              //c.info(c.enclosingPosition, s"Checking fragment $fragTpe dependencies $depsTpe against submodel $visibleCompModelTpeForFrag", true)
+              //c.info(c.enclosingPosition, s"Checking fragment $fragTpe dependencies $depsWithoutFragTpe against submodel $disjunctionOfFragAltLUBs", true)
 
-            try {
-              // 2.5.
-              // Setting source and target conformance level to Partial means that the RIGHT-TOTAL relation is required,
-              // in other words that all source alternatives must be mapped to some target one.
-              checkMorphKernelAssignment(c, s"Checking fragment $fragTpe dependencies")(disjunctionOfFragAltLUBs, depsWithoutFragTpe, checkDepsInSrcModel = false, Partial,
-                Partial, containsHiddenFragments = false /* irrelevant, no placeholders in the self-type */ , noHiddenFragments = false)
+              try {
+                // 2.5.
+                // Setting source and target conformance level to Partial means that the RIGHT-TOTAL relation is required,
+                // in other words that all source alternatives must be mapped to some target one.
+                checkMorphKernelAssignment(c, s"Checking fragment $fragTpe dependencies")(disjunctionOfFragAltLUBs, depsWithoutFragTpe, checkDepsInSrcModel = false, Partial,
+                  Partial, containsHiddenFragments = false /* irrelevant, no placeholders in the self-type */ , noHiddenFragments = false)
 
-              // 2.6.
-              val depAltMaps1 = checkMorphKernelAssignment(c, s"Building alt mapping between $fragTpe dependencies and its composite submodel $visibleCompModelTpeForFrag")(
-                visibleCompModelTpeForFrag, depsTpe, checkDepsInSrcModel = false, conformanceLevel,
-                refConfLevel, containsHiddenFragments = false /* irrelevant, no placeholders in the self-type */ , noHiddenFragments = false)._2
+                // 2.6.
+                val depAltMaps1 = checkMorphKernelAssignment(c, s"Building alt mapping between $fragTpe dependencies and its composite submodel $visibleCompModelTpeForFrag")(
+                  visibleCompModelTpeForFrag, depsTpe, checkDepsInSrcModel = false, conformanceLevel,
+                  refConfLevel, containsHiddenFragments = false /* irrelevant, no placeholders in the self-type */ , noHiddenFragments = false)._2
 
-              // 2.7.
-              val depAltMaps2 = checkMorphKernelAssignment(c, s"Building alt mapping between $fragTpe's composite submodel $visibleCompModelTpeForFrag and main model $compTpe")(
-                compTpe, visibleCompModelTpeForFrag, checkDepsInSrcModel = false, conformanceLevel, Total,
-                containsHiddenFragments = false /* irrelevant, no placeholders in the self-type */ , noHiddenFragments = false)._2
+                // 2.7.
+                val depAltMaps2 = checkMorphKernelAssignment(c, s"Building alt mapping between $fragTpe's composite submodel $visibleCompModelTpeForFrag and main model $compTpe")(
+                  compTpe, visibleCompModelTpeForFrag, checkDepsInSrcModel = false, conformanceLevel, Total,
+                  containsHiddenFragments = false /* irrelevant, no placeholders in the self-type */ , noHiddenFragments = false)._2
 
 
-              // 2.8.
-              // compose the two mapping in order to get the mapping between the fragment's dependencies and the main composite model
-              val depsMapsAsStr = depAltMaps1.compose(depAltMaps2).serialize
+                // 2.8.
+                // compose the two mapping in order to get the mapping between the fragment's dependencies and the main composite model
+                val depsMapsAsStr = depAltMaps1.compose(depAltMaps2).serialize
 
-              fragToDepsMaps += (fragNode.id -> c.Expr[String](q"$depsMapsAsStr"))
+                fragToDepsMaps += (fragNode.id -> c.Expr[String](q"$depsMapsAsStr"))
 
+              }
+              catch {
+                case dchk: DependencyCheckException =>
+                  c.abort(c.enclosingPosition, dchk.getMessage)
+              }
             }
-            catch {
-              case dchk: DependencyCheckException =>
-                c.abort(c.enclosingPosition, dchk.getMessage)
-            }
-          }
 
-        case _ => // no deps
+          case _ => // no deps
+        }
+
       }
-
     }
 
     // Check whether for each wrapper there exists a wrappable fragment in all alternatives where the wrapper occurs
@@ -3301,6 +3306,16 @@ object Morpheus {
             }
           case _ => Partial
         }
+    }
+  }
+
+  private def checkDepsFlagFromAnnotation(c: whitebox.Context)(fragTpe: c.Type): Boolean = {
+    import c.universe._
+
+    getAnnotation[nodepscheck](c)(fragTpe) match {
+      case None => true
+
+      case Some(_) => false
     }
   }
 
