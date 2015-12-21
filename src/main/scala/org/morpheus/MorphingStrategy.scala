@@ -613,7 +613,7 @@ case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: MorphKernelRef[MT, 
 
   override def convertToHolders(newModelInstance: MorphKernel[MT], newAlt: List[FragmentNode], rating: Double, newAltStruct: Option[List[Node]]): List[FragmentHolder[_]] = {
 
-    if (newAlt == Nil) {
+    if (newAlt == Nil && !newAltStruct.isDefined) {
       return Nil
     }
 
