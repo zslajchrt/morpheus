@@ -923,8 +923,6 @@ object Morpheus {
          }
        """
 
-    c.info(c.enclosingPosition, s"${show(result)}", true)
-
     c.Expr(result)
     //c.Expr(q"null")
   }
