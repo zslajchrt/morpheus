@@ -79,12 +79,22 @@ abstract class MorphModel[M](rn: MorphModelNode) extends MorphModelBase[M](rn) w
   type LUB
   type Model = M
   type ConformLevel <: ConformanceLevelMarker
-  type MutableLUB = LUB with MutableMorphMirror[M] { type ConfLev = ConformLevel }
-  type ImmutableLUB = LUB with MorphMirror[M] { type ConfLev = ConformLevel }
+  type MutableLUB = LUB with MutableMorphMirror[M] { type ConfLev = ConformLevel; type LUB = outer.LUB }
+  type ImmutableLUB = LUB with MorphMirror[M] { type ConfLev = ConformLevel; type LUB = outer.LUB }
   type Kernel = MorphKernel[Model] { type LUB = outer.LUB; type ConformLevel = TotalConformance }
   type Recognizer = Kernel // Just an alias for Kernel
 
   val fragmentDescriptors: HList
+
+  trait Strategy extends MorphingStrategy[Model] {
+
+    override def chooseAlternatives(instance: MorphKernel[MorphModel.this.Model])(morphProxy: Option[instance.ImmutableLUB]): Alternatives[MorphModel.this.Model] = {
+      val fixedInst = instance.asInstanceOf[Recognizer]
+      chooseAlts(fixedInst)(morphProxy.asInstanceOf[Option[fixedInst.ImmutableLUB]])
+    }
+
+    def chooseAlts(instance: Recognizer)(morphProxy: Option[instance.ImmutableLUB]): Alternatives[instance.Model]
+  }
 
 }
 

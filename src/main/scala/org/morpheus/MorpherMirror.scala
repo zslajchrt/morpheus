@@ -53,7 +53,8 @@ trait MorphMirror[M] {
   }
 
   //def owningMutableProxy: Option[L with MutableMorphMirror[M, L]]
-  def owningMutableProxy: Option[kernel.MutableLUB]
+  //def owningMutableProxy: Option[kernel.MutableLUB]
+  def owningMutableProxy: Option[LUB with MutableMorphMirror[M] {type ConfLev = outer.ConfLev; type LUB = outer.LUB}]
 }
 
 

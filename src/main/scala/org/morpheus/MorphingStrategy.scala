@@ -481,6 +481,41 @@ class FragmentMaskingStrategyWithModel[M, F, ImmutableLUB](val morphModel: Morph
 
 }
 
+abstract class FragmentRatingStrategyCommon[M, F](delegate: MorphingStrategy[M], fragmentDesc: Frag[F, _]) extends MorphingStrategy[M] {
+
+  def chooseAlternatives(instance: MorphKernel[M])(morphProxy: Option[instance.ImmutableLUB]): Alternatives[M] = {
+
+    val origAlts = delegate.chooseAlternatives(instance)(morphProxy)
+
+    origAlts.rate((alt, curRat) => if (alt.map(_.id).contains(fragmentDesc.index)) {
+      curRat + rateAlt(instance)(morphProxy)
+    } else {
+      curRat
+    })
+  }
+
+  protected def rateAlt(instance: MorphKernel[M])(morphProxy: Option[instance.ImmutableLUB]): Double
+
+}
+
+case class FragmentRatingStrategy[M, F](delegate: MorphingStrategy[M], fragmentDesc: Frag[F, _], rateFn: () => Double)
+  extends FragmentRatingStrategyCommon[M, F](delegate, fragmentDesc) {
+
+  override protected def rateAlt(instance: MorphKernel[M])(morphProxy: Option[instance.ImmutableLUB]): Double = rateFn()
+}
+
+class FragmentRatingStrategyWithModel[M, F, ImmutableLUB](val morphModel: MorphModel[M]) {
+
+  class Strat(delegate: MorphingStrategy[morphModel.Model], fragmentDesc: Frag[F, _], rateFn: (Option[ImmutableLUB]) => Double)
+    extends FragmentRatingStrategyCommon[M, F](delegate, fragmentDesc) {
+
+    override protected def rateAlt(instance: MorphKernel[M])(morphProxy: Option[instance.ImmutableLUB]): Double = {
+      rateFn(morphProxy.asInstanceOf[Option[ImmutableLUB]])
+    }
+
+  }
+
+}
 
 /**
  * This is the default strategy in composite instances. It assigns rate 0 to all alternatives in the composite model given by

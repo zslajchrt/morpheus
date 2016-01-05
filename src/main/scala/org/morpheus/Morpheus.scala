@@ -161,6 +161,8 @@ object Morpheus {
 
   def *[M](ciRef: MorphKernelRef[M, _], placeholders: Any*): Any = macro deref_impl[M]
 
+  def *![M](ciRef: MorphKernelRef[M, _]): Any = macro derefMirror_impl[M]
+
   def *[M](ciRef: MorphKernelRef[M, _], strategy: MorphingStrategy[_], placeholders: Any*): Any = macro derefWithStrategy_impl[M]
 
   def derefHelper[M](ciRef: MorphKernelRef[M, _], placeholders: Any*): Any = macro derefHelper_impl[M]
@@ -239,9 +241,19 @@ object Morpheus {
 
   def unmaskFragment[F](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], sw: (Option[morphModel.ImmutableLUB]) => Boolean): Any = macro unmaskFragment_impl[F]
 
+  def rateFragment[F](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], rateFn: (Option[morphModel.ImmutableLUB]) => Double): Any = macro rateFragment_impl[F]
+
   def strict[M](delegate: MorphingStrategy[M]): Any = macro strict_impl[M]
 
+  def typeOfExpr(expr: Any): Unit = macro typeOfExpr_impl
+
   def assertFailure(code: Any): Unit = macro assertFailure_impl
+
+  def typeOfExpr_impl(c: whitebox.Context)(expr: c.Expr[Any]): c.Expr[Unit] = {
+    import c.universe._
+    c.info(c.enclosingPosition, s"${show(expr.actualType.dealias)}", true)
+    c.Expr[Unit](q"()")
+  }
 
   def assertFailure_impl(c: whitebox.Context)(code: c.Expr[Any]): c.Expr[Unit] = {
     import c.universe._
@@ -927,6 +939,29 @@ object Morpheus {
     //c.Expr(q"null")
   }
 
+  def rateFragment_impl[F: c.WeakTypeTag](c: whitebox.Context)(morphModel: c.Expr[MorphModel[_]])(delegate: c.Expr[MorphingStrategy[morphModel.value.Model]], rateFn: c.Expr[(Option[morphModel.value.ImmutableLUB]) => Double]): c.Expr[Any] = {
+    import c.universe._
+
+    val modelTpe = c.typecheck(tq"$morphModel.Model", mode = c.TYPEmode).tpe
+    val immutableLUBTpe = c.typecheck(tq"$morphModel.ImmutableLUB", mode = c.TYPEmode).tpe
+    val fragTpe = implicitly[WeakTypeTag[F]].tpe.dealias
+
+    val result = q"""
+         {
+            def createStrategy() = {
+              val wrapper = new org.morpheus.FragmentRatingStrategyWithModel[$modelTpe, $fragTpe, $immutableLUBTpe]($morphModel)
+              val fragDesc = $morphModel.fragmentDescriptor[$fragTpe]
+              require(fragDesc.isDefined, "Fragment " + ${fragTpe.toString} + " not found")
+              new wrapper.Strat($delegate, fragDesc.get, $rateFn)
+            }
+            createStrategy
+         }
+       """
+
+    c.Expr(result)
+    //c.Expr(q"null")
+  }
+
   def strict_impl[M: c.WeakTypeTag](c: whitebox.Context)(delegate: c.Expr[MorphingStrategy[M]]): c.Expr[Any] = {
     import c.universe._
 
@@ -1063,6 +1098,31 @@ object Morpheus {
     val result = q"(..$fragFactTrees)"
 
     c.Expr(result)
+  }
+
+  def derefMirror_impl[M: c.WeakTypeTag](c: whitebox.Context)(ciRef: c.Expr[MorphKernelRef[M, _]]): c.Expr[Any] = {
+    import c.universe._
+
+    val resTree = q"""
+        {
+           import org.morpheus.Morpheus._
+           val pm = parse[$ciRef.TargetModel](false, true)
+           val mirrorOpt = $ciRef.sourceStrategy match {
+              case None => None
+              case Some(srcStrat) =>
+                 srcStrat match {
+                    case lrs: LastRatingStrategy[_] => lrs.mirrorOpt match {
+                       case None => None
+                       case Some(m) => Some(m)
+                    }
+                    case _ => None
+                 }
+           }
+           val mirror = mirrorOpt.getOrElse($ciRef.instance.!).asInstanceOf[pm.ImmutableLUB]
+           mirror
+        }
+    """
+    c.Expr[Any](resTree)
   }
 
   def deref_impl[M: c.WeakTypeTag](c: whitebox.Context)(ciRef: c.Expr[MorphKernelRef[M, _]], placeholders: c.Expr[Any]*): c.Expr[Any] = {
@@ -1216,7 +1276,7 @@ object Morpheus {
     }).map(phFragWithTpe => {
       // create the default fragment factories for the missing placeholder factories
       val phFragTpe = phFragWithTpe._2
-      val defaultPlhdFact = q"org.morpheus.Morpheus.single[$phFragTpe]"
+      val defaultPlhdFact = q"org.morpheus.Morpheus.frag[$phFragTpe]"
       q"${phFragWithTpe._1.id} -> $defaultPlhdFact.asInstanceOf[org.morpheus.Frag[_, _] => _]"
     })
 
@@ -2333,20 +2393,20 @@ object Morpheus {
       c.Expr[AltMappings](pcTree)
     }
 
-    if (!isCompatible) {
-      srcAltIter.reset()
-      tgtAltIter.reset()
-
-      def printUnsatisfiedAltsPair(unstfAltPair: (List[c.Type] /*tgt alt*/ , List[c.Type] /*src alt*/ , String /*reason*/ )): String = {
-        val tgtAlt = toShortNames(c)(unstfAltPair._1)
-        val srcAlt = toShortNames(c)(unstfAltPair._2)
-        val reason = unstfAltPair._3
-        s"""
+    def printUnsatisfiedAltsPair(unstfAltPair: (List[c.Type] /*tgt alt*/ , List[c.Type] /*src alt*/ , String /*reason*/ )): String = {
+      val tgtAlt = toShortNames(c)(unstfAltPair._1)
+      val srcAlt = toShortNames(c)(unstfAltPair._2)
+      val reason = unstfAltPair._3
+      s"""
             Target alt: $tgtAlt
             Source alt: $srcAlt
             Reason: $reason
         """
-      }
+    }
+
+    if (!isCompatible) {
+      srcAltIter.reset()
+      tgtAltIter.reset()
 
       throw new DependencyCheckException( s"""
            *** $ctxMsg ***
@@ -2375,11 +2435,19 @@ object Morpheus {
 //           *** $ctxMsg ***
 //
 //           Reference of $tgtTpe:$tgtConfLev does not conform $srcTpe:$srcConfLev.
+//           Unsatisfied alternatives:${unsatisfiedTargetAlts.toList.map(printUnsatisfiedAltsPair).mkString("---")}
 //           Source root: $srcRoot
 //           Target root: $tgtRoot
 //           Antagonists: ${antagonists.map(tpl => (fragSrcPretty(tpl._1), fragSrcPretty(tpl._2), tpl)).mkString(", ")}
 //           NewFragToOrigFrag: $newFragToOrigFrag
+//           Source alternatives:\n\t${allSourceAltsOrig.map(toShortNames(c)(_)).mkString("\n\t")}
+//           Exp. Source alternatives:\n\t${allSourceAlts.map(toShortNames(c)(_)).mkString("\n\t")}
 //           Target alternatives:\n\t${allTargetAlts.map(toShortNames(c)(_)).mkString("\n\t")}
+//           Source Alt Cnt: ${sourceAltCnt}
+//           Target Alt Cnt: ${targetAltCnt}
+//           Matching Target Alt Cnt: ${matchingTargetAltCounter}
+//           Alt Relations Cnt: ${altRelationsCnt}
+//           Independent Alt Cnt: $independentTargetAltCounter
 //         """
 //      c.info(c.enclosingPosition, s"AltMapping Report: $report", true)
 
@@ -2453,9 +2521,13 @@ object Morpheus {
 
     val tp = self.actualType
 
-    val conformanceLevelMarker = implicitly[WeakTypeTag[ConformanceLevelMarker]]
+    //getConfLevelFromAnnotation(c)()
+    val lub = buildModel(c)(tp, None)._4
+    //val conformanceLevelMarker = implicitly[WeakTypeTag[ConformanceLevelMarker]]
 
-    val mirrorTpe = tq"$tp with MorphMirror[or[$tp, Unit]] with $conformanceLevelMarker"
+    //val mirrorTpe = tq"$tp with MorphMirror[or[$tp, Unit]] with $conformanceLevelMarker { type LUB = $tp }"
+    //val mirrorTpe = tq"$tp with MorphMirror[$tp] with $conformanceLevelMarker { type LUB = $lub }"
+    val mirrorTpe = tq"$tp with MorphMirror[$tp] { type LUB = $lub }"
 
     val res =
       q"""
