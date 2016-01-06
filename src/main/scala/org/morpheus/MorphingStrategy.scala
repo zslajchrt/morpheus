@@ -22,13 +22,13 @@ trait MorphingStrategy[M] {
 
 trait AlternativeComposer[M] {
 
-  def convertToHolders(instance: MorphKernel[M], alternative: List[FragmentNode], rating: Double, altStruct: Option[List[Node]]): List[FragmentHolder[_]]
+  def convertToHolders(instance: MorphKernel[M], alternative: List[FragmentNode], rating: Double, altStruct: Option[List[Node]])(morphProxy: Option[instance.ImmutableLUB]): List[FragmentHolder[_]]
 
 }
 
 class DefaultAlternativeComposer[M] extends AlternativeComposer[M] {
 
-  def convertToHolders(instance: MorphKernel[M], alternative: List[FragmentNode], rating: Double, altStruct: Option[List[Node]]): List[FragmentHolder[_]] = {
+  def convertToHolders(instance: MorphKernel[M], alternative: List[FragmentNode], rating: Double, altStruct: Option[List[Node]])(morphProxy: Option[instance.ImmutableLUB]): List[FragmentHolder[_]] = {
     altStruct match {
       case None =>
         alternative.map(fn => instance.fragmentHolder(fn).get)
@@ -540,7 +540,11 @@ case class BridgeStrategy[MT, MS](srcInstanceRef: MorphKernelRef[MT, MS]) extend
   }
 
   def chooseAlternatives(instance: MorphKernel[MT])(morphProxy: Option[instance.ImmutableLUB]): Alternatives[MT] = {
-    val sourceAlts: Alternatives[MS] = actualStrategy.chooseAlternatives(srcInstanceRef.instance)(Some(srcInstanceRef.instance.!))
+    //val sourceAlts: Alternatives[MS] = actualStrategy.chooseAlternatives(srcInstanceRef.instance)(Some(srcInstanceRef.instance.!))
+
+    // The target proxy should be able to substitute the source proxy. Just type-cast the target proxy
+    val srcMorphProxy = morphProxy.map(_.asInstanceOf[srcInstanceRef.instance.ImmutableLUB])
+    val sourceAlts: Alternatives[MS] = actualStrategy.chooseAlternatives(srcInstanceRef.instance)(srcMorphProxy)
 
     val suggestedWinnerAlt: List[Int] = MorphingStrategy.fittestAlternative(srcInstanceRef.instance, sourceAlts.toMaskedList) match {
       case None => throw new NoAlternativeChosenException("Source model yields no viable alternative")
@@ -656,7 +660,7 @@ case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: MorphKernelRef[MT, 
 
   }
 
-  override def convertToHolders(newModelInstance: MorphKernel[MT], newAlt: List[FragmentNode], rating: Double, newAltStruct: Option[List[Node]]): List[FragmentHolder[_]] = {
+  override def convertToHolders(newModelInstance: MorphKernel[MT], newAlt: List[FragmentNode], rating: Double, newAltStruct: Option[List[Node]])(morphProxy: Option[newModelInstance.ImmutableLUB]): List[FragmentHolder[_]] = {
 
     if (newAlt == Nil && !newAltStruct.isDefined) {
       return Nil
@@ -684,7 +688,9 @@ case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: MorphKernelRef[MT, 
     val origAltForNewAltFrags = origAltsForNewAlt.map(origAlt => origAlt.fragments)
     // consult the original strategy to choose the best orig alt
 
-    val suggestedOrigAlternatives = actualStrategy.chooseAlternatives(srcInstanceRef.instance)(Some(srcInstanceRef.instance.!))
+    // The target proxy should be able to substitute the source proxy. Just type-cast the target proxy
+    val srcMorphProxy = morphProxy.map(_.asInstanceOf[srcInstanceRef.instance.ImmutableLUB])
+    val suggestedOrigAlternatives = actualStrategy.chooseAlternatives(srcInstanceRef.instance)(srcMorphProxy)
     // First, try to get the candidate original alts from the masked list
     val chosenAltsFirstAttempt = restrictRatedAltsToSpecifiedAlts(origAltForNewAltFrags, suggestedOrigAlternatives.toMaskedList, rating)
     val chosenAlts = if (chosenAltsFirstAttempt == Nil) {
@@ -717,7 +723,7 @@ case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: MorphKernelRef[MT, 
                 }
 
                 // Pass the template with the required alt structure to the original default strategy
-                srcInstanceRef.instance.altComposer.convertToHolders(srcInstanceRef.instance, bestOrigAlt._1, bestOrigAlt._2, Some(mergedAltStruct))
+                srcInstanceRef.instance.altComposer.convertToHolders(srcInstanceRef.instance, bestOrigAlt._1, bestOrigAlt._2, Some(mergedAltStruct))(srcMorphProxy)
               case None =>
                 if (bestOrigAltIds == Nil) {
                   // The chosen alt is the empty alt, but it is not among the source alts. It's OK.

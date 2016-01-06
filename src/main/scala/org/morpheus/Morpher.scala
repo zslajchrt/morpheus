@@ -13,11 +13,7 @@ class Morpher[M]() {
 
   def morph(instance: MorphKernel[M], strategy: MorphingStrategy[M], altFailover: Boolean = true)(owningMutableProxy: Option[instance.MutableLUB], morphProxy: Option[instance.ImmutableLUB]): instance.ImmutableLUB = {
 
-    val alternatives: Alternatives[M] = morphProxy match {
-      //case Some(proxy) if proxy.delegate != null => strategy.chooseAlternatives(instance)(Some(proxy))
-      case Some(proxy) => strategy.chooseAlternatives(instance)(Some(proxy))
-      case _ => strategy.chooseAlternatives(instance)(None)
-    }
+    val alternatives: Alternatives[M] = strategy.chooseAlternatives(instance)(morphProxy)
 
     @tailrec
     def makeFragHolders(candidates: List[(List[FragmentNode], Double)]): List[FragmentHolder[_]] = {
@@ -25,7 +21,7 @@ class Morpher[M]() {
         MorphingStrategy.fittestAlternative(instance, candidates) match {
           case None => throw new NoAlternativeChosenException("No alternative can be chosen")
           case Some(alternative) =>
-            instance.altComposer.convertToHolders(instance, alternative._1, alternative._2, None)
+            instance.altComposer.convertToHolders(instance, alternative._1, alternative._2, None)(morphProxy)
         }
       }
       catch {

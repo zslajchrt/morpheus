@@ -165,6 +165,8 @@ object Morpheus {
 
   def *[M](ciRef: MorphKernelRef[M, _], strategy: MorphingStrategy[_], placeholders: Any*): Any = macro derefWithStrategy_impl[M]
 
+  def unveil[M](ciRef: MorphKernelRef[M, _]): Any = macro unveil_impl[M]
+
   def derefHelper[M](ciRef: MorphKernelRef[M, _], placeholders: Any*): Any = macro derefHelper_impl[M]
 
   def derefHelperWithStrategy[M](ciRef: MorphKernelRef[M, _], strategy: MorphingStrategy[_], placeholders: Any*): Any = macro derefHelperWithStrategy_impl[M]
@@ -1120,6 +1122,20 @@ object Morpheus {
            }
            val mirror = mirrorOpt.getOrElse($ciRef.instance.!).asInstanceOf[pm.ImmutableLUB]
            mirror
+        }
+    """
+    c.Expr[Any](resTree)
+  }
+
+  def unveil_impl[M: c.WeakTypeTag](c: whitebox.Context)(ciRef: c.Expr[MorphKernelRef[M, _]]): c.Expr[Any] = {
+    import c.universe._
+
+    val resTree = q"""
+        {
+           import org.morpheus.Morpheus._
+           val model = parse[$ciRef.TargetModel](false, true)
+           val strategy = BridgeStrategy[$ciRef.TargetModel, $ciRef.instance.Model]($ciRef).asInstanceOf[BridgeStrategy[model.Model, _]]
+           (model, strategy)
         }
     """
     c.Expr[Any](resTree)
