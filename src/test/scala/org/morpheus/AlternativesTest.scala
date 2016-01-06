@@ -138,4 +138,19 @@ class AlternativesTest {
     assertEquals(0, alts3.toMaskedList.size)
     assertTrue(alts3.fragmentMask.isEmpty)
   }
+
+  @Test
+  def testX(): Unit = {
+    val rootNode = ConjNode(List(FragmentNode(0,true), FragmentNode(1,true), DisjNode(List(ConjNode(List(FragmentNode(2,true), FragmentNode(3,false))), UnitNode)), DisjNode(List(UnitNode, ConjNode(List(FragmentNode(4,true), FragmentNode(5,true))))), DisjNode(List(UnitNode, ConjNode(List(FragmentNode(6,true), FragmentNode(7,true), DisjNode(List(UnitNode, ConjNode(List(FragmentNode(8,true), FragmentNode(9,true))))), DisjNode(List(UnitNode, ConjNode(List(FragmentNode(10,true), FragmentNode(11,true), DisjNode(List(UnitNode, ConjNode(List(FragmentNode(12,true), FragmentNode(13,true), DisjNode(List(UnitNode, ConjNode(List(FragmentNode(14,true), FragmentNode(15,true), DisjNode(List(UnitNode, ConjNode(List(FragmentNode(16,true), FragmentNode(17,true))))))))))))))))))))), FragmentNode(18,false), FragmentNode(19,false)))
+
+//    val alts = Alternatives.apply(rootNode)
+//    val altList = alts.toList
+
+    val altList = (new IdentAltIterator(rootNode.toAltNode)).toList
+
+    for (a <- altList) {
+      println(a)
+    }
+  }
+
 }

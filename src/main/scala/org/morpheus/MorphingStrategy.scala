@@ -541,12 +541,36 @@ case class BridgeStrategy[MT, MS](srcInstanceRef: MorphKernelRef[MT, MS]) extend
 
   def chooseAlternatives(instance: MorphKernel[MT])(morphProxy: Option[instance.ImmutableLUB]): Alternatives[MT] = {
     val sourceAlts: Alternatives[MS] = actualStrategy.chooseAlternatives(srcInstanceRef.instance)(Some(srcInstanceRef.instance.!))
-    val suggestedOrigAlternatives: List[(List[Int], Double)] = sourceAlts.toMaskedList
-      .map(origAlt => (origAlt._1.map(_.id), origAlt._2)) // maps FragmentNode -> Int
 
-    if (suggestedOrigAlternatives.isEmpty) {
-      throw new NoAlternativeChosenException("Source model yields no viable alternative")
+    val suggestedWinnerAlt: List[Int] = MorphingStrategy.fittestAlternative(srcInstanceRef.instance, sourceAlts.toMaskedList) match {
+      case None => throw new NoAlternativeChosenException("Source model yields no viable alternative")
+      case Some(winnerAlt) => winnerAlt._1.map(_.id)
     }
+
+    val altMap: AltMappings = srcInstanceRef.altMappings
+
+    val al: Alternatives[MT] = instance.model.alternatives
+
+    // find the first target alt referring to the source winner - it is used for promoting the preferred target alt
+    val targetAltsReferringWinner: Set[List[Int]] = al.toMaskedList.find(tgtAlt => {
+      val tgtAltIds: List[Int] = tgtAlt._1.map(_.id)
+      val referredSourceAlts: List[List[Int]] = altMap.newAltToOrigAlt.getOrElse(tgtAltIds, List.empty).map(_.fragments)
+      referredSourceAlts.contains(suggestedWinnerAlt)
+    }).map(_._1.map(_.id)).toSet
+
+    //    // find the target alts referring the source winner - it is used for promoting the preferred target alts
+//    val targetAltsReferringWinner: Set[List[Int]] = altMap.newAltToOrigAlt.filter(newAltEntry => {
+//        val referredSourceAlts: List[List[Int]] = newAltEntry._2.map(_.fragments)
+//        referredSourceAlts.contains(suggestedWinnerAlt)
+//      }).map(newAltEntry => newAltEntry._1).toSet
+
+    val targetFragmentMask: Set[Int] = altMap.newFragToOrigFrag.filter(f2f => {
+      sourceAlts.fragmentMask.contains(f2f._2)
+    }).map(_._1).toSet
+
+    // maps FragmentNode -> Int
+    val suggestedOrigAlternatives: List[(List[Int], Double)] = sourceAlts.toMaskedList
+      .map(origAlt => (origAlt._1.map(_.id), origAlt._2))
 
     def findRatingForOrigAlt(origAlt: List[Int]): Double = {
       suggestedOrigAlternatives.find(_._1 == origAlt) match {
@@ -555,20 +579,6 @@ case class BridgeStrategy[MT, MS](srcInstanceRef: MorphKernelRef[MT, MS]) extend
       }
     }
 
-    val altMap: AltMappings = srcInstanceRef.altMappings
-
-    val suggestedWinnerAlt = suggestedOrigAlternatives.head._1 // the suggested winner
-    // find the target alts referring the source winner - it is used for promoting the preferred target alts
-    val targetAltsReferringWinner: Set[List[Int]] = altMap.newAltToOrigAlt.filter(newAltEntry => {
-        val referredSourceAlts: List[List[Int]] = newAltEntry._2.map(_.fragments)
-        referredSourceAlts.contains(suggestedWinnerAlt)
-      }).map(newAltEntry => newAltEntry._1).toSet
-
-    val targetFragmentMask: Set[Int] = altMap.newFragToOrigFrag.filter(f2f => {
-      sourceAlts.fragmentMask.contains(f2f._2)
-    }).map(_._1).toSet
-
-    val al: Alternatives[MT] = instance.model.alternatives
     // transform the new alts stored on altMap and associate the rating to them
     al.filter((newAlt, altRating) => {
       // There may be some alternatives missing in the alt mapping if the mapping was built for an existential reference.
