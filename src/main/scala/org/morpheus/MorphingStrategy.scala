@@ -520,7 +520,8 @@ class FragmentRatingStrategyWithModel[M, F, ImmutableLUB](val morphModel: MorphM
 /**
  * This is the default strategy in composite instances. It assigns rate 0 to all alternatives in the composite model given by
  * the type `M`.
- * @tparam M
+  *
+  * @tparam M
  */
 case class DefaultCompositeStrategy[M](model: MorphModel[M]) extends MorphingStrategy[M] {
 
@@ -666,92 +667,100 @@ case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: MorphKernelRef[MT, 
       return Nil
     }
 
-    val altMap: AltMappings = srcInstanceRef.altMappings
-
-    val newAltIds: List[Int] = newAlt.map(_.id)
-    val origAltsForNewAlt: List[OrigAlt] = altMap.newAltToOrigAlt.get(newAltIds) match {
-      case None =>
-        if (newAlt.isEmpty && newAltStruct.isDefined) {
-          require(newAltStruct.get.forall({
-            case FragmentInsertion(_) => true
-            case _ => false
-          }), "Empty new alternative structure must be accompanied by its structure composed of fragment insertions only")
-
-          return newAltStruct.get.map(_.holder())
-        } else {
-          sys.error(s"There is no corresponding original alternative for $newAlt")
-        }
-      case Some(origAlts) => origAlts
-    }
-
-    //val origAltForNewAltWithRating = origAltsForNewAlt.map(origAlt => (origAlt.fragments.map(FragmentNode(_)), 0d))
-    val origAltForNewAltFrags = origAltsForNewAlt.map(origAlt => origAlt.fragments)
-    // consult the original strategy to choose the best orig alt
-
-    // The target proxy should be able to substitute the source proxy. Just type-cast the target proxy
-    val srcMorphProxy = morphProxy.map(_.asInstanceOf[srcInstanceRef.instance.ImmutableLUB])
-    val suggestedOrigAlternatives = actualStrategy.chooseAlternatives(srcInstanceRef.instance)(srcMorphProxy)
-    // First, try to get the candidate original alts from the masked list
-    val chosenAltsFirstAttempt = restrictRatedAltsToSpecifiedAlts(origAltForNewAltFrags, suggestedOrigAlternatives.toMaskedList, rating)
-    val chosenAlts = if (chosenAltsFirstAttempt == Nil) {
-      // If the masked list does not contain any target alt or the target alts do not contain the empty one
-      // then we have to throw an exception
-      throw new AlternativeNotAvailableException(newAlt, s"No source alternative found for target alternative $newAlt")
-    } else {
-      chosenAltsFirstAttempt
-    }
-
-    @tailrec
-    def makeFragHolders(candidates: List[(List[FragmentNode], Double)]): List[FragmentHolder[_]] = {
-      try {
-        // find the best alt from the subset of the orig alts
-        MorphingStrategy.fittestAlternative(srcInstanceRef.instance, candidates) match {
-          case Some(bestOrigAlt) =>
-            // find the template for the chosen alternative
-            val bestOrigAltIds = bestOrigAlt._1.map(_.id)
-            origAltsForNewAlt.find(_.fragments == bestOrigAltIds) match {
-              case Some(origAltForNewAlt) =>
-
-                // merge the new and orig template structures
-                val origAltStruct = AltMappingModel(origAltForNewAlt.template, altMap.newFragToOrigFrag,
-                  (fn) => newModelInstance.fragmentHolder(fn).get,
-                  (fn) => srcInstanceRef.instance.fragmentHolder(fn).get)
-
-                val mergedAltStruct = newAltStruct match {
-                  case None => origAltStruct
-                  case Some(newStruct) => AltMappingModel.transform(newStruct, origAltStruct)
-                }
-
-                // Pass the template with the required alt structure to the original default strategy
-                srcInstanceRef.instance.altComposer.convertToHolders(srcInstanceRef.instance, bestOrigAlt._1, bestOrigAlt._2, Some(mergedAltStruct))(srcMorphProxy)
-              case None =>
-                if (bestOrigAltIds == Nil) {
-                  // The chosen alt is the empty alt, but it is not among the source alts. It's OK.
-                  Nil
-                } else {
-                  // This one should not occur
-                  sys.error(s"Cannot find template for chosen alternative $bestOrigAltIds")
-                }
-            }
-
-          case None => sys.error("No alternative chosen")
-        }
-
-      } catch {
-        case ae: AlternativeNotAvailableException =>
-          val newCandidates = candidates.filterNot(_._1 == ae.alt)
-          if (newCandidates.isEmpty) {
-            throw new AlternativeNotAvailableException(newAlt, s"No source alternative found for target alternative $newAlt")
-          } else {
-            // try it again without the failed candidate alt
-            makeFragHolders(newCandidates)
-          }
+    if (newAlt.forall(_.placeholder)) {
+      newAltStruct match {
+        case None =>
+          newAlt.map(fn => newModelInstance.fragmentHolder(fn).get)
+        case Some(altStructTemplate) => altStructTemplate.map(_.holder())
       }
+    } else {
+
+      val altMap: AltMappings = srcInstanceRef.altMappings
+
+      val newAltIds: List[Int] = newAlt.map(_.id)
+      val origAltsForNewAlt: List[OrigAlt] = altMap.newAltToOrigAlt.get(newAltIds) match {
+        case None =>
+          if (newAlt.isEmpty && newAltStruct.isDefined) {
+            require(newAltStruct.get.forall({
+              case FragmentInsertion(_) => true
+              case _ => false
+            }), "Empty new alternative structure must be accompanied by its structure composed of fragment insertions only")
+
+            return newAltStruct.get.map(_.holder())
+          } else {
+            sys.error(s"There is no corresponding original alternative for $newAlt")
+          }
+        case Some(origAlts) => origAlts
+      }
+
+      //val origAltForNewAltWithRating = origAltsForNewAlt.map(origAlt => (origAlt.fragments.map(FragmentNode(_)), 0d))
+      val origAltForNewAltFrags = origAltsForNewAlt.map(origAlt => origAlt.fragments)
+      // consult the original strategy to choose the best orig alt
+
+      // The target proxy should be able to substitute the source proxy. Just type-cast the target proxy
+      val srcMorphProxy = morphProxy.map(_.asInstanceOf[srcInstanceRef.instance.ImmutableLUB])
+      val suggestedOrigAlternatives = actualStrategy.chooseAlternatives(srcInstanceRef.instance)(srcMorphProxy)
+      // First, try to get the candidate original alts from the masked list
+      val chosenAltsFirstAttempt = restrictRatedAltsToSpecifiedAlts(origAltForNewAltFrags, suggestedOrigAlternatives.toMaskedList, rating)
+      val chosenAlts = if (chosenAltsFirstAttempt == Nil) {
+        // If the masked list does not contain any target alt or the target alts do not contain the empty one
+        // then we have to throw an exception
+        throw new AlternativeNotAvailableException(newAlt, s"No source alternative found for target alternative $newAlt")
+      } else {
+        chosenAltsFirstAttempt
+      }
+
+      @tailrec
+      def makeFragHolders(candidates: List[(List[FragmentNode], Double)]): List[FragmentHolder[_]] = {
+        try {
+          // find the best alt from the subset of the orig alts
+          MorphingStrategy.fittestAlternative(srcInstanceRef.instance, candidates) match {
+            case Some(bestOrigAlt) =>
+              // find the template for the chosen alternative
+              val bestOrigAltIds = bestOrigAlt._1.map(_.id)
+              origAltsForNewAlt.find(_.fragments == bestOrigAltIds) match {
+                case Some(origAltForNewAlt) =>
+
+                  // merge the new and orig template structures
+                  val origAltStruct = AltMappingModel(origAltForNewAlt.template, altMap.newFragToOrigFrag,
+                    (fn) => newModelInstance.fragmentHolder(fn).get,
+                    (fn) => srcInstanceRef.instance.fragmentHolder(fn).get)
+
+                  val mergedAltStruct = newAltStruct match {
+                    case None => origAltStruct
+                    case Some(newStruct) => AltMappingModel.transform(newStruct, origAltStruct)
+                  }
+
+                  // Pass the template with the required alt structure to the original default strategy
+                  srcInstanceRef.instance.altComposer.convertToHolders(srcInstanceRef.instance, bestOrigAlt._1, bestOrigAlt._2, Some(mergedAltStruct))(srcMorphProxy)
+                case None =>
+                  if (bestOrigAltIds == Nil) {
+                    // The chosen alt is the empty alt, but it is not among the source alts. It's OK.
+                    Nil
+                  } else {
+                    // This one should not occur
+                    sys.error(s"Cannot find template for chosen alternative $bestOrigAltIds")
+                  }
+              }
+
+            case None => sys.error("No alternative chosen")
+          }
+
+        } catch {
+          case ae: AlternativeNotAvailableException =>
+            val newCandidates = candidates.filterNot(_._1 == ae.alt)
+            if (newCandidates.isEmpty) {
+              throw new AlternativeNotAvailableException(newAlt, s"No source alternative found for target alternative $newAlt")
+            } else {
+              // try it again without the failed candidate alt
+              makeFragHolders(newCandidates)
+            }
+        }
+      }
+
+
+      makeFragHolders(chosenAlts)
     }
-
-
-    makeFragHolders(chosenAlts)
-
   }
 }
 
@@ -926,7 +935,8 @@ object MorphingStrategy {
 
   /**
    * It returns the first alternative with the highest rating.
-   * @param alts
+    *
+    * @param alts
    * @tparam M
    * @return
    */
@@ -1063,7 +1073,8 @@ object FragmentSelector {
    *            ?[ResponseProfiler] { _ => context.profileResponse })
    *
    * }}}
-   * @param activator the function returning the activity status of the fragment `F`
+    *
+    * @param activator the function returning the activity status of the fragment `F`
    * @tparam F the fragment type for which the activity status is determined
    * @return the fragment's activity status partial function
    */

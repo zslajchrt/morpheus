@@ -139,6 +139,8 @@ object Morpheus {
 
   implicit def convertMorphToTotalRef[M1, M2](morph: MorphMirror[M1]): &[M2] = macro convertMorphToTotalRef_impl[M1, M2]
 
+  implicit def convertMorphToTotalRefNoDepsCheck[M1, M2](morph: MorphMirror[M1]): &?[M2] = macro convertMorphToTotalRefNoDepsCheck_impl[M1, M2]
+
   implicit def convertMorphToTotalRefNoHidden[M1, M2](morph: MorphMirror[M1]): &![M2] = macro convertMorphToTotalRefNoHidden_impl[M1, M2]
 
   implicit def convertMorphKernelToPartialRef[M1, M2](ci: MorphKernel[M1]): ~&[M2] = macro convertMorphKernelToPartialRef_impl[M1, M2]
@@ -1368,6 +1370,21 @@ object Morpheus {
       }
     """
     c.Expr[&[M2]](res)
+  }
+
+  def convertMorphToTotalRefNoDepsCheck_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(morph: c.Expr[MorphMirror[M1]]): c.Expr[&?[M2]] = {
+    import c.universe._
+
+    val tgtTpe = implicitly[WeakTypeTag[M2]].tpe.dealias
+    val srcTpe = implicitly[WeakTypeTag[M1]]
+    val res = q"""
+      {
+        import org.morpheus._
+        val ref: &?[$tgtTpe] = convertMorphKernelToTotalRefNoDepsCheck[$srcTpe, $tgtTpe]($morph.kernel)
+        ref.copy(sourceStrategy = Some(new LastRatingStrategy($morph.asInstanceOf[MorphMirror[Any]]))).asInstanceOf[&?[$tgtTpe]]
+      }
+    """
+    c.Expr[&?[M2]](res)
   }
 
   def convertMorphToTotalRefNoHidden_impl[M1: c.WeakTypeTag, M2: c.WeakTypeTag](c: whitebox.Context)(morph: c.Expr[MorphMirror[M1]]): c.Expr[&![M2]] = {
