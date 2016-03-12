@@ -364,7 +364,7 @@ case class StrictStrategy[M](delegate: MorphingStrategy[M]) extends MorphingStra
 
 }
 
-abstract class MaskingStrategyCommon[M, S](delegate: MorphingStrategy[M], switchModel: MorphModel[S], altMap: AltMappings, negative: Boolean, cumulative: Boolean) extends MorphingStrategy[M] {
+abstract class MaskingStrategyCommon[M, S](delegate: MorphingStrategy[M], sourceModel: MorphModel[M], switchModel: MorphModel[S], altMap: AltMappings, negative: Boolean, cumulative: Boolean) extends MorphingStrategy[M] {
 
   val switchAlts: List[List[Int]] = switchModel.altIterator().toList.map(_.map(_.id))
   val altMapReduced = altMap.preserveDynamics()
@@ -375,6 +375,13 @@ abstract class MaskingStrategyCommon[M, S](delegate: MorphingStrategy[M], switch
 
     val origAlts = delegate.chooseAlternatives(instance)(morphProxy)
 
+    def toSrcAlt(swAlt: List[Int]): Set[Int] = swAlt.toSet.map((tgtFragId: Int) => {
+      altMapReduced.newFragToOrigFrag(switchModel.sec2prim(tgtFragId))
+//      val srcFraId = altMapReduced.newFragToOrigFrag(switchModel.sec2prim(tgtFragId))
+//      sourceModel.prim2sec(srcFraId).toSet
+    })
+
+
     switch(instance)(morphProxy) match {
       case None => origAlts
 
@@ -383,29 +390,29 @@ abstract class MaskingStrategyCommon[M, S](delegate: MorphingStrategy[M], switch
 
         if (cumulative) {
           val swAlt: List[Int] = switchAlts(activeAltIndex)
-          val maskedFragments: List[Int] = swAlt.map(altMapReduced.newFragToOrigFrag)
+          val maskedFragments: Set[Int] = toSrcAlt(swAlt)
           if (negative) {
-            origAlts.unmask(maskedFragments.toSet)
+            origAlts.unmask(maskedFragments)
           } else {
-            origAlts.mask(maskedFragments.toSet)
+            origAlts.mask(maskedFragments)
           }
 
         } else {
           var updatedAlts = origAlts
           for (altId <- 0 until altsCount) {
             val swAlt: List[Int] = switchAlts(altId)
-            val selectedFragments: List[Int] = swAlt.map(altMapReduced.newFragToOrigFrag)
+            val selectedFragments: Set[Int] = toSrcAlt(swAlt)
 
             updatedAlts = if (altId == activeAltIndex) {
               if (negative)
-                updatedAlts.unmask(selectedFragments.toSet)
+                updatedAlts.unmask(selectedFragments)
               else
-                updatedAlts.mask(selectedFragments.toSet)
+                updatedAlts.mask(selectedFragments)
             } else {
               if (negative)
-                updatedAlts.mask(selectedFragments.toSet)
+                updatedAlts.mask(selectedFragments)
               else
-                updatedAlts.unmask(selectedFragments.toSet)
+                updatedAlts.unmask(selectedFragments)
             }
           }
           updatedAlts
@@ -418,8 +425,8 @@ abstract class MaskingStrategyCommon[M, S](delegate: MorphingStrategy[M], switch
 
 }
 
-case class MaskingStrategy[M, S](delegate: MorphingStrategy[M], switchModel: MorphModel[S], altMap: AltMappings, switchFn: () => Option[Int], negative: Boolean, cumulative: Boolean)
-  extends MaskingStrategyCommon[M, S](delegate, switchModel, altMap, negative, cumulative) {
+case class MaskingStrategy[M, S](delegate: MorphingStrategy[M], sourceModel: MorphModel[M], switchModel: MorphModel[S], altMap: AltMappings, switchFn: () => Option[Int], negative: Boolean, cumulative: Boolean)
+  extends MaskingStrategyCommon[M, S](delegate, sourceModel, switchModel, altMap, negative, cumulative) {
 
   override protected def switch(instance: MorphKernel[M])(morphProxy: Option[instance.ImmutableLUB]): Option[Int] = switchFn()
 
@@ -427,8 +434,8 @@ case class MaskingStrategy[M, S](delegate: MorphingStrategy[M], switchModel: Mor
 
 class MaskingStrategyWithModel[M, S, ImmutableLUB](val morphModel: MorphModel[M]) {
 
-  class Strat(delegate: MorphingStrategy[morphModel.Model], switchModel: MorphModel[S], altMap: AltMappings, switchFn: (Option[ImmutableLUB]) => Option[Int], negative: Boolean, cumulative: Boolean)
-    extends MaskingStrategyCommon[M, S](delegate, switchModel, altMap, negative, cumulative) {
+  class Strat(delegate: MorphingStrategy[morphModel.Model], sourceModel: MorphModel[M], switchModel: MorphModel[S], altMap: AltMappings, switchFn: (Option[ImmutableLUB]) => Option[Int], negative: Boolean, cumulative: Boolean)
+    extends MaskingStrategyCommon[M, S](delegate, sourceModel, switchModel, altMap, negative, cumulative) {
 
     override protected def switch(instance: MorphKernel[M])(morphProxy: Option[instance.ImmutableLUB]): Option[Int] = {
       switchFn(morphProxy.asInstanceOf[Option[ImmutableLUB]])

@@ -28,6 +28,11 @@ abstract class MorphModelBase[M](val rootNode: MorphModelNode) extends MorphingT
    */
   val sec2prim: Map[Int, Int]
 
+  /**
+    * Returns the secondary fragments corresponding to the primary one
+    */
+  def prim2sec(primId: Int) = sec2prim.filter(_._2 == primId).map(_._1)
+
   private lazy val frag2Desc: Map[Int, Frag[_, _]] = {
     sec2prim.map(e => {
       val secFragId = e._1

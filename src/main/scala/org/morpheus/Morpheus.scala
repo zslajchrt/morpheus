@@ -794,13 +794,14 @@ object Morpheus {
     val immutableLUBTpe = c.typecheck(tq"$morphModel.ImmutableLUB", mode = c.TYPEmode).tpe
     val switchTpe = implicitly[WeakTypeTag[S]].tpe.dealias
 
+    val srcModelTree = parseMorphModelFromType(c)(modelTpe, false, false, None, Total)._1
     val switchModelTree = parseMorphModelFromType(c)(switchTpe, false, false, None, Total)._1
     val altMapTree = checkMorphKernelAssignment(c, s"Checking compatibility of switch model $switchTpe with $modelTpe")(modelTpe, switchTpe, false, Total, Total, false, noHiddenFragments = false)._1
     val result = q"""
          {
             def createStrategy() = {
               val wrapper = new org.morpheus.MaskingStrategyWithModel[$modelTpe, $switchTpe, $immutableLUBTpe]($morphModel)
-              new wrapper.Strat($delegate, $switchModelTree, $altMapTree, $sw, $negative, $cumulative)
+              new wrapper.Strat($delegate, $srcModelTree, $switchModelTree, $altMapTree, $sw, $negative, $cumulative)
             }
             createStrategy
          }
@@ -872,12 +873,13 @@ object Morpheus {
     val modelTpe = delegate.actualType.typeArgs.head.dealias
     val switchTpe = implicitly[WeakTypeTag[S]].tpe.dealias
 
+    val srcModelTree = parseMorphModelFromType(c)(modelTpe, false, false, None, Total)._1
     val switchModelTree = parseMorphModelFromType(c)(switchTpe, false, false, None, Total)._1
     val altMapTree = checkMorphKernelAssignment(c, s"Checking compatibility of switch model $switchTpe with $modelTpe")(modelTpe, switchTpe, false, Total, Total, false, noHiddenFragments = false)._1
 
     val result = q"""
          {
-            def createStrategy() = org.morpheus.MaskingStrategy($delegate, $switchModelTree, $altMapTree, $sw, $negative, $cumulative)
+            def createStrategy() = org.morpheus.MaskingStrategy($delegate, $srcModelTree, $switchModelTree, $altMapTree, $sw, $negative, $cumulative)
             createStrategy
          }
        """
