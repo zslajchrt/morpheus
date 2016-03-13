@@ -116,6 +116,9 @@ abstract class CompleteMorphContext[M, L, ConformLev <: ConformanceLevelMarker](
       if (declaringClass == classOf[MorphMirror[M]])
         new MethodInterceptor {
           override def intercept(obj: scala.Any, method: Method, args: Array[AnyRef], proxy: MethodProxy): AnyRef = {
+            if (!owningProxy.isEmpty && owningProxy.get.delegate != obj) {
+              throw new StaleMorphException
+            }
             inContext {
               proxy.invoke(compositeMirror, args)
             }
@@ -132,6 +135,9 @@ abstract class CompleteMorphContext[M, L, ConformLev <: ConformanceLevelMarker](
           case Some((_, outerFrag)) =>
             new MethodInterceptor {
               override def intercept(obj: scala.Any, method: Method, args: Array[AnyRef], proxy: MethodProxy): AnyRef = {
+                if (!owningProxy.isEmpty && owningProxy.get.delegate != obj) {
+                  throw new StaleMorphException
+                }
                 inContext {
                   proxy.invoke(outerFrag, args)
                 }
