@@ -551,7 +551,8 @@ case class BridgeStrategy[MT, MS](srcInstanceRef: MorphKernelRef[MT, MS]) extend
     //val sourceAlts: Alternatives[MS] = actualStrategy.chooseAlternatives(srcInstanceRef.instance)(Some(srcInstanceRef.instance.!))
 
     // The target proxy should be able to substitute the source proxy. Just type-cast the target proxy
-    val srcMorphProxy = morphProxy.map(_.asInstanceOf[srcInstanceRef.instance.ImmutableLUB])
+    val srcMorphProxy = morphProxy.map(_.asInstanceOf[srcInstanceRef.instance.ImmutableLUB]).orElse(Some(srcInstanceRef.instance.!))
+
     val sourceAlts: Alternatives[MS] = actualStrategy.chooseAlternatives(srcInstanceRef.instance)(srcMorphProxy)
 
     val suggestedWinnerAlt: List[Int] = MorphingStrategy.fittestAlternative(srcInstanceRef.instance, sourceAlts.toMaskedList) match {
@@ -569,6 +570,10 @@ case class BridgeStrategy[MT, MS](srcInstanceRef: MorphKernelRef[MT, MS]) extend
       val referredSourceAlts: List[List[Int]] = altMap.newAltToOrigAlt.getOrElse(tgtAltIds, List.empty).map(_.fragments)
       referredSourceAlts.contains(suggestedWinnerAlt)
     }).map(_._1.map(_.id)).toSet
+
+    if (targetAltsReferringWinner.isEmpty) {
+      throw new NoAlternativeChosenException(s"No matching source alternative found")
+    }
 
     //    // find the target alts referring the source winner - it is used for promoting the preferred target alts
 //    val targetAltsReferringWinner: Set[List[Int]] = altMap.newAltToOrigAlt.filter(newAltEntry => {
@@ -705,7 +710,7 @@ case class BridgeAlternativeComposer[MT, MS](srcInstanceRef: MorphKernelRef[MT, 
       // consult the original strategy to choose the best orig alt
 
       // The target proxy should be able to substitute the source proxy. Just type-cast the target proxy
-      val srcMorphProxy = morphProxy.map(_.asInstanceOf[srcInstanceRef.instance.ImmutableLUB])
+      val srcMorphProxy = morphProxy.map(_.asInstanceOf[srcInstanceRef.instance.ImmutableLUB]).orElse(Some(srcInstanceRef.instance.!))
       val suggestedOrigAlternatives = actualStrategy.chooseAlternatives(srcInstanceRef.instance)(srcMorphProxy)
       // First, try to get the candidate original alts from the masked list
       val chosenAltsFirstAttempt = restrictRatedAltsToSpecifiedAlts(origAltForNewAltFrags, suggestedOrigAlternatives.toMaskedList, rating)

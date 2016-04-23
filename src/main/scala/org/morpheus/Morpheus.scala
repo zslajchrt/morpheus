@@ -239,7 +239,7 @@ object Morpheus {
 
   def unmaskFull[S](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], sw: (Option[morphModel.ImmutableLUB]) => Option[Int]): Any = macro unmaskWithExplicitModel_impl[S]
 
-  def umaskFull_+[S](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], sw: (Option[morphModel.ImmutableLUB]) => Option[Int]): Any = macro unmaskWithExplicitModel_implCumulative[S]
+  def unmaskFull_+[S](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], sw: (Option[morphModel.ImmutableLUB]) => Option[Int]): Any = macro unmaskWithExplicitModel_implCumulative[S]
 
   def maskFragment[F](morphModel: MorphModel[_])(delegate: MorphingStrategy[morphModel.Model], sw: (Option[morphModel.ImmutableLUB]) => Boolean): Any = macro maskFragment_impl[F]
 
