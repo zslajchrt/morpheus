@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<diagram program="umlet" version="13.3">
+  <zoom_level>10</zoom_level>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>350</x>
+      <y>120</y>
+      <w>170</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>Individual
+&lt;&lt;fragment&gt;&gt;
+--
++name: String
+--
+Individual(name: String)</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>390</x>
+      <y>360</y>
+      <w>150</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>Joy
+&lt;&lt;fragment&gt;&gt;
+--
++joyLevel: Float
+--
+Joy(level: String)</panel_attributes>
+    <additional_attributes/>
+  </element>
+</diagram>
